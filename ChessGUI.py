@@ -1,7 +1,6 @@
 import pygame
 import sys
 import chess
-import ChessBot
 
 class ChessGUI:
     def __init__(self):
@@ -147,7 +146,6 @@ class ChessGUI:
     def run(self):
         """The main execution loop of the game."""
         running = True
-        Bot = ChessBot.ChessBot()
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -157,9 +155,6 @@ class ChessGUI:
                         self.handle_click(event.pos)
             
             self.render()
-            if not self.board.is_game_over():
-                move = Bot.best_move(self.board)
-                self.board.push(move)
             self.clock.tick(60)
         print("Game Over:", self.board.result())
         pygame.quit()
