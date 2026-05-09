@@ -9,7 +9,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include_directories(include)
 
 add_executable(BluieChessBot
-    src/Bot.cpp
     src/Bluie.cpp
     src/MoveGen.cpp
+    src/Precomputed.cpp
 )

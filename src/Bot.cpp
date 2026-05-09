@@ -1,23 +1,8 @@
-#include <iostream>
-#include <cstdint>
-#include <bitset>
+
 #include "Bitboard.hpp"
 
 
-// Print the bitboard in a human-readable format (for debugging)
-void print_bitboard(Bitboard b)
-{
-    for (int rank = 7; rank >= 0; --rank)
-    {
-        for (int file = 0; file < 8; ++file)
-        {
-            int square = rank * 8 + file;
-            std::cout << (get_bit(b, square) ? "1 " : ". ");
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
-}
+
 
 // Move Generation Logic
 
@@ -126,11 +111,3 @@ void precompute_king_moves()
     }
 }
 
-int main()
-{
-    precompute_king_moves();
-    for(Bitboard b : precomputed_king_moves)
-        print_bitboard(b);
-
-    return 0;
-}

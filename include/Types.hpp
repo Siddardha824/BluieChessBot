@@ -7,10 +7,10 @@ using Bitboard = uint64_t;
 constexpr int MAX_MOVES = 256;
 
 struct Move {
-  int from_square;
-  int to_square;
+  int fromSquare;
+  int toSquare;
 
-  Move(int from, int to) : from_square(from), to_square(to) {}
+  Move(int from, int to) : fromSquare(from), toSquare(to) {}
 };
 
 struct MoveList {
