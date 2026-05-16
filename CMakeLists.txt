@@ -11,5 +11,5 @@ include_directories(include)
 add_executable(BluieChessBot
     src/Bluie.cpp
     src/MoveGen.cpp
-    src/Precomputed.cpp
+    src/PreComputation.cpp
 )

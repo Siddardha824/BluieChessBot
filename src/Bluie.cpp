@@ -1,24 +1,33 @@
 #include <iostream>
-
+#include <iomanip>
 #include "Bluie.hpp"
-#include "Precomputed.hpp"
+#include "PreComputation.hpp"
+#include "Types.hpp"
 
 // Print the bitboard in a human-readable format (for debugging)
-void printBitboard(Bitboard b) {
-  for (int rank = 7; rank >= 0; --rank) {
-    for (int file = 0; file < 8; ++file) {
-      int square = rank * 8 + file;
-      std::cout << (getBit(b, square) ? "1 " : ". ");
+void printBitboard(Bitboard b)
+{
+    for (int rank = 0; rank < 8; ++rank)
+    {
+        std::cout << 8 - rank << "  ";
+        for (int file = 0; file < 8; ++file)
+        {
+            int square = rank * 8 + file;
+            std::cout << (getBit(b, square) ? "1 " : ". ");
+        }
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
-  }
-  std::cout << std::endl;
+    std::cout << "   a b c d e f g h" << std::endl << std::endl;
+    std::cout << "Bitboard: " << std::hex << std::setfill('0') << std::setw(16) <<  b << std::endl << std::endl;
 }
 
-int main() {
-  calculateWhitePawnMoves();
-  for (int i = 0; i < 64; i++) {
-    printBitboard(whitePawnMoves[i]);
-  }
-  return 0;
+int main()
+{
+    computePawnAttacks();
+
+    computeKnightAttacks();
+
+    for (int square = 0; square < 64; ++square) {
+        printBitboard(knightAttacks[square]);
+    }
 }
