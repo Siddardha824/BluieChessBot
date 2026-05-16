@@ -23,11 +23,10 @@ void printBitboard(Bitboard b)
 
 int main()
 {
-    computePawnAttacks();
-
-    computeKnightAttacks();
+    // Initializing all the precomputed attacks tables
+    initPrecompute();
 
     for (int square = 0; square < 64; ++square) {
-        printBitboard(knightAttacks[square]);
+        printBitboard(kingAttacks[square]);
     }
 }

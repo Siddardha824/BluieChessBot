@@ -4,6 +4,19 @@
 
 Bitboard pawnAttacks[2][64];
 Bitboard knightAttacks[64];
+Bitboard kingAttacks[64];
+
+void initPrecompute()
+{
+    // Precompute the pawn attacks Table
+    computePawnAttacks();
+
+    // Precompute the knight attacks Table
+    computeKnightAttacks();
+
+    // Precompute the king attacks Table
+    computeKingAttacks();
+}
 
 void computePawnAttacks()
 {
@@ -65,5 +78,42 @@ void computeKnightAttacks()
         attacks |= (piece << 6) & Masks::NOT_GH_FILE;  // Direction 8
 
         knightAttacks[square] = attacks;
+    }
+}
+
+void computeKingAttacks()
+{
+    // Iterate through all the squares
+    for (int square = 0; square < 64; square++)
+    {
+        // Create a empty board and place the pawn at the square
+        Bitboard piece = 0ULL;
+        setBit(piece, square);
+
+        Bitboard attacks = 0ULL;
+
+        // Calculate the king attacks in 8 directions
+        /*
+            8  . . . . . . . .
+            7  . . . . . . . .
+            6  . . 1 2 3 . . .
+            5  . . 8 K 4 . . .
+            4  . . 7 6 5 . . .
+            3  . . . . . . . .
+            2  . . . . . . . .
+            1  . . . . . . . .
+               a b c d e f g h
+        */
+
+        attacks |= (piece >> 9) & Masks::NOT_H_FILE; // Direction 1
+        attacks |= (piece >> 8);                     // Direction 2
+        attacks |= (piece >> 7) & Masks::NOT_A_FILE; // Direction 3
+        attacks |= (piece << 1) & Masks::NOT_A_FILE; // Direction 4
+        attacks |= (piece << 9) & Masks::NOT_A_FILE; // Direction 5
+        attacks |= (piece << 8);                     // Direction 6
+        attacks |= (piece << 7) & Masks::NOT_H_FILE; // Direction 7
+        attacks |= (piece >> 1) & Masks::NOT_H_FILE; // Direction 8
+
+        kingAttacks[square] = attacks;
     }
 }
