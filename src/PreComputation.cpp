@@ -18,6 +18,11 @@ void initPrecompute()
     computeKingAttacks();
 }
 
+/*-----------------------------------------------*\
+           Leaper pieces Attack Tables
+\*-----------------------------------------------*/
+
+
 void computePawnAttacks()
 {
     // Iterate through all the squares
@@ -117,3 +122,8 @@ void computeKingAttacks()
         kingAttacks[square] = attacks;
     }
 }
+
+/*-----------------------------------------------*\
+           Slider pieces Attacks
+\*-----------------------------------------------*/
+

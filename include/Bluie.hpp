@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Types.hpp"
+#include "PreComputation.hpp"
 #include "Bitboard.hpp"
-
-void printBitboard(Bitboard b);
+#include "Types.hpp"
+#include "Debug.hpp"
