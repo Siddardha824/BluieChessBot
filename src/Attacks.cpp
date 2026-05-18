@@ -1,6 +1,6 @@
 #include "Types.hpp"
 
-Bitboard mask_bishop_attacks(Square square)
+Bitboard maskBishopAttacks(Square square)
 {
     // Resulting bitboard to store the bishop attacks
     Bitboard attacks = 0ULL;
@@ -49,7 +49,7 @@ Bitboard mask_bishop_attacks(Square square)
     return attacks;
 }
 
-Bitboard mask_rook_attacks(Square square)
+Bitboard maskRookAttacks(Square square)
 {
     // Resulting bitboard to store the bishop attacks
     Bitboard attacks = 0ULL;
@@ -98,7 +98,7 @@ Bitboard mask_rook_attacks(Square square)
     return attacks;
 }
 
-Bitboard bishop_attacks_on_the_fly(Square square, Bitboard occupancy)
+Bitboard bishopAttacksOnTheFly(Square square, Bitboard occupancy)
 {
     // Resulting bitboard to store the bishop attacks
     Bitboard attacks = 0ULL;
@@ -155,7 +155,7 @@ Bitboard bishop_attacks_on_the_fly(Square square, Bitboard occupancy)
     return attacks;
 }
 
-Bitboard rook_attacks_on_the_fly(Square square, Bitboard occupancy)
+Bitboard rookAttacksOnTheFly(Square square, Bitboard occupancy)
 {
     // Resulting bitboard to store the bishop attacks
     Bitboard attacks = 0ULL;

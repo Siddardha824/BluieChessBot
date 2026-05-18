@@ -6,14 +6,14 @@
            Leaper pieces Attack Tables
 \*-----------------------------------------------*/
 
-constexpr Bitboard generate_pawn_attack(Side side, Square square)
+constexpr Bitboard generatePawnAttack(Side side, Square square)
 {
     // Create a empty board and place the pawn at the square
     Bitboard piece = 0ULL;
-    set_bit(piece, square);
+    setBit(piece, square);
 
     Bitboard attacks = 0ULL;
-    if (side == Side::white)
+    if (side == Side::WHITE)
     {
         // Calculate the pawn attacks if the pawn is white.
         // File masks are used to prevent wrap around at the edge of the board
@@ -29,11 +29,11 @@ constexpr Bitboard generate_pawn_attack(Side side, Square square)
     return attacks;
 }
 
-constexpr Bitboard generate_knight_attack(Square square)
+constexpr Bitboard generateKnightAttack(Square square)
 {
     // Create a empty board and place the pawn at the square
     Bitboard piece = 0ULL;
-    set_bit(piece, square);
+    setBit(piece, square);
 
     Bitboard attacks = 0ULL;
 
@@ -62,11 +62,11 @@ constexpr Bitboard generate_knight_attack(Square square)
     return attacks;
 }
 
-constexpr Bitboard generate_king_attack(Square square)
+constexpr Bitboard generateKingAttack(Square square)
 {
     // Create a empty board and place the pawn at the square
     Bitboard piece = 0ULL;
-    set_bit(piece, square);
+    setBit(piece, square);
 
     Bitboard attacks = 0ULL;
 
@@ -95,7 +95,7 @@ constexpr Bitboard generate_king_attack(Square square)
     return attacks;
 }
 
-constexpr auto generate_pawn_attacks()
+constexpr auto generatePawnAttacks()
 {
     std::array<std::array<Bitboard, 64>, 2> table{};
     // Iterate for both sides
@@ -105,38 +105,38 @@ constexpr auto generate_pawn_attacks()
         for (int square = 0; square < 64; square++)
         {
             table[side][square] =
-                generate_pawn_attack(static_cast<Side>(side), static_cast<Square>(square));
+                generatePawnAttack(static_cast<Side>(side), static_cast<Square>(square));
         }
     }
     return table;
 }
 
 
-constexpr auto generate_knight_attacks()
+constexpr auto generateKnightAttacks()
 {
     std::array<Bitboard, 64> table = {};
     
     // Iterate through all the squares
     for (int square = 0; square < 64; square++)
     {
-        table[square] = generate_knight_attack(static_cast<Square>(square));
+        table[square] = generateKnightAttack(static_cast<Square>(square));
     }
     return table;
 }
 
 
-constexpr auto generate_king_attacks()
+constexpr auto generateKingAttacks()
 {
     std::array<Bitboard, 64> table = {};
     
     // Iterate through all the squares
     for (int square = 0; square < 64; square++)
     {
-        table[square] = generate_king_attack(static_cast<Square>(square));
+        table[square] = generateKingAttack(static_cast<Square>(square));
     }
     return table;
 }
 
-inline constexpr auto pawn_attacks = generate_pawn_attacks();
-inline constexpr auto knight_attacks = generate_knight_attacks();
-inline constexpr auto king_attacks = generate_king_attacks();
+inline constexpr auto pawnAttacks = generatePawnAttacks();
+inline constexpr auto knightAttacks = generateKnightAttacks();
+inline constexpr auto kingAttacks = generateKingAttacks();

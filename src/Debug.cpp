@@ -6,7 +6,7 @@
 #include "Types.hpp"
 
 // Print the bitboard in a human-readable format (for debugging)
-void print_bitboard(Bitboard b)
+void printBitboard(Bitboard b)
 {
     for (int rank = 0; rank < 8; ++rank)
     {
@@ -14,7 +14,7 @@ void print_bitboard(Bitboard b)
         for (int file = 0; file < 8; ++file)
         {
             int square = rank * 8 + file;
-            std::cout << (get_bit(b, static_cast<Square>(square)) ? "1 " : ". ");
+            std::cout << (getBit(b, static_cast<Square>(square)) ? "1 " : ". ");
         }
         std::cout << std::endl;
     }
