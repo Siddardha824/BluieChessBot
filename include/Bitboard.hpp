@@ -18,30 +18,30 @@ const Bitboard NOT_GH_FILE = 0x3F3F3F3F3F3F3F3FULL; // ~(G_FILE | H_FILE)
 \*-----------------------------------------------*/
 
 // Set a piece on a specific square (0 to 63)
-constexpr void setBit(Bitboard& b, int square)
+constexpr void set_bit(Bitboard& b, Square square)
 {
     b |= (1ULL << square);
 }
 
 // Remove a piece from a specific square
-constexpr void clearBit(Bitboard& b, int square)
+constexpr void clear_bit(Bitboard& b, Square square)
 {
     b &= ~(1ULL << square);
 }
 
 // Check if a square is occupied in this bitboard
-constexpr bool getBit(Bitboard b, int square)
+constexpr bool get_bit(Bitboard b, Square square)
 {
     return (b & (1ULL << square)) != 0;
 }
 
 // Move a piece from one square to another using a branchless XOR operation
-constexpr void movePiece(Bitboard& b, Square from_square, Square to_square)
+constexpr void move_piece(Bitboard& b, Square from_square, Square to_square)
 {
     b ^= ((1ULL << from_square) | (1ULL << to_square));
 }
 
-constexpr int countBits(Bitboard bitboard)
+constexpr int count_bits(Bitboard bitboard)
 {
     // Counter for bits
     int count = 0;
@@ -58,11 +58,11 @@ constexpr int countBits(Bitboard bitboard)
     return count;
 }
 
-constexpr int getLSBIndex(Bitboard bitboard)
+constexpr int get_LSB_index(Bitboard bitboard)
 {
     if (bitboard)
     {
-        return countBits((bitboard & -bitboard) - 1);
+        return count_bits((bitboard & -bitboard) - 1);
     }
     else
     {

@@ -3,9 +3,10 @@
 
 #include "Debug.hpp"
 #include "Bitboard.hpp"
+#include "Types.hpp"
 
 // Print the bitboard in a human-readable format (for debugging)
-void printBitboard(Bitboard b)
+void print_bitboard(Bitboard b)
 {
     for (int rank = 0; rank < 8; ++rank)
     {
@@ -13,7 +14,7 @@ void printBitboard(Bitboard b)
         for (int file = 0; file < 8; ++file)
         {
             int square = rank * 8 + file;
-            std::cout << (getBit(b, square) ? "1 " : ". ");
+            std::cout << (get_bit(b, static_cast<Square>(square)) ? "1 " : ". ");
         }
         std::cout << std::endl;
     }

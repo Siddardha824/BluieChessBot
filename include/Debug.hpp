@@ -1,3 +1,3 @@
 #include "Types.hpp"
 
-void printBitboard(Bitboard b);
+void print_bitboard(Bitboard b);

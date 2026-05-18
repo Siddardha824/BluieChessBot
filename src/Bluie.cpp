@@ -1,17 +1,10 @@
-#include <iostream>
-
-#include "Bluie.hpp"
+#include "MagicNumbers.hpp"
+#include "Attacks.hpp"
+#include "Bitboard.hpp"
+#include "Types.hpp"
+#include "Debug.hpp"
 
 int main()
 {
-    // Initializing all the precomputed attacks tables
-    initPrecompute();
-
-    Bitboard board = 0ULL;
-    setBit(board, e4);
-    setBit(board, a2);
-    setBit(board, g6);
-    printBitboard(board);
-    std::cout << countBits(board) << std::endl;
-    std::cout << squareToCoordinates[getLSBIndex(board)] << std::endl;
+    
 }

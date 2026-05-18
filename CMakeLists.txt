@@ -10,7 +10,7 @@ include_directories(include)
 
 add_executable(BluieChessBot
     src/Bluie.cpp
-    src/MoveGen.cpp
-    src/PreComputation.cpp
     src/Debug.cpp
+    src/Attacks.cpp
+    src/MagicNumbers.cpp
 )
