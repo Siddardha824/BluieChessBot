@@ -16,7 +16,7 @@ class BoardRenderer:
 
         self.draw_coordinates(context)
 
-        self.draw_highlights(context)
+        self.draw_selected_square(context)
 
         self.piece_renderer.draw_pieces(context)
 
@@ -93,7 +93,7 @@ class BoardRenderer:
                 font=("Segoe UI", font_size, "bold")
             )
 
-    def draw_highlights(self, context):
+    def draw_selected_square(self, context):
         if context.selected_square is None:
             return
         

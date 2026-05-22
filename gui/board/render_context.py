@@ -1,19 +1,24 @@
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
 class RenderContext:
 
-    def __init__(
-        self,
-        tile_size,
-        origin_x,
-        origin_y,
-        board_state,
-        selected_square
-    ):
+    tile_size: float
 
-        self.tile_size = tile_size
+    origin_x: float
+    origin_y: float
 
-        self.origin_x = origin_x
-        self.origin_y = origin_y
+    board_state: list
 
-        self.board_state = board_state
+    selected_square: tuple | None
 
-        self.selected_square = selected_square
+    dragging_square: tuple | None
+
+    dragging_piece: str | None
+
+    drag_position: tuple
+
+    @property
+    def board_size(self):
+        return self.tile_size * 8
