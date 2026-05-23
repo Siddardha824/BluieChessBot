@@ -1,6 +1,10 @@
+#pragma once
+
 #include "Bitboard.hpp"
+#include "MagicNumbers.hpp"
 #include "Types.hpp"
 #include <array>
+#include <cstddef>
 
 /*-----------------------------------------------*\
            Leaper pieces Attack Tables
@@ -97,7 +101,7 @@ constexpr Bitboard generateKingAttack(Square square)
 
 constexpr auto generatePawnAttacks()
 {
-    std::array<std::array<Bitboard, 64>, 2> table{};
+    std::array<BitboardArray, 2> table{};
     // Iterate for both sides
     for (int side = 0; side < 2; ++side)
     {
@@ -111,11 +115,10 @@ constexpr auto generatePawnAttacks()
     return table;
 }
 
-
 constexpr auto generateKnightAttacks()
 {
-    std::array<Bitboard, 64> table = {};
-    
+    BitboardArray table = {};
+
     // Iterate through all the squares
     for (int square = 0; square < 64; square++)
     {
@@ -124,11 +127,10 @@ constexpr auto generateKnightAttacks()
     return table;
 }
 
-
 constexpr auto generateKingAttacks()
 {
-    std::array<Bitboard, 64> table = {};
-    
+    BitboardArray table = {};
+
     // Iterate through all the squares
     for (int square = 0; square < 64; square++)
     {
@@ -140,3 +142,142 @@ constexpr auto generateKingAttacks()
 inline constexpr auto pawnAttacks = generatePawnAttacks();
 inline constexpr auto knightAttacks = generateKnightAttacks();
 inline constexpr auto kingAttacks = generateKingAttacks();
+
+constexpr Bitboard maskBishopAttacks(Square square)
+{
+    // Resulting bitboard to store the bishop attacks
+    Bitboard attacks = 0ULL;
+
+    // Convert the square index to rank and file
+    int rank = square / 8;
+    int file = square % 8;
+
+    // Calculate the bishop attacks in 4 diagonal directions
+    /*
+        8  . . . . . . . .
+        7  . 4 . . . 1 . .
+        6  . . 4 . 1 . . .
+        5  . . . B . . . .
+        4  . . 3 . 2 . . .
+        3  . 3 . . . 2 . .
+        2  . . . . . . 2 .
+        1  . . . . . . . .
+           a b c d e f g h
+    */
+    int r, f;
+    // Direction 1: Up-Right
+    for (int r = rank + 1, f = file + 1; r <= 6 && f <= 6; ++r, ++f)
+    {
+        attacks |= (1ULL << (r * 8 + f));
+    }
+
+    // Direction 2: Down-Right
+    for (int r = rank - 1, f = file + 1; r >= 1 && f <= 6; --r, ++f)
+    {
+        attacks |= (1ULL << (r * 8 + f));
+    }
+
+    // Direction 3: Down-Left
+    for (int r = rank - 1, f = file - 1; r >= 1 && f >= 1; --r, --f)
+    {
+        attacks |= (1ULL << (r * 8 + f));
+    }
+
+    // Direction 4: Up-Left
+    for (int r = rank + 1, f = file - 1; r <= 6 && f >= 1; ++r, --f)
+    {
+        attacks |= (1ULL << (r * 8 + f));
+    }
+
+    return attacks;
+}
+
+constexpr Bitboard maskRookAttacks(Square square)
+{
+    // Resulting bitboard to store the bishop attacks
+    Bitboard attacks = 0ULL;
+
+    // Convert the square index to rank and file
+    int rank = square / 8;
+    int file = square % 8;
+
+    // Calculate the rook attacks in 4 directions
+    /*
+        8  . . . . . . . .
+        7  . . . 1 . . . .
+        6  . . . 1 . . . .
+        5  . . . 1 . . . .
+        4  . 4 4 R 2 2 2 .
+        3  . . . 3 . . . .
+        2  . . . 3 . . . .
+        1  . . . . . . . .
+           a b c d e f g h
+    */
+    int r, f;
+    // Direction 1: Up
+    for (int r = rank + 1, f = file; r <= 6; ++r)
+    {
+        attacks |= (1ULL << (r * 8 + f));
+    }
+
+    // Direction 2: Right
+    for (int r = rank, f = file + 1; f <= 6; ++f)
+    {
+        attacks |= (1ULL << (r * 8 + f));
+    }
+
+    // Direction 3: Down
+    for (int r = rank - 1, f = file; r >= 1; --r)
+    {
+        attacks |= (1ULL << (r * 8 + f));
+    }
+
+    // Direction 4: Left
+    for (int r = rank, f = file - 1; f >= 1; --f)
+    {
+        attacks |= (1ULL << (r * 8 + f));
+    }
+
+    return attacks;
+}
+
+constexpr auto generateBishopOccupancyMaskTables()
+{
+    BitboardArray table = {};
+
+    // Iterate through all the squares
+    for (int square = 0; square < 64; square++)
+    {
+        table[square] = maskBishopAttacks(static_cast<Square>(square));
+    }
+    return table;
+}
+
+constexpr auto generateRookOccupancyMaskTables()
+{
+    BitboardArray table = {};
+
+    // Iterate through all the squares
+    for (int square = 0; square < 64; square++)
+    {
+        table[square] = maskRookAttacks(static_cast<Square>(square));
+    }
+    return table;
+}
+
+inline constexpr BitboardArray bishopOccupancyMasks = generateBishopOccupancyMaskTables();
+inline constexpr BitboardArray rookOccupancyMasks = generateRookOccupancyMaskTables();
+
+constexpr std::size_t getBishopMagicIndex(Square square, Bitboard occupancy)
+{
+    occupancy &= bishopOccupancyMasks[square];
+
+    return (occupancy * bishopMagicNumbers[square]) >> (64 - bishopRelevantBits[square]);
+}
+
+constexpr std::size_t getRookMagicIndex(Square square, Bitboard occupancy)
+{
+    occupancy &= rookOccupancyMasks[square];
+
+    return (occupancy * rookMagicNumbers[square]) >> (64 - rookRelevantBits[square]);
+}

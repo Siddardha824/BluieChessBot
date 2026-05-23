@@ -13,4 +13,7 @@ add_executable(BluieChessBot
     src/Debug.cpp
     src/Attacks.cpp
     src/MagicNumbers.cpp
+    src/Board.cpp
+    tools/Random.cpp
+    tools/Tests.cpp
 )

@@ -4,9 +4,9 @@
 #include <cassert>
 #include <cstdint>
 
-
 using Bitboard = uint64_t;
 using Move = uint32_t;
+using BitboardArray = std::array<Bitboard, 64>;
 
 enum Side
 {

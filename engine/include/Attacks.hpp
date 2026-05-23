@@ -1,7 +1,6 @@
-#include "Types.hpp"
+#pragma once
 
-Bitboard maskBishopAttacks(Square square);
-Bitboard maskRookAttacks(Square square);
+#include "Types.hpp"
 
 Bitboard bishopAttacksOnTheFly(Square square, Bitboard occupancy);
 Bitboard rookAttacksOnTheFly(Square square, Bitboard occupancy);
