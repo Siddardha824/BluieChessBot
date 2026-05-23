@@ -6,6 +6,11 @@
 #include "core/Types.hpp"
 #include <cstddef>
 
+namespace Bluie
+{
+namespace Attacks
+{
+
 /**
  * @brief Maps a bishop square and board occupancy to its precomputed table index using hashing.
  * 
@@ -46,3 +51,6 @@ constexpr Bitboard getQueenAttack(Square square, Bitboard occupancy)
     return bishopAttacks[square][getBishopMagicIndex(square, occupancy)] |
            rookAttacks[square][getRookMagicIndex(square, occupancy)];
 }
+
+} // namespace Attacks
+} // namespace Bluie

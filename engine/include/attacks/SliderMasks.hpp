@@ -4,6 +4,11 @@
 #include "core/Types.hpp"
 #include <array>
 
+namespace Bluie
+{
+namespace Attacks
+{
+
 /*-----------------------------------------------*\
            Slider pieces Attack Tables
 \*-----------------------------------------------*/
@@ -132,3 +137,6 @@ constexpr auto generateRookOccupancyMaskTables()
 
 inline constexpr BitboardArray bishopOccupancyMasks = generateBishopOccupancyMaskTables();
 inline constexpr BitboardArray rookOccupancyMasks = generateRookOccupancyMaskTables();
+
+} // namespace Attacks
+} // namespace Bluie

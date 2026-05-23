@@ -3,12 +3,14 @@
 #include "core/Types.hpp"
 #include <array>
 
-
+namespace Bluie
+{
+namespace Attacks
+{
 
 // clang-format off
 
 // bishop relevant occupancy bit count for every square on board
-
 inline constexpr std::array<int, 64> bishopRelevantBits = {
     6, 5, 5, 5, 5, 5, 5, 6, 
     5, 5, 5, 5, 5, 5, 5, 5, 
@@ -167,3 +169,6 @@ inline constexpr BitboardArray bishopMagicNumbers = {
 };
 
 // clang-format on
+
+} // namespace Attacks
+} // namespace Bluie

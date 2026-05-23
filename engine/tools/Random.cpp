@@ -2,8 +2,16 @@
 #include "core/Types.hpp"
 #include <cstdint>
 
-// pseudo random number state
+namespace Bluie
+{
+namespace Tools
+{
+
+namespace
+{
+// pseudo random number state localized inside this translation unit
 uint32_t randomState = 1804289383;
+} // namespace
 
 // generate 32-bit pseudo legal numbers
 uint32_t getRandomU32Number()
@@ -24,7 +32,7 @@ uint32_t getRandomU32Number()
 }
 
 // generate 64-bit pseudo legal numbers
-Bitboard getRandomBitboardNumber()
+Bluie::Bitboard getRandomBitboardNumber()
 {
     // define 4 random numbers
     Bitboard n1, n2, n3, n4;
@@ -40,7 +48,10 @@ Bitboard getRandomBitboardNumber()
 }
 
 // generate magic number candidate
-Bitboard generateMagicNumber()
+Bluie::Bitboard generateMagicNumber()
 {
     return getRandomBitboardNumber() & getRandomBitboardNumber() & getRandomBitboardNumber();
 }
+
+} // namespace Tools
+} // namespace Bluie

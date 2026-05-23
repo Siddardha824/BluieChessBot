@@ -1,5 +1,10 @@
 #include "tools/AttacksOnTheFly.hpp"
 
+namespace Bluie
+{
+namespace Tools
+{
+
 Bitboard bishopAttacksOnTheFly(Square square, Bitboard occupancy)
 {
     // Resulting bitboard to store the bishop attacks
@@ -113,3 +118,6 @@ Bitboard rookAttacksOnTheFly(Square square, Bitboard occupancy)
 
     return attacks;
 }
+
+} // namespace Tools
+} // namespace Bluie

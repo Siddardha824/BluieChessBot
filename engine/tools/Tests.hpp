@@ -1,5 +1,10 @@
 #pragma once
 
+namespace Bluie
+{
+namespace Tools
+{
+
 /**
  * @brief Run correctness tests for bishop and rook magic lookup tables.
  * 
@@ -15,3 +20,6 @@ void testMagicAttacks();
  * hash key to ensure 100% correct engine attack lookups.
  */
 void writeAttackTablesHeaderFile();
+
+} // namespace Tools
+} // namespace Bluie

@@ -2,6 +2,11 @@
 
 #include "core/Types.hpp"
 
+namespace Bluie
+{
+namespace Tools
+{
+
 /**
  * @brief Maximum possible occupancies for sliding piece magic lookup array.
  */
@@ -22,7 +27,7 @@ constexpr int MAGIC_TRIES = 100000000;
  * @param attackMask The base slider occupancy mask.
  * @return Bitboard representing chess board occupancy for this state.
  */
-Bitboard setOccupancy(int index, int bitsInMask, Bitboard attackMask);
+Bluie::Bitboard setOccupancy(int index, int bitsInMask, Bluie::Bitboard attackMask);
 
 /**
  * @brief Finds a valid magic number candidate using XORShift hashing.
@@ -32,4 +37,7 @@ Bitboard setOccupancy(int index, int bitsInMask, Bitboard attackMask);
  * @param bishop True for bishop lookups, false for rook lookups.
  * @return The 64-bit magic number candidate, or 0ULL if search fails.
  */
-Bitboard findMagicNumber(Square square, int relevantBits, bool bishop);
+Bluie::Bitboard findMagicNumber(Square square, int relevantBits, bool bishop);
+
+} // namespace Tools
+} // namespace Bluie

@@ -2,6 +2,11 @@
 
 #include "core/Types.hpp"
 
+namespace Bluie
+{
+namespace Attacks
+{
+
 inline constexpr std::array<std::array<Bitboard, 512>, 64> bishopAttacks = {{
     {
         0x8040201008040200ULL,        0x0000000000000200ULL,        0x0000201008040200ULL,        0x0000000000000200ULL,
@@ -27175,3 +27180,6 @@ inline constexpr std::array<std::array<Bitboard, 4096>, 64> rookAttacks = {{
         0x4080000000000000ULL,        0x7c80000000000000ULL,        0x7c80000000000000ULL,        0x4080000000000000ULL,
     },
 }};
+
+} // namespace Attacks
+} // namespace Bluie

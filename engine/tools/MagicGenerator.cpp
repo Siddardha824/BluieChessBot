@@ -9,6 +9,10 @@
 #include <array>
 #include <iostream>
 
+namespace Bluie
+{
+namespace Tools
+{
 
 Bitboard setOccupancy(int index, int bitsInMask, Bitboard attackMask)
 {
@@ -16,8 +20,8 @@ Bitboard setOccupancy(int index, int bitsInMask, Bitboard attackMask)
 
     for (int i = 0; i < bitsInMask; ++i)
     {
-        int square = getLSBIndex(attackMask);
-        clearBit(attackMask, static_cast<Square>(square));
+        int square = Bitboards::getLSBIndex(attackMask);
+        Bitboards::clearBit(attackMask, static_cast<Square>(square));
         if (index & (1 << i))
         {
             occupancy |= (1ULL << square);
@@ -34,12 +38,12 @@ Bitboard findMagicNumber(Square square, int relevantBits, bool bishop)
     std::array<Bitboard, MAX_OCCUPANCIES> usedAttacks{};
 
     // init attack mask for a current piece
-    Bitboard attackMask = bishop ? bishopOccupancyMasks[square] : rookOccupancyMasks[square];
+    Bitboard attackMask = bishop ? Attacks::bishopOccupancyMasks[square] : Attacks::rookOccupancyMasks[square];
 
-    // init occupancy indicies
+    // init occupancy indices
     int occupancyIndices = 1 << relevantBits;
 
-    // loop over occupancy indicies
+    // loop over occupancy indices
     for (std::size_t index = 0; index < occupancyIndices; index++)
     {
         // init occupancies
@@ -57,7 +61,7 @@ Bitboard findMagicNumber(Square square, int relevantBits, bool bishop)
         Bitboard magicNumber = generateMagicNumber();
 
         // skip inappropriate magic numbers
-        if (countBits((attackMask * magicNumber) & 0xFF00000000000000) < 6)
+        if (Bitboards::countBits((attackMask * magicNumber) & 0xFF00000000000000) < 6)
             continue;
 
         // init used attacks
@@ -98,3 +102,5 @@ Bitboard findMagicNumber(Square square, int relevantBits, bool bishop)
     return 0ULL;
 }
 
+} // namespace Tools
+} // namespace Bluie

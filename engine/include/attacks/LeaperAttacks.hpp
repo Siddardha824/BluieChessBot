@@ -4,6 +4,11 @@
 #include "core/Types.hpp"
 #include <array>
 
+namespace Bluie
+{
+namespace Attacks
+{
+
 /*-----------------------------------------------*\
            Leaper pieces Attack Tables
 \*-----------------------------------------------*/
@@ -12,21 +17,21 @@ constexpr Bitboard generatePawnAttack(Side side, Square square)
 {
     // Create an empty board and place the pawn at the square
     Bitboard piece = 0ULL;
-    setBit(piece, square);
+    Bitboards::setBit(piece, square);
 
     Bitboard attacks = 0ULL;
     if (side == Side::WHITE)
     {
         // Calculate the pawn attacks if the pawn is white.
         // File masks are used to prevent wrap around at the edge of the board
-        attacks |= (piece >> 7) & Masks::NOT_A_FILE;
-        attacks |= (piece >> 9) & Masks::NOT_H_FILE;
+        attacks |= (piece >> 7) & Bitboards::Masks::NOT_A_FILE;
+        attacks |= (piece >> 9) & Bitboards::Masks::NOT_H_FILE;
     }
     else
     {
         // Calculate the pawn attacks if the pawn is black.
-        attacks |= (piece << 7) & Masks::NOT_H_FILE;
-        attacks |= (piece << 9) & Masks::NOT_A_FILE;
+        attacks |= (piece << 7) & Bitboards::Masks::NOT_H_FILE;
+        attacks |= (piece << 9) & Bitboards::Masks::NOT_A_FILE;
     }
     return attacks;
 }
@@ -35,7 +40,7 @@ constexpr Bitboard generateKnightAttack(Square square)
 {
     // Create an empty board and place the knight at the square
     Bitboard piece = 0ULL;
-    setBit(piece, square);
+    Bitboards::setBit(piece, square);
 
     Bitboard attacks = 0ULL;
 
@@ -52,14 +57,14 @@ constexpr Bitboard generateKnightAttack(Square square)
            a b c d e f g h
     */
 
-    attacks |= (piece >> 10) & Masks::NOT_GH_FILE; // Direction 1
-    attacks |= (piece >> 17) & Masks::NOT_H_FILE;  // Direction 2
-    attacks |= (piece >> 15) & Masks::NOT_A_FILE;  // Direction 3
-    attacks |= (piece >> 6) & Masks::NOT_AB_FILE;  // Direction 4
-    attacks |= (piece << 10) & Masks::NOT_AB_FILE; // Direction 5
-    attacks |= (piece << 17) & Masks::NOT_A_FILE;  // Direction 6
-    attacks |= (piece << 15) & Masks::NOT_H_FILE;  // Direction 7
-    attacks |= (piece << 6) & Masks::NOT_GH_FILE;  // Direction 8
+    attacks |= (piece >> 10) & Bitboards::Masks::NOT_GH_FILE; // Direction 1
+    attacks |= (piece >> 17) & Bitboards::Masks::NOT_H_FILE;  // Direction 2
+    attacks |= (piece >> 15) & Bitboards::Masks::NOT_A_FILE;  // Direction 3
+    attacks |= (piece >> 6) & Bitboards::Masks::NOT_AB_FILE;  // Direction 4
+    attacks |= (piece << 10) & Bitboards::Masks::NOT_AB_FILE; // Direction 5
+    attacks |= (piece << 17) & Bitboards::Masks::NOT_A_FILE;  // Direction 6
+    attacks |= (piece << 15) & Bitboards::Masks::NOT_H_FILE;  // Direction 7
+    attacks |= (piece << 6) & Bitboards::Masks::NOT_GH_FILE;  // Direction 8
 
     return attacks;
 }
@@ -68,7 +73,7 @@ constexpr Bitboard generateKingAttack(Square square)
 {
     // Create an empty board and place the king at the square
     Bitboard piece = 0ULL;
-    setBit(piece, square);
+    Bitboards::setBit(piece, square);
 
     Bitboard attacks = 0ULL;
 
@@ -85,14 +90,14 @@ constexpr Bitboard generateKingAttack(Square square)
            a b c d e f g h
     */
 
-    attacks |= (piece >> 9) & Masks::NOT_H_FILE; // Direction 1
+    attacks |= (piece >> 9) & Bitboards::Masks::NOT_H_FILE; // Direction 1
     attacks |= (piece >> 8);                     // Direction 2
-    attacks |= (piece >> 7) & Masks::NOT_A_FILE; // Direction 3
-    attacks |= (piece << 1) & Masks::NOT_A_FILE; // Direction 4
-    attacks |= (piece << 9) & Masks::NOT_A_FILE; // Direction 5
+    attacks |= (piece >> 7) & Bitboards::Masks::NOT_A_FILE; // Direction 3
+    attacks |= (piece << 1) & Bitboards::Masks::NOT_A_FILE; // Direction 4
+    attacks |= (piece << 9) & Bitboards::Masks::NOT_A_FILE; // Direction 5
     attacks |= (piece << 8);                     // Direction 6
-    attacks |= (piece << 7) & Masks::NOT_H_FILE; // Direction 7
-    attacks |= (piece >> 1) & Masks::NOT_H_FILE; // Direction 8
+    attacks |= (piece << 7) & Bitboards::Masks::NOT_H_FILE; // Direction 7
+    attacks |= (piece >> 1) & Bitboards::Masks::NOT_H_FILE; // Direction 8
 
     return attacks;
 }
@@ -140,3 +145,6 @@ constexpr auto generateKingAttacks()
 inline constexpr auto pawnAttacks = generatePawnAttacks();
 inline constexpr auto knightAttacks = generateKnightAttacks();
 inline constexpr auto kingAttacks = generateKingAttacks();
+
+} // namespace Attacks
+} // namespace Bluie

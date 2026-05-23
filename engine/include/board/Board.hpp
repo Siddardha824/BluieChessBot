@@ -4,6 +4,9 @@
 #include <array>
 #include <cstdint>
 
+namespace Bluie
+{
+
 /**
  * @class Board
  * @brief Represents the full state of a chess position.
@@ -27,3 +30,5 @@ private:
     Square enPassant; ///< En passant target square (NONE if none exists)
     uint8_t casstle;  ///< Castling rights bitmask (WKca)
 };
+
+} // namespace Bluie

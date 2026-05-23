@@ -2,16 +2,21 @@
 
 #include "core/Types.hpp"
 
+namespace Bluie
+{
+namespace Bitboards
+{
+
 /**
  * @brief Mask constants for board file and rank boundary operations.
  */
 namespace Masks
 {
-inline constexpr Bitboard NOT_A_FILE = 0xFEFEFEFEFEFEFEFEULL; ///< Everything except the A-file
-inline constexpr Bitboard NOT_H_FILE = 0x7F7F7F7F7F7F7F7FULL; ///< Everything except the H-file
+inline constexpr Bluie::Bitboard NOT_A_FILE = 0xFEFEFEFEFEFEFEFEULL; ///< Everything except the A-file
+inline constexpr Bluie::Bitboard NOT_H_FILE = 0x7F7F7F7F7F7F7F7FULL; ///< Everything except the H-file
 
-inline constexpr Bitboard NOT_AB_FILE = 0xFCFCFCFCFCFCFCFCULL; ///< Everything except A and B files
-inline constexpr Bitboard NOT_GH_FILE = 0x3F3F3F3F3F3F3F3FULL; ///< Everything except G and H files
+inline constexpr Bluie::Bitboard NOT_AB_FILE = 0xFCFCFCFCFCFCFCFCULL; ///< Everything except A and B files
+inline constexpr Bluie::Bitboard NOT_GH_FILE = 0x3F3F3F3F3F3F3F3FULL; ///< Everything except G and H files
 
 } // namespace Masks
 
@@ -24,7 +29,7 @@ inline constexpr Bitboard NOT_GH_FILE = 0x3F3F3F3F3F3F3F3FULL; ///< Everything e
  * @param square The square index (0-63).
  * @return Bitboard with a single set bit.
  */
-constexpr Bitboard squareToBitboard(Square square)
+constexpr Bluie::Bitboard squareToBitboard(Square square)
 {
     return 1ULL << square;
 }
@@ -34,7 +39,7 @@ constexpr Bitboard squareToBitboard(Square square)
  * @param b The bitboard reference to modify.
  * @param square The square index (0-63).
  */
-constexpr void setBit(Bitboard& b, Square square)
+constexpr void setBit(Bluie::Bitboard& b, Square square)
 {
     b |= (1ULL << square);
 }
@@ -44,7 +49,7 @@ constexpr void setBit(Bitboard& b, Square square)
  * @param b The bitboard reference to modify.
  * @param square The square index (0-63).
  */
-constexpr void clearBit(Bitboard& b, Square square)
+constexpr void clearBit(Bluie::Bitboard& b, Square square)
 {
     b &= ~(1ULL << square);
 }
@@ -55,7 +60,7 @@ constexpr void clearBit(Bitboard& b, Square square)
  * @param square The square index (0-63).
  * @return True if the square is occupied, false otherwise.
  */
-constexpr bool getBit(Bitboard b, Square square)
+constexpr bool getBit(Bluie::Bitboard b, Square square)
 {
     return (b & (1ULL << square)) != 0;
 }
@@ -66,7 +71,7 @@ constexpr bool getBit(Bitboard b, Square square)
  * @param fromSquare The square the piece is leaving.
  * @param toSquare The square the piece is entering.
  */
-constexpr void movePiece(Bitboard& b, Square fromSquare, Square toSquare)
+constexpr void movePiece(Bluie::Bitboard& b, Square fromSquare, Square toSquare)
 {
     b ^= ((1ULL << fromSquare) | (1ULL << toSquare));
 }
@@ -76,7 +81,7 @@ constexpr void movePiece(Bitboard& b, Square fromSquare, Square toSquare)
  * @param bitboard The bitboard to count.
  * @return Count of active bits.
  */
-constexpr int countBits(Bitboard bitboard)
+constexpr int countBits(Bluie::Bitboard bitboard)
 {
     int count = 0;
     while (bitboard)
@@ -92,7 +97,7 @@ constexpr int countBits(Bitboard bitboard)
  * @param bitboard The bitboard to scan.
  * @return Index of the LSB (0-63), or -1 if the bitboard is empty.
  */
-constexpr int getLSBIndex(Bitboard bitboard)
+constexpr int getLSBIndex(Bluie::Bitboard bitboard)
 {
     if (bitboard)
     {
@@ -108,7 +113,10 @@ constexpr int getLSBIndex(Bitboard bitboard)
  * @brief Reset (pop/clear) the Least Significant set Bit (LSB) in a bitboard.
  * @param bitboard The bitboard reference to modify.
  */
-constexpr void popLSB(Bitboard& bitboard)
+constexpr void popLSB(Bluie::Bitboard& bitboard)
 {
     bitboard &= bitboard - 1;
 }
+
+} // namespace Bitboards
+} // namespace Bluie

@@ -11,6 +11,11 @@
 #include <iomanip>
 #include <iostream>
 
+namespace Bluie
+{
+namespace Tools
+{
+
 void testMagicAttacks()
 {
     for (int square = 0; square < 64; ++square)
@@ -21,19 +26,19 @@ void testMagicAttacks()
         // ROOK TEST
         // =========================
 
-        Bitboard rookOccupancyMask = rookOccupancyMasks[square];
+        Bitboard rookOccupancyMask = Attacks::rookOccupancyMasks[square];
 
-        int rookOccupancyIndices = 1 << rookRelevantBits[square];
+        int rookOccupancyIndices = 1 << Attacks::rookRelevantBits[square];
 
         for (int index = 0; index < rookOccupancyIndices; ++index)
         {
-            Bitboard occupancy = setOccupancy(index, rookRelevantBits[square], rookOccupancyMask);
+            Bitboard occupancy = setOccupancy(index, Attacks::rookRelevantBits[square], rookOccupancyMask);
 
             Bitboard expected = rookAttacksOnTheFly(sq, occupancy);
 
-            std::size_t magicIndex = getRookMagicIndex(sq, occupancy);
+            std::size_t magicIndex = Attacks::getRookMagicIndex(sq, occupancy);
 
-            Bitboard actual = rookAttacks[square][magicIndex];
+            Bitboard actual = Attacks::rookAttacks[square][magicIndex];
 
             if (expected != actual)
             {
@@ -42,10 +47,10 @@ void testMagicAttacks()
                 std::cout << "Index : " << index << '\n';
 
                 std::cout << "\nExpected:\n";
-                printBitboard(expected);
+                Debug::printBitboard(expected);
 
                 std::cout << "\nActual:\n";
-                printBitboard(actual);
+                Debug::printBitboard(actual);
 
                 return;
             }
@@ -55,20 +60,20 @@ void testMagicAttacks()
         // BISHOP TEST
         // =========================
 
-        Bitboard bishopOccupancyMask = bishopOccupancyMasks[square];
+        Bitboard bishopOccupancyMask = Attacks::bishopOccupancyMasks[square];
 
-        int bishopOccupancyIndices = 1 << bishopRelevantBits[square];
+        int bishopOccupancyIndices = 1 << Attacks::bishopRelevantBits[square];
 
         for (int index = 0; index < bishopOccupancyIndices; ++index)
         {
             Bitboard occupancy =
-                setOccupancy(index, bishopRelevantBits[square], bishopOccupancyMask);
+                setOccupancy(index, Attacks::bishopRelevantBits[square], bishopOccupancyMask);
 
             Bitboard expected = bishopAttacksOnTheFly(sq, occupancy);
 
-            std::size_t magicIndex = getBishopMagicIndex(sq, occupancy);
+            std::size_t magicIndex = Attacks::getBishopMagicIndex(sq, occupancy);
 
-            Bitboard actual = bishopAttacks[square][magicIndex];
+            Bitboard actual = Attacks::bishopAttacks[square][magicIndex];
 
             if (expected != actual)
             {
@@ -77,10 +82,10 @@ void testMagicAttacks()
                 std::cout << "Index : " << index << '\n';
 
                 std::cout << "\nExpected:\n";
-                printBitboard(expected);
+                Debug::printBitboard(expected);
 
                 std::cout << "\nActual:\n";
-                printBitboard(actual);
+                Debug::printBitboard(actual);
 
                 return;
             }
@@ -101,20 +106,21 @@ void writeAttackTablesHeaderFile()
 
     file << "#pragma once\n\n";
     file << "#include \"core/Types.hpp\"\n\n";
+    file << "namespace Bluie\n{\nnamespace Attacks\n{\n\n";
 
     // Bishop Attacks
     file << "inline constexpr std::array<std::array<Bitboard, 512>, 64> bishopAttacks = {{\n";
     for (int square = 0; square < 64; ++square)
     {
         file << "    {\n";
-        int occupancyIndices = 1 << bishopRelevantBits[square];
+        int occupancyIndices = 1 << Attacks::bishopRelevantBits[square];
         std::array<Bitboard, 512> table{};
 
         for (int index = 0; index < occupancyIndices; ++index)
         {
             Bitboard occupancy =
-                setOccupancy(index, bishopRelevantBits[square], bishopOccupancyMasks[square]);
-            std::size_t magicIndex = getBishopMagicIndex(static_cast<Square>(square), occupancy);
+                setOccupancy(index, Attacks::bishopRelevantBits[square], Attacks::bishopOccupancyMasks[square]);
+            std::size_t magicIndex = Attacks::getBishopMagicIndex(static_cast<Square>(square), occupancy);
             Bitboard attacks = bishopAttacksOnTheFly(static_cast<Square>(square), occupancy);
             table[magicIndex] = attacks;
         }
@@ -134,14 +140,14 @@ void writeAttackTablesHeaderFile()
     for (int square = 0; square < 64; ++square)
     {
         file << "    {\n";
-        int occupancyIndices = 1 << rookRelevantBits[square];
+        int occupancyIndices = 1 << Attacks::rookRelevantBits[square];
         std::array<Bitboard, 4096> table{};
 
         for (int index = 0; index < occupancyIndices; ++index)
         {
             Bitboard occupancy =
-                setOccupancy(index, rookRelevantBits[square], rookOccupancyMasks[square]);
-            std::size_t magicIndex = getRookMagicIndex(static_cast<Square>(square), occupancy);
+                setOccupancy(index, Attacks::rookRelevantBits[square], Attacks::rookOccupancyMasks[square]);
+            std::size_t magicIndex = Attacks::getRookMagicIndex(static_cast<Square>(square), occupancy);
             Bitboard attacks = rookAttacksOnTheFly(static_cast<Square>(square), occupancy);
             table[magicIndex] = attacks;
         }
@@ -154,9 +160,12 @@ void writeAttackTablesHeaderFile()
         }
         file << "    },\n";
     }
-    file << "}};\n";
+    file << "}};\n\n";
 
+    file << "} // namespace Attacks\n} // namespace Bluie\n";
     file.close();
     std::cout << "Successfully regenerated AttackTables.hpp!\n";
 }
 
+} // namespace Tools
+} // namespace Bluie

@@ -4,6 +4,9 @@
 #include <cassert>
 #include <cstdint>
 
+namespace Bluie
+{
+
 /**
  * @brief Representation of a 64-bit chessboard occupancy map (Bitboard).
  */
@@ -69,7 +72,7 @@ inline constexpr std::array<const char*, 64> squareToCoordinates =
 /**
  * @class Move
  * @brief High-performance packed 16-bit move representation.
- *
+ * 
  * Bit layout:
  * - Bits 0-5  : Source Square (0-63)
  * - Bits 6-11 : Target Square (0-63)
@@ -77,26 +80,26 @@ inline constexpr std::array<const char*, 64> squareToCoordinates =
  */
 class Move
 {
-  public:
+public:
     /**
      * @brief Move flags representing move category, captures, and promotions.
      */
     enum Flag : uint16_t
     {
-        QUIET = 0,            ///< Quiet Move
-        DOUBLE_PAWN_PUSH = 1, ///< Double Pawn Push (2 squares)
-        KING_CASTLE = 2,      ///< Kingside Castling
-        QUEEN_CASTLE = 3,     ///< Queenside Castling
-        CAPTURE = 4,          ///< Standard Piece Capture
-        EN_PASSANT = 5,       ///< En Passant Capture
-        PR_KNIGHT = 8,        ///< Promotion to Knight
-        PR_BISHOP = 9,        ///< Promotion to Bishop
-        PR_ROOK = 10,         ///< Promotion to Rook
-        PR_QUEEN = 11,        ///< Promotion to Queen
-        PC_KNIGHT = 12,       ///< Promotion to Knight with Capture
-        PC_BISHOP = 13,       ///< Promotion to Bishop with Capture
-        PC_ROOK = 14,         ///< Promotion to Rook with Capture
-        PC_QUEEN = 15         ///< Promotion to Queen with Capture
+        QUIET            = 0,  ///< Quiet Move
+        DOUBLE_PAWN_PUSH = 1,  ///< Double Pawn Push (2 squares)
+        KING_CASTLE      = 2,  ///< Kingside Castling
+        QUEEN_CASTLE     = 3,  ///< Queenside Castling
+        CAPTURE          = 4,  ///< Standard Piece Capture
+        EN_PASSANT       = 5,  ///< En Passant Capture
+        PR_KNIGHT        = 8,  ///< Promotion to Knight
+        PR_BISHOP        = 9,  ///< Promotion to Bishop
+        PR_ROOK          = 10, ///< Promotion to Rook
+        PR_QUEEN         = 11, ///< Promotion to Queen
+        PC_KNIGHT        = 12, ///< Promotion to Knight with Capture
+        PC_BISHOP        = 13, ///< Promotion to Bishop with Capture
+        PC_ROOK          = 14, ///< Promotion to Rook with Capture
+        PC_QUEEN         = 15  ///< Promotion to Queen with Capture
     };
 
     /**
@@ -113,99 +116,64 @@ class Move
      * @brief Constructor from source square, target square, and move flags.
      */
     inline constexpr Move(Square from, Square to, Flag flag = QUIET)
-        : data(static_cast<uint16_t>(from) | (static_cast<uint16_t>(to) << 6) |
-               (static_cast<uint16_t>(flag) << 12))
-    {
-    }
+        : data(static_cast<uint16_t>(from) | 
+              (static_cast<uint16_t>(to) << 6) | 
+              (static_cast<uint16_t>(flag) << 12)) {}
 
     /**
      * @brief Extract the source square of the move.
      */
-    inline constexpr Square getFrom() const
-    {
-        return static_cast<Square>(data & 0x3F);
-    }
+    inline constexpr Square getFrom() const { return static_cast<Square>(data & 0x3F); }
 
     /**
      * @brief Extract the destination square of the move.
      */
-    inline constexpr Square getTo() const
-    {
-        return static_cast<Square>((data >> 6) & 0x3F);
-    }
+    inline constexpr Square getTo() const { return static_cast<Square>((data >> 6) & 0x3F); }
 
     /**
      * @brief Extract the move flag.
      */
-    inline constexpr Flag getFlags() const
-    {
-        return static_cast<Flag>((data >> 12) & 0x0F);
-    }
+    inline constexpr Flag getFlags() const { return static_cast<Flag>((data >> 12) & 0x0F); }
 
     /**
      * @brief Get the raw 16-bit value of this move.
      */
-    inline constexpr uint16_t getRaw() const
-    {
-        return data;
-    }
+    inline constexpr uint16_t getRaw() const { return data; }
 
     /**
      * @brief Check if the move is a piece capture.
      */
-    inline constexpr bool isCapture() const
-    {
-        return (data & 0x4000) != 0;
-    }
+    inline constexpr bool isCapture() const { return (data & 0x4000) != 0; }
 
     /**
      * @brief Check if the move is a pawn promotion.
      */
-    inline constexpr bool isPromotion() const
-    {
-        return (data & 0x8000) != 0;
-    }
+    inline constexpr bool isPromotion() const { return (data & 0x8000) != 0; }
 
     /**
      * @brief Check if the move is an en passant capture.
      */
-    inline constexpr bool isEnPassant() const
-    {
-        return getFlags() == EN_PASSANT;
-    }
+    inline constexpr bool isEnPassant() const { return getFlags() == EN_PASSANT; }
 
     /**
      * @brief Check if the move is castling.
      */
-    inline constexpr bool isCastling() const
-    {
-        Flag f = getFlags();
-        return f == KING_CASTLE || f == QUEEN_CASTLE;
-    }
+    inline constexpr bool isCastling() const { Flag f = getFlags(); return f == KING_CASTLE || f == QUEEN_CASTLE; }
 
     /**
      * @brief Check if the move is a double pawn push.
      */
-    inline constexpr bool isDoublePush() const
-    {
-        return getFlags() == DOUBLE_PAWN_PUSH;
-    }
+    inline constexpr bool isDoublePush() const { return getFlags() == DOUBLE_PAWN_PUSH; }
 
     /**
      * @brief Sentinel representing a null, illegal, or empty move.
      */
     static const Move NO_MOVE;
 
-    inline constexpr bool operator==(const Move& other) const
-    {
-        return data == other.data;
-    }
-    inline constexpr bool operator!=(const Move& other) const
-    {
-        return data != other.data;
-    }
+    inline constexpr bool operator==(const Move& other) const { return data == other.data; }
+    inline constexpr bool operator!=(const Move& other) const { return data != other.data; }
 
-  private:
+private:
     uint16_t data; ///< Encoded move data
 };
 
@@ -235,3 +203,5 @@ struct MoveList
         moves[count++] = m;
     }
 };
+
+} // namespace Bluie
