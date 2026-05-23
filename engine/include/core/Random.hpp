@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Types.hpp"
+#include "core/Types.hpp"
 #include <cstdint>
 
 uint32_t getRandomU32Number();

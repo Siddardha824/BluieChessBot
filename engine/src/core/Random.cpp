@@ -1,5 +1,5 @@
-#include "Random.hpp"
-#include "Types.hpp"
+#include "core/Random.hpp"
+#include "core/Types.hpp"
 #include <cstdint>
 
 // pseudo random number state

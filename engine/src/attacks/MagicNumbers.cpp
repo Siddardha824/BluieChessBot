@@ -1,9 +1,9 @@
-#include "MagicNumbers.hpp"
-#include "PreComputation.hpp"
-#include "Attacks.hpp"
-#include "Bitboard.hpp"
-#include "Types.hpp"
-#include "Random.hpp"
+#include "attacks/MagicNumbers.hpp"
+#include "attacks/PreComputation.hpp"
+#include "attacks/Attacks.hpp"
+#include "core/Bitboard.hpp"
+#include "core/Types.hpp"
+#include "core/Random.hpp"
 #include <cstddef>
 #include <array>
 #include <iostream>

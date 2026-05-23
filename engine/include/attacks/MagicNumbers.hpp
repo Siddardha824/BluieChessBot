@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Types.hpp"
+#include "core/Types.hpp"
 #include <array>
 
 constexpr int MAX_OCCUPANCIES = 4096;

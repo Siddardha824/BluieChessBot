@@ -1,9 +1,9 @@
 #include <iomanip>
 #include <iostream>
 
-#include "Debug.hpp"
-#include "Bitboard.hpp"
-#include "Types.hpp"
+#include "core/Debug.hpp"
+#include "core/Bitboard.hpp"
+#include "core/Types.hpp"
 
 // Print the bitboard in a human-readable format (for debugging)
 void printBitboard(Bitboard b)
