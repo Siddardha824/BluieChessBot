@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/Bitboard.hpp"
 #include "core/Types.hpp"
 #include <array>
 

@@ -1,5 +1,4 @@
 #include "tools/MagicGenerator.hpp"
-#include "attacks/MagicNumbers.hpp"
 #include "attacks/SliderMasks.hpp"
 #include "tools/AttacksOnTheFly.hpp"
 #include "core/Bitboard.hpp"
