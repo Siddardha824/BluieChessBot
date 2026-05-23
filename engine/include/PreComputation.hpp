@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AttackTables.hpp"
 #include "Bitboard.hpp"
 #include "MagicNumbers.hpp"
 #include "Types.hpp"
@@ -143,6 +144,10 @@ inline constexpr auto pawnAttacks = generatePawnAttacks();
 inline constexpr auto knightAttacks = generateKnightAttacks();
 inline constexpr auto kingAttacks = generateKingAttacks();
 
+/*-----------------------------------------------*\
+           Slider pieces Attack Tables
+\*-----------------------------------------------*/
+
 constexpr Bitboard maskBishopAttacks(Square square)
 {
     // Resulting bitboard to store the bishop attacks
@@ -280,4 +285,10 @@ constexpr std::size_t getRookMagicIndex(Square square, Bitboard occupancy)
     occupancy &= rookOccupancyMasks[square];
 
     return (occupancy * rookMagicNumbers[square]) >> (64 - rookRelevantBits[square]);
+}
+
+constexpr Bitboard getQueneAttack(Square square, Bitboard occupancy)
+{
+    return bishopAttacks[square][getBishopMagicIndex(square, occupancy)] |
+           rookAttacks[square][getRookMagicIndex(square, occupancy)];
 }
