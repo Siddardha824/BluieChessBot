@@ -1,6 +1,5 @@
+#include "tools/Tests.hpp"
 #include <iostream>
-
-extern void testMagicAttacks();
 
 int main()
 {

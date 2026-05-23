@@ -1,9 +1,10 @@
+#include "tools/MagicGenerator.hpp"
 #include "attacks/MagicNumbers.hpp"
-#include "attacks/PreComputation.hpp"
-#include "attacks/Attacks.hpp"
+#include "attacks/SliderMasks.hpp"
+#include "tools/AttacksOnTheFly.hpp"
 #include "core/Bitboard.hpp"
 #include "core/Types.hpp"
-#include "core/Random.hpp"
+#include "tools/Random.hpp"
 #include <cstddef>
 #include <array>
 #include <iostream>

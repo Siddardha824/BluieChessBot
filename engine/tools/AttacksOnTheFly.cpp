@@ -1,4 +1,4 @@
-#include "core/Types.hpp"
+#include "tools/AttacksOnTheFly.hpp"
 
 Bitboard bishopAttacksOnTheFly(Square square, Bitboard occupancy)
 {

@@ -3,8 +3,7 @@
 #include "core/Types.hpp"
 #include <array>
 
-constexpr int MAX_OCCUPANCIES = 4096;
-constexpr int MAGIC_TRIES = 100000000;
+
 
 // clang-format off
 
@@ -168,6 +167,3 @@ inline constexpr BitboardArray bishopMagicNumbers = {
 };
 
 // clang-format on
-
-Bitboard setOccupancy(int index, int bitsInMask, Bitboard attackMask);
-Bitboard findMagicNumber(Square square, int relevantBits, bool bishop);

@@ -1,8 +1,10 @@
+#include "tools/Tests.hpp"
 #include "attacks/Attacks.hpp"
 #include "attacks/AttackTables.hpp"
 #include "core/Debug.hpp"
 #include "attacks/MagicNumbers.hpp"
-#include "attacks/PreComputation.hpp"
+#include "tools/MagicGenerator.hpp"
+#include "tools/AttacksOnTheFly.hpp"
 #include "core/Types.hpp"
 
 #include <fstream>
