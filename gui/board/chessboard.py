@@ -29,30 +29,17 @@ class ChessBoard(tk.Canvas):
         self.game_state = GameState()
         self.ui_state = UIState()
 
-        self.board_controller = BoardController(self.game_state, self.ui_state)
+        self.board_controller = BoardController(self, self.game_state, self.ui_state)
         
         self.sprite_manager = SpriteManager(ASSETS_DIR / "Pieces.png")
 
         self.piece_renderer = PieceRenderer(self, self.sprite_manager)
         self.renderer = BoardRenderer(self, theme, self.piece_renderer)
 
-        self.bind("<Configure>", self.on_resize)
-        self.bind("<Button-1>", self.on_mouse_press)
-        self.bind("<B1-Motion>", self.on_mouse_drag)
-        self.bind("<ButtonRelease-1>", self.on_mouse_release)
-
-        self.draw()
-
-    def on_resize(self, event):
-        canvas_size = min(event.width, event.height)
-
-        self.padding = canvas_size * 0.05
-
-        self.board_size = canvas_size - (self.padding * 2)
-
-        self.tile_size = self.board_size / 8
-
-        self.origin = ((event.width - self.board_size) / 2, (event.height - self.board_size) / 2)
+        self.bind("<Configure>", self.board_controller.on_resize)
+        self.bind("<Button-1>", self.board_controller.handle_mouse_press)
+        self.bind("<B1-Motion>", self.board_controller.handle_mouse_drag)
+        self.bind("<ButtonRelease-1>", self.board_controller.handle_mouse_release)
 
         self.draw()
     
@@ -73,63 +60,6 @@ class ChessBoard(tk.Canvas):
             return None
 
         return (row, col)
-
-    def on_click(self, event):
-        square = self.screen_to_square(event.x, event.y)
-
-        if square is None:
-            return
-        
-        self.board_controller.handle_square_clicks(square=square)
-        self.draw()
-
-    def on_mouse_press(self, event):
-        square = self.screen_to_square(event.x, event.y)
-
-        if square is None:
-            return
-        
-        row, col = square
-
-        piece = self.game_state.board[row][col]
-
-        if piece == " ":
-            return
-
-        self.ui_state.dragging_square = square
-        self.ui_state.dragging_piece = piece
-        self.ui_state.drag_position = (event.x, event.y)
-
-        self.draw()
-
-    def on_mouse_drag(self, event):
-
-        if self.ui_state.dragging_piece is None:
-            return
-
-        self.ui_state.drag_position = (event.x, event.y)
-
-        self.draw()
-
-    def on_mouse_release(self, event):
-
-        if self.ui_state.dragging_square is None:
-            return
-
-        target_square = self.screen_to_square(event.x, event.y)
-        start_square = self.ui_state.dragging_square
-
-        if target_square is not None and target_square != start_square:
-
-            self.game_state.make_move(
-                start_square,
-                target_square
-            )
-
-        self.ui_state.dragging_square = None
-        self.ui_state.dragging_piece = None
-
-        self.draw()
 
     def draw(self):
 
