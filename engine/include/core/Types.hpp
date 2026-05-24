@@ -22,9 +22,9 @@ using BitboardArray = std::array<Bitboard, 64>;
  */
 enum Side
 {
-    NONE,  ///< Empty/No Side
     BLACK, ///< Black Side (0)
-    WHITE  ///< White Side (1)
+    WHITE, ///< White Side (1)
+    NONE   ///< Empty/No Side/Both
 };
 
 // clang-format off
@@ -40,7 +40,8 @@ enum Square
     a4, b4, c4, d4, e4, f4, g4, h4, 
     a3, b3, c3, d3, e3, f3, g3, h3, 
     a2, b2, c2, d2, e2, f2, g2, h2, 
-    a1, b1, c1, d1, e1, f1, g1, h1
+    a1, b1, c1, d1, e1, f1, g1, h1,
+    NO_SQUARE
 };
 
 /**
@@ -48,9 +49,9 @@ enum Square
  */
 enum Piece 
 {
-    NO_PIECE,
-    P, N, B, R, Q, K, ///< White Pieces (Pawn, Knight, Bishop, Rook, Queen, King)
-    p, n, b, r, q, k  ///< Black Pieces (Pawn, Knight, Bishop, Rook, Queen, King)
+    P, N, B, R, Q, K,  ///< White Pieces (Pawn, Knight, Bishop, Rook, Queen, King)
+    p, n, b, r, q, k,  ///< Black Pieces (Pawn, Knight, Bishop, Rook, Queen, King)
+    NO_PIECE           ///< No piece
 };
 
 /**

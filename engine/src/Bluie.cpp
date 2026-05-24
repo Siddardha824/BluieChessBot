@@ -1,10 +1,17 @@
-#include "tools/Tests.hpp"
+#include "uci/UCI.hpp"
 #include <iostream>
 
 int main()
 {
-    std::cout << "Starting BluieChessBot Correctness Verification Tests...\n";
-    Bluie::Tools::testMagicAttacks();
-    std::cout << "All verification tests completed.\n";
+    try
+    {
+        Bluie::UCI uci;
+        uci.loop();
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Fatal Engine Error: " << e.what() << std::endl;
+        return 1;
+    }
     return 0;
 }
