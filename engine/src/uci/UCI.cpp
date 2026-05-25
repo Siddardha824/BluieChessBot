@@ -4,6 +4,8 @@
 #include <vector>
 #include <chrono>
 #include <cmath>
+#include "attacks/Attacks.hpp"
+#include "core/Bitboard.hpp"
 
 namespace Bluie
 {
@@ -92,6 +94,10 @@ void UCI::parseCommand(const std::string& line)
     {
         stopSearch();
         std::exit(0);
+    }
+    else if (cmd == "bluie-debug")
+    {
+        handleDebug(tokens);
     }
 }
 
@@ -313,6 +319,253 @@ void UCI::runSearch(int depth, int movetime)
     }
     
     isSearching = false;
+}
+
+void UCI::handleDebug(const std::vector<std::string>& tokens)
+{
+    if (tokens.size() < 2)
+    {
+        std::lock_guard<std::mutex> lock(coutMutex);
+        std::cout << "info string error: bluie-debug requires a subcommand" << std::endl;
+        return;
+    }
+    
+    std::string sub = tokens[1];
+    
+    if (sub == "board")
+    {
+        // 1. Reconstruct FEN placement
+        std::string fenPlacement = "";
+        for (int rank = 0; rank < 8; ++rank)
+        {
+            int emptyCount = 0;
+            for (int file = 0; file < 8; ++file)
+            {
+                int sq = rank * 8 + file;
+                uint64_t bit = 1ULL << (63 - sq);
+                Piece foundPiece = NO_PIECE;
+                
+                for (int p = 0; p < 12; ++p)
+                {
+                    if (board.getPieceBitboard(static_cast<Piece>(p)) & bit)
+                    {
+                        foundPiece = static_cast<Piece>(p);
+                        break;
+                    }
+                }
+                
+                if (foundPiece != NO_PIECE)
+                {
+                    if (emptyCount > 0)
+                    {
+                        fenPlacement += std::to_string(emptyCount);
+                        emptyCount = 0;
+                    }
+                    char pChar = '?';
+                    switch (foundPiece)
+                    {
+                        case P: pChar = 'P'; break;
+                        case N: pChar = 'N'; break;
+                        case B: pChar = 'B'; break;
+                        case R: pChar = 'R'; break;
+                        case Q: pChar = 'Q'; break;
+                        case K: pChar = 'K'; break;
+                        case p: pChar = 'p'; break;
+                        case n: pChar = 'n'; break;
+                        case b: pChar = 'b'; break;
+                        case r: pChar = 'r'; break;
+                        case q: pChar = 'q'; break;
+                        case k: pChar = 'k'; break;
+                        default: break;
+                    }
+                    fenPlacement += pChar;
+                }
+                else
+                {
+                    emptyCount++;
+                }
+            }
+            if (emptyCount > 0)
+            {
+                fenPlacement += std::to_string(emptyCount);
+            }
+            if (rank < 7)
+            {
+                fenPlacement += "/";
+            }
+        }
+        
+        // Turn
+        std::string turnStr = (board.getTurn() == WHITE) ? "w" : "b";
+        
+        // Castling rights
+        std::string castleStr = "";
+        uint8_t c = board.getCastle();
+        if (c & 1) castleStr += "K";
+        if (c & 2) castleStr += "Q";
+        if (c & 4) castleStr += "k";
+        if (c & 8) castleStr += "q";
+        if (castleStr.empty()) castleStr = "-";
+        
+        // En Passant target
+        std::string epStr = "-";
+        if (board.getEnPassant() != NO_SQUARE)
+        {
+            epStr = squareToCoordinates[board.getEnPassant()];
+        }
+        
+        std::lock_guard<std::mutex> lock(coutMutex);
+        std::cout << "info string DEBUG BOARD FEN " << fenPlacement << " " << turnStr << " " << castleStr << " " << epStr << std::endl;
+        std::cout << "info string DEBUG BOARD TURN " << turnStr << std::endl;
+        std::cout << "info string DEBUG BOARD CASTLING " << castleStr << std::endl;
+        std::cout << "info string DEBUG BOARD EP " << epStr << std::endl;
+    }
+    else if (sub == "bitboards")
+    {
+        std::lock_guard<std::mutex> lock(coutMutex);
+        
+        // 12 pieces
+        std::array<std::string, 12> pieceNames = {
+            "WHITE_PAWNS", "WHITE_KNIGHTS", "WHITE_BISHOPS", "WHITE_ROOKS", "WHITE_QUEENS", "WHITE_KINGS",
+            "BLACK_PAWNS", "BLACK_KNIGHTS", "BLACK_BISHOPS", "BLACK_ROOKS", "BLACK_QUEENS", "BLACK_KINGS"
+        };
+        
+        for (int p = 0; p < 12; ++p)
+        {
+            uint64_t bb = board.getPieceBitboard(static_cast<Piece>(p));
+            std::cout << "info string DEBUG BITBOARD " << pieceNames[p] << " " << std::hex << bb << std::dec << std::endl;
+        }
+        
+        // 3 occupancies
+        std::cout << "info string DEBUG BITBOARD WHITE_OCCUPANCY " << std::hex << board.getOccupancy(WHITE) << std::dec << std::endl;
+        std::cout << "info string DEBUG BITBOARD BLACK_OCCUPANCY " << std::hex << board.getOccupancy(BLACK) << std::dec << std::endl;
+        std::cout << "info string DEBUG BITBOARD COMBINED_OCCUPANCY " << std::hex << board.getOccupancy(NONE) << std::dec << std::endl;
+    }
+    else if (sub == "occupancy")
+    {
+        std::lock_guard<std::mutex> lock(coutMutex);
+        std::cout << "info string DEBUG OCCUPANCY WHITE " << std::hex << board.getOccupancy(WHITE) << std::dec << std::endl;
+        std::cout << "info string DEBUG OCCUPANCY BLACK " << std::hex << board.getOccupancy(BLACK) << std::dec << std::endl;
+        std::cout << "info string DEBUG OCCUPANCY ALL " << std::hex << board.getOccupancy(NONE) << std::dec << std::endl;
+    }
+    else if (sub == "attacks")
+    {
+        if (tokens.size() < 3)
+        {
+            std::lock_guard<std::mutex> lock(coutMutex);
+            std::cout << "info string error: bluie-debug attacks requires a side (white/black)" << std::endl;
+            return;
+        }
+        
+        std::string sideStr = tokens[2];
+        Side sideToGen = WHITE;
+        if (sideStr == "black" || sideStr == "b")
+        {
+            sideToGen = BLACK;
+        }
+        
+        uint64_t attacksBB = 0ULL;
+        uint64_t occAll = board.getOccupancy(NONE);
+        
+        int startPiece = (sideToGen == WHITE) ? 0 : 6;
+        int endPiece = startPiece + 6;
+        
+        for (int pInt = startPiece; pInt < endPiece; ++pInt)
+        {
+            Piece currentPiece = static_cast<Piece>(pInt);
+            uint64_t bb = board.getPieceBitboard(currentPiece);
+            
+            while (bb)
+            {
+                int sq = Bitboards::getLSBIndex(bb);
+                Square fromSq = static_cast<Square>(sq);
+                
+                switch (currentPiece)
+                {
+                    case P: case p:
+                        attacksBB |= Attacks::pawnAttacks[sideToGen][sq];
+                        break;
+                    case N: case n:
+                        attacksBB |= Attacks::knightAttacks[sq];
+                        break;
+                    case K: case k:
+                        attacksBB |= Attacks::kingAttacks[sq];
+                        break;
+                    case B: case b:
+                        attacksBB |= Attacks::bishopAttacks[sq][Attacks::getBishopMagicIndex(fromSq, occAll)];
+                        break;
+                    case R: case r:
+                        attacksBB |= Attacks::rookAttacks[sq][Attacks::getRookMagicIndex(fromSq, occAll)];
+                        break;
+                    case Q: case q:
+                        attacksBB |= Attacks::getQueenAttack(fromSq, occAll);
+                        break;
+                    default:
+                        break;
+                }
+                
+                Bitboards::popLSB(bb);
+            }
+        }
+        
+        std::lock_guard<std::mutex> lock(coutMutex);
+        std::cout << "info string DEBUG ATTACKS " << (sideToGen == WHITE ? "WHITE" : "BLACK") << " " << std::hex << attacksBB << std::dec << std::endl;
+    }
+    else if (sub == "legalmoves")
+    {
+        // Placeholder stub: returns mock move based on turn
+        std::lock_guard<std::mutex> lock(coutMutex);
+        std::string mockMoves = (board.getTurn() == WHITE) ? "e2e4" : "e7e5";
+        std::cout << "info string DEBUG LEGALS " << mockMoves << std::endl;
+    }
+    else if (sub == "piecemoves")
+    {
+        // Placeholder stub: returns mock empty list
+        std::lock_guard<std::mutex> lock(coutMutex);
+        std::cout << "info string DEBUG PIECEMOVES" << std::endl;
+    }
+    else if (sub == "perft")
+    {
+        // Placeholder stub: returns perft node count 0
+        std::lock_guard<std::mutex> lock(coutMutex);
+        std::cout << "info string DEBUG PERFTTOTAL 0" << std::endl;
+    }
+    else if (sub == "moveparse")
+    {
+        if (tokens.size() < 3)
+        {
+            std::lock_guard<std::mutex> lock(coutMutex);
+            std::cout << "info string error: bluie-debug moveparse requires a move coordinate" << std::endl;
+            return;
+        }
+        
+        std::string moveStr = tokens[2];
+        Move move = parseMove(moveStr);
+        
+        std::lock_guard<std::mutex> lock(coutMutex);
+        if (move == Move::NO_MOVE)
+        {
+            std::cout << "info string DEBUG MOVEPARSE " << moveStr << " INVALID" << std::endl;
+        }
+        else
+        {
+            std::cout << "info string DEBUG MOVEPARSE " << moveStr 
+                      << " FROM " << squareToCoordinates[move.getFrom()] 
+                      << " TO " << squareToCoordinates[move.getTo()] 
+                      << " FLAGS " << std::hex << move.getFlags() << std::dec << std::endl;
+        }
+    }
+    else if (sub == "searchinfo")
+    {
+        // Telemetry stream placeholder
+        std::lock_guard<std::mutex> lock(coutMutex);
+        std::cout << "info string DEBUG SEARCHINFO ACTIVE" << std::endl;
+    }
+    else
+    {
+        std::lock_guard<std::mutex> lock(coutMutex);
+        std::cout << "info string error: unknown bluie-debug subcommand " << sub << std::endl;
+    }
 }
 
 } // namespace Bluie

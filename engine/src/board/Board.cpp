@@ -77,28 +77,28 @@ bool Board::parseFen(const std::string& fen)
         }
         else
         {
-            Piece p = NO_PIECE;
+            Piece pc = NO_PIECE;
             switch (c)
             {
-                case 'P': p = P; break;
-                case 'N': p = N; break;
-                case 'B': p = B; break;
-                case 'R': p = R; break;
-                case 'Q': p = Q; break;
-                case 'K': p = K; break;
-                case 'p': p = p; break;
-                case 'n': p = n; break;
-                case 'b': p = b; break;
-                case 'r': p = r; break;
-                case 'q': p = q; break;
-                case 'k': p = k; break;
+                case 'P': pc = P; break;
+                case 'N': pc = N; break;
+                case 'B': pc = B; break;
+                case 'R': pc = R; break;
+                case 'Q': pc = Q; break;
+                case 'K': pc = K; break;
+                case 'p': pc = p; break;
+                case 'n': pc = n; break;
+                case 'b': pc = b; break;
+                case 'r': pc = r; break;
+                case 'q': pc = q; break;
+                case 'k': pc = k; break;
                 default: return false; // Invalid char
             }
-            if (p != NO_PIECE && squareIdx < 64)
+            if (pc != NO_PIECE && squareIdx < 64)
             {
                 // Add the bit representing c to p's bitboard
                 // Note: a8 is 0, h1 is 63. The square bit starts at MSB (square index 0)
-                pieceBitboards[static_cast<size_t>(p)] |= (1ULL << (63 - squareIdx));
+                pieceBitboards[static_cast<size_t>(pc)] |= (1ULL << (63 - squareIdx));
                 squareIdx++;
             }
         }

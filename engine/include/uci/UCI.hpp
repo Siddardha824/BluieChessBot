@@ -42,6 +42,11 @@ private:
     void parseCommand(const std::string& line);
 
     /**
+     * @brief Parses custom debug commands prefixed with 'bluie-debug'.
+     */
+    void handleDebug(const std::vector<std::string>& tokens);
+
+    /**
      * @brief Parses position strings (e.g. 'position startpos moves e2e4...').
      */
     void parsePosition(const std::vector<std::string>& tokens);
