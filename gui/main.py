@@ -1,21 +1,33 @@
 import sys
+import traceback
+
 from PySide6.QtWidgets import QApplication
+
 from gui.ui import MainWindow
+from gui.debug import get_logger
+
+logger = get_logger(__name__)
 
 def main():
-    """
-    Main startup function. Initializes the QApplication, applies stylesheets,
-    loads the dashboard MainWindow, and starts the event loop.
-    """
 
-    app = QApplication(sys.argv)
+    try:
+        logger.info("Starting Bluie Chess GUI")
 
-    main_window = MainWindow()
+        app = QApplication(sys.argv)
 
-    main_window.showMaximized()
+        logger.info("Creating MainWindow")
 
-    sys.exit(app.exec())
+        window = MainWindow()
+        
+        window.showMaximized()
+        
+        logger.info("Entering MainWindow event loop")
 
-    
+        sys.exit(app.exec())
+
+    except Exception:
+        traceback.print_exc()
+
+
 if __name__ == "__main__":
     main()

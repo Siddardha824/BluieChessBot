@@ -1,13 +1,14 @@
 from PySide6.QtWidgets import (
     QMainWindow,
     QWidget,
-    QVBoxLayout
+    QVBoxLayout,
+    QHBoxLayout
 )
 
-from PySide6.QtCore import Qt
-
 from gui.ui.board import ChessBoard
+from gui.debug import get_logger
 
+logger = get_logger(__name__)
 
 class MainWindow(QMainWindow):
 
@@ -19,19 +20,24 @@ class MainWindow(QMainWindow):
 
         self.setup_ui()
 
+        logger.info("Main Window initialized")
+
     def setup_ui(self):
 
         container = QWidget()
 
-        layout = QVBoxLayout()
+        outer_layout = QVBoxLayout()
+
+        middle_layout = QHBoxLayout()
+
+        logger.info("Creating Chessboard widget")
 
         self.board = ChessBoard()
 
-        layout.addWidget(
-            self.board,
-            alignment=Qt.AlignCenter
-        )
+        middle_layout.addWidget(self.board)
 
-        container.setLayout(layout)
+        outer_layout.addLayout(middle_layout)
+
+        container.setLayout(outer_layout)
 
         self.setCentralWidget(container)

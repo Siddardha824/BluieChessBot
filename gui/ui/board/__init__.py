@@ -1,2 +1,2 @@
 # Chessboard Rendering Module Init
-from .chessboard_widget import ChessBoard
+from .board_widget import ChessBoard
