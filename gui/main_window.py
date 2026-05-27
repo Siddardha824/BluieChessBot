@@ -1,6 +1,7 @@
 # gui/main_window.py
 
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
+from PySide6.QtGui import QCloseEvent
 from gui.board.board_widget import ChessBoard
 from gui.controllers.game_controller import GameController
 from gui.panels import MoveListWidget, DebugConsoleWidget, EngineInfoWidget, EvalBarWidget
@@ -94,16 +95,52 @@ class MainWindow(QMainWindow):
         """
         Locks in uni-directional events using Qt Signals & Slots.
         """
-        # Connect clicking event from BoardWidget to Controller slot
-        self.board.square_clicked.connect(self.game_controller.handle_square_clicked)
+        # Connect clicking event from BoardWidget to Controller slot using safe lambda
+        self.board.square_clicked.connect(lambda idx: self.game_controller.handle_square_clicked(idx))
         
         # Connect state changes from Controller to trigger BoardWidget repaints
-        self.game_controller.state_changed.connect(self.board.update)
+        self.game_controller.signals.state_changed.connect(lambda: self.board.update())
         
         # Wire Phase 2 move histories
-        self.game_controller.move_executed.connect(self.move_list.add_move)
+        self.game_controller.signals.move_executed.connect(lambda san: self.move_list.add_move(san))
         
-        # Stream move events in console log
-        self.game_controller.move_executed.connect(
-            lambda san: self.debug_console.log_message("UCI_OUT", f"User executed move: {san}")
+        # Stream user move events in console log
+        self.game_controller.signals.move_executed.connect(
+            lambda san: self.debug_console.log_message("INFO", f"Move registered: {san}")
         )
+        
+        # Wire Phase 3 move undone connection
+        self.game_controller.signals.move_undone.connect(lambda: self.move_list.remove_last_move())
+        
+        # Wire Engine Signals directly to sub-panels
+        engine_mgr = self.game_controller.engine_manager
+        
+        # 1. Connect stdout/stdin logs directly to console (direction "IN" -> "UCI_IN")
+        engine_mgr.uci_io_logged.connect(
+            lambda text, direction: self.debug_console.log_message(f"UCI_{direction}", text)
+        )
+        
+        # 2. Connect engine metric info data blocks
+        engine_mgr.info_received.connect(lambda state: self.engine_info.update_analysis_state(state))
+        engine_mgr.info_received.connect(
+            lambda state: self.eval_bar.set_evaluation(state.score, state.is_mate, state.mate_in)
+        )
+        
+        # 3. Connect engine process alerts and state status descriptions
+        engine_mgr.status_changed.connect(
+            lambda status: self.debug_console.log_message("INFO", f"Engine status changed: {status}")
+        )
+        engine_mgr.engine_error.connect(
+            lambda err: self.debug_console.log_message("ERROR", f"Engine error: {err}")
+        )
+        engine_mgr.bestmove_received.connect(
+            lambda move: self.debug_console.log_message("INFO", f"Engine chose move: {move}")
+        )
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """
+        Safely halts search computations and terminates subprocesses before closure.
+        """
+        logger.info("MainWindow closeEvent received. Releasing resources...")
+        self.game_controller.cleanup()
+        event.accept()

@@ -19,18 +19,23 @@ class EvalBarWidget(QWidget):
         self.theme = theme if theme is not None else DefaultTheme()
         
         # Center represents 0.0 (even game)
+        # Center represents 0.0 (even game)
         self.evaluation = 0.0
+        self.is_mate = False
+        self.mate_in = 0
         self._font: QFont | None = None
 
     def sizeHint(self) -> QSize:
         return QSize(14, 400)
 
-    def set_evaluation(self, cp_score: float) -> None:
+    def set_evaluation(self, cp_score: float, is_mate: bool = False, mate_in: int = 0) -> None:
         """
         Sets evaluation score (e.g. +1.50, -0.70) and triggers redraw.
         Score is clamped to represent a +/- 8 advantage dynamically.
         """
         self.evaluation = max(-8.0, min(8.0, cp_score))
+        self.is_mate = is_mate
+        self.mate_in = mate_in
         self.update()
 
     def paintEvent(self, event) -> None:
@@ -73,7 +78,10 @@ class EvalBarWidget(QWidget):
             self._font = QFont(self.theme.font_family, 7, QFont.Weight.Black)  # Extra bold/black for legibility
         painter.setFont(self._font)
         
-        score_text = f"{abs(self.evaluation):.1f}"
+        if self.is_mate:
+            score_text = f"M{abs(self.mate_in)}"
+        else:
+            score_text = f"{abs(self.evaluation):.1f}"
             
         # Draw text dynamically positioned depending on which side has the space!
         # If White is winning, the bottom half is white, so draw the score text near the bottom (in black text).

@@ -81,10 +81,10 @@ class BoardState:
         pc_move = chess.Move(from_pc, to_pc, promotion=promotion_type)
         return pc_move in self._board.legal_moves
 
-    def make_move(self, move: Move) -> bool:
+    def make_move(self, move: Move) -> Optional[str]:
         """
         Attempts to execute the move on the board.
-        Returns True if successful, False if the move was illegal.
+        Returns the SAN move string if successful, None if the move was illegal.
         """
         from_pc = self._convert_square(move.from_square)
         to_pc = self._convert_square(move.to_square)
@@ -92,7 +92,7 @@ class BoardState:
         piece = self._board.piece_at(from_pc)
 
         if piece is None:
-            return False
+            return None
 
         # Determine if this move is a pawn promotion
         is_pawn = piece and piece.piece_type == chess.PAWN
@@ -132,6 +132,15 @@ class BoardState:
     def turn(self) -> bool:
         """Returns True if it is White's turn, False for Black."""
         return self._board.turn
+
+    def undo_last_move(self) -> Optional[chess.Move]:
+        """
+        Pops the last executed move from the stack and restores the board state.
+        Returns the popped chess.Move, or None if the stack was empty.
+        """
+        if len(self._board.move_stack) > 0:
+            return self._board.pop()
+        return None
 
     def get_board_state_array(self) -> List[List[str]]:
         """

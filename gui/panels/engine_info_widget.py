@@ -82,6 +82,40 @@ class EngineInfoWidget(QWidget):
         self.pv_val.setText(pv)
         self.best_move_val.setText(best_move)
 
+    def update_analysis_state(self, state) -> None:
+        """
+        Updates the engine metrics using a structured AnalysisState object,
+        formatting mate-in-N scores elegantly.
+        """
+        self.depth_val.setText(str(state.depth))
+        self.nps_val.setText(f"{state.nps / 1000:.1f} kN/s" if state.nps > 0 else "-")
+        
+        # Format Score (Handling Mate vs Centipawn)
+        if state.is_mate:
+            mate_val = state.mate_in if state.mate_in is not None else 0
+            if mate_val > 0:
+                self.score_val.setText(f"M{mate_val}")
+                self.score_val.setStyleSheet(f"font-weight: bold; color: {self.theme.console_info.name()}; font-family: 'Outfit'; font-size: 13px;")
+            else:
+                self.score_val.setText(f"M{mate_val}")
+                self.score_val.setStyleSheet(f"font-weight: bold; color: {self.theme.console_error.name()}; font-family: 'Outfit'; font-size: 13px;")
+        else:
+            score = state.score
+            if score > 0.0:
+                self.score_val.setText(f"+{score:.2f}")
+                self.score_val.setStyleSheet(f"font-weight: bold; color: {self.theme.console_info.name()}; font-family: 'Outfit'; font-size: 13px;")
+            elif score < 0.0:
+                self.score_val.setText(f"{score:.2f}")
+                self.score_val.setStyleSheet(f"font-weight: bold; color: {self.theme.console_error.name()}; font-family: 'Outfit'; font-size: 13px;")
+            else:
+                self.score_val.setText("0.00")
+                self.score_val.setStyleSheet(f"font-weight: bold; color: {self.theme.panel_text.name()}; font-family: 'Outfit'; font-size: 13px;")
+                
+        pv_str = " ".join(state.pv) if state.pv else "-"
+        self.pv_val.setText(pv_str)
+        self.best_move_val.setText(state.best_move if state.best_move else "-")
+
+
     def clear(self) -> None:
         """Resets all metrics to default lines."""
         self.depth_val.setText("-")

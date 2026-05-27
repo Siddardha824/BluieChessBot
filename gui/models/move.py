@@ -29,3 +29,24 @@ class Move:
 
     def __hash__(self) -> int:
         return hash((self.from_square, self.to_square, self.promotion))
+
+    @staticmethod
+    def from_uci(uci_str: str) -> 'Move':
+        """
+        Parses a standard UCI move string (e.g. 'e2e4' or 'e7e8q')
+        and returns a Move object using C++ indexing (0 = A8).
+        """
+        if len(uci_str) < 4:
+            raise ValueError(f"Invalid UCI move string: {uci_str}")
+        
+        from_col = ord(uci_str[0]) - ord('a')
+        from_row = 8 - int(uci_str[1])
+        to_col = ord(uci_str[2]) - ord('a')
+        to_row = 8 - int(uci_str[3])
+        
+        from_square = from_row * 8 + from_col
+        to_square = to_row * 8 + to_col
+        
+        promotion = uci_str[4] if len(uci_str) > 4 else None
+        return Move(from_square, to_square, promotion)
+

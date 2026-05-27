@@ -79,6 +79,23 @@ class MoveListWidget(QWidget):
         # Smooth scroll to ensure the latest moves are always visible
         self.table.scrollToBottom()
 
+    def remove_last_move(self) -> None:
+        """
+        Removes the very last move from the SAN history grid.
+        Handles both row deletion and black-to-white cell cell clearing.
+        """
+        row_count = self.table.rowCount()
+        if row_count == 0:
+            return
+            
+        # Check if the last row has a Black move
+        if self.table.item(row_count - 1, 2) is not None:
+            # Clear Black's move cell
+            self.table.setItem(row_count - 1, 2, None)
+        else:
+            # Row only contains White's move, so delete the entire row
+            self.table.removeRow(row_count - 1)
+
     def clear(self) -> None:
         """Clears all moves from the panel."""
         self.table.setRowCount(0)
