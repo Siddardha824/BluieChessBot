@@ -1,0 +1,92 @@
+# gui/panels/engine_info_widget.py
+
+from PySide6.QtWidgets import QWidget, QFormLayout, QLabel, QVBoxLayout
+from PySide6.QtCore import Qt
+
+class EngineInfoWidget(QWidget):
+    def __init__(self, theme=None, parent=None):
+        """
+        Initializes the Engine Info Panel.
+        Exposes deep search metrics dynamically formatted and styled using the active theme.
+        """
+        super().__init__(parent)
+        from gui.themes.default_theme import DefaultTheme
+        self.theme = theme if theme is not None else DefaultTheme()
+        self.setup_ui()
+
+    def setup_ui(self) -> None:
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(10, 10, 10, 10)
+        
+        # Pull panel background dynamically
+        bg_hex = self.theme.panel_background.name()
+        border_hex = self.theme.panel_border.name()
+        self.setStyleSheet(f"background-color: {bg_hex}; border: 1px solid {border_hex};")
+        
+        self.form = QFormLayout()
+        self.form.setVerticalSpacing(8)
+        self.form.setHorizontalSpacing(15)
+        
+        self.depth_val = QLabel("-")
+        self.nps_val = QLabel("-")
+        self.score_val = QLabel("-")
+        self.pv_val = QLabel("-")
+        self.best_move_val = QLabel("-")
+        
+        # Apply premium, theme-synchronized text colors
+        lbl_color = self.theme.panel_text_muted.name()
+        val_color = self.theme.panel_text.name()
+        
+        label_style = f"font-weight: bold; color: {lbl_color}; font-family: 'Outfit'; font-size: 11px;"
+        value_style = f"font-weight: bold; color: {val_color}; font-family: 'Outfit'; font-size: 13px;"
+        
+        # Word wrap for PV Line in case it grows very long
+        self.pv_val.setWordWrap(True)
+        self.pv_val.setMaximumWidth(250)
+        
+        for name, val_lbl in [
+            ("Depth:", self.depth_val), 
+            ("Speed (NPS):", self.nps_val),
+            ("Evaluation:", self.score_val), 
+            ("PV Line:", self.pv_val),
+            ("Best Move:", self.best_move_val)
+        ]:
+            val_lbl.setStyleSheet(value_style)
+            
+            name_lbl = QLabel(name)
+            name_lbl.setStyleSheet(label_style)
+            
+            self.form.addRow(name_lbl, val_lbl)
+            
+        layout.addLayout(self.form)
+        layout.addStretch()
+
+    def update_engine_data(self, depth: int, nps: int, score: float, pv: str, best_move: str = "-") -> None:
+        """
+        Dynamically updates the UI label texts based on active search frames.
+        """
+        self.depth_val.setText(str(depth))
+        self.nps_val.setText(f"{nps / 1000:.1f} kN/s" if nps > 0 else "-")
+        
+        # Colorize score based on advantage (soft green for positive, soft red for negative, normal for even)
+        if score > 0.0:
+            self.score_val.setText(f"+{score:.2f}")
+            self.score_val.setStyleSheet(f"font-weight: bold; color: {self.theme.console_info.name()}; font-family: 'Outfit'; font-size: 13px;")
+        elif score < 0.0:
+            self.score_val.setText(f"{score:.2f}")
+            self.score_val.setStyleSheet(f"font-weight: bold; color: {self.theme.console_error.name()}; font-family: 'Outfit'; font-size: 13px;")
+        else:
+            self.score_val.setText("0.00")
+            self.score_val.setStyleSheet(f"font-weight: bold; color: {self.theme.panel_text.name()}; font-family: 'Outfit'; font-size: 13px;")
+            
+        self.pv_val.setText(pv)
+        self.best_move_val.setText(best_move)
+
+    def clear(self) -> None:
+        """Resets all metrics to default lines."""
+        self.depth_val.setText("-")
+        self.nps_val.setText("-")
+        self.score_val.setText("-")
+        self.score_val.setStyleSheet(f"font-weight: bold; color: {self.theme.panel_text.name()}; font-family: 'Outfit'; font-size: 13px;")
+        self.pv_val.setText("-")
+        self.best_move_val.setText("-")

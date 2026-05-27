@@ -20,6 +20,24 @@ class DefaultTheme:
     text_on_light: QColor = field(default_factory=lambda: colors.TEXT_LIGHT_SQUARE)
     text_on_dark: QColor = field(default_factory=lambda: colors.TEXT_DARK_SQUARE)
 
+    # Panel UI Colors
+    panel_background: QColor = field(default_factory=lambda: colors.PANEL_BG)
+    panel_text: QColor = field(default_factory=lambda: colors.PANEL_TEXT)
+    panel_text_muted: QColor = field(default_factory=lambda: colors.PANEL_TEXT_MUTED)
+
+    # Console UI Colors
+    console_in: QColor = field(default_factory=lambda: colors.CONSOLE_IN)
+    console_out: QColor = field(default_factory=lambda: colors.CONSOLE_OUT)
+    console_info: QColor = field(default_factory=lambda: colors.CONSOLE_INFO)
+    console_error: QColor = field(default_factory=lambda: colors.CONSOLE_ERROR)
+
+    # Evaluation Bar UI Colors
+    eval_white: QColor = field(default_factory=lambda: colors.EVAL_WHITE)
+    eval_black: QColor = field(default_factory=lambda: colors.EVAL_BLACK)
+
+    # Border UI Colors
+    panel_border: QColor = field(default_factory=lambda: colors.PANEL_BORDER)
+
     # Fonts and sizes
     font_family: str = "Outfit"
     font_size: int = 11

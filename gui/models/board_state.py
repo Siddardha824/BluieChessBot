@@ -110,9 +110,11 @@ class BoardState:
         pc_move = chess.Move(from_pc, to_pc, promotion=promotion_type)
         
         if pc_move in self._board.legal_moves:
+            # Generate the algebraic notation (SAN) *before* pushing to board state
+            san_string = self._board.san(pc_move)
             self._board.push(pc_move)
-            return True
-        return False
+            return san_string
+        return None
 
     def is_check(self) -> bool:
         """Returns True if the side to move is in check."""

@@ -10,8 +10,9 @@ from gui.utils.logger import get_logger
 logger = get_logger(__name__)
 
 class GameController(QObject):
-    # Signal emitted to notify view widgets that state has changed and a repaint is required
+    # Signals emitted to notify widgets of UI updates
     state_changed = Signal()
+    move_executed = Signal(str)  # Emits SAN notation string on successful moves
 
     def __init__(self, parent: QObject | None = None):
         """
@@ -66,10 +67,11 @@ class GameController(QObject):
             # B2. Clicking a legal target square executes the move
             if square_idx in self.highlight_manager.legal_moves:
                 move = Move(selected_idx, square_idx)
-                success = self.board_state.make_move(move)
+                san_move = self.board_state.make_move(move)
                 
-                if success:
-                    logger.info(f"GameController executed move: {selected_idx} -> {square_idx}")
+                if san_move is not None:
+                    logger.info(f"GameController executed move: {selected_idx} -> {square_idx} (SAN: {san_move})")
+                    self.move_executed.emit(san_move)
                     
                     # Highlight last move squares
                     self.highlight_manager.set_last_move(selected_idx, square_idx)
