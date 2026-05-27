@@ -1,44 +1,57 @@
 # gui/board/board_widget.py
 
 from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import QSize
+from PySide6.QtCore import QSize, Signal
 from PySide6.QtGui import QPaintEvent, QResizeEvent, QMouseEvent, QPainter
 
-from gui.models.board_state import BoardState
-from gui.themes.default_theme import DefaultTheme
+from .board_geometry import BoardGeometry
 from .coordinate_helper import CoordinateHelper
 from .board_renderer import BoardRenderer
+from .coordinate_renderer import CoordinateRenderer
+from .highlight_renderer import HighlightRenderer
 from .piece_renderer import PieceRenderer
-from .highlights import HighlightManager
-from .interaction_manager import InteractionManager
+from .render_context import RenderContext
+from gui.themes.default_theme import DefaultTheme
 from gui.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 class ChessBoard(QWidget):
+    # Qt Signal emitted when a mouse press occurs (passes square index or None if clicked outside)
+    square_clicked = Signal(object)
+
     def __init__(self, parent=None):
         """
         Initializes the interactive ChessBoard QWidget.
-        Orchestrates rendering, coordinate mapping, interaction handling, and state storage.
+        Acts as a pure presentation view component, relying on injected models and signals.
         """
         super().__init__(parent)
-        
         self.setMinimumSize(400, 400)
         
-        # 1. Initialize Domain State Models & Themes
-        self.board_state = BoardState()
-        self.theme = DefaultTheme()
+        # 1. State Models (Provided dynamically via Dependency Injection)
+        self._board_state = None
+        self._highlight_manager = None
         
-        # 2. Initialize Helpers & Renderers
+        # 2. View Geometry & Theme
+        self.board_geometry = BoardGeometry()
+        self.theme = DefaultTheme()
         self.coord_helper = CoordinateHelper(self)
-        self.board_renderer = BoardRenderer(self, self.coord_helper, self.theme)
+        
+        # 3. Individual decoupled Layer Renderers
+        self.board_renderer = BoardRenderer()
+        self.coord_renderer = CoordinateRenderer()
+        self.highlight_renderer = HighlightRenderer()
         self.piece_renderer = PieceRenderer(self, self.coord_helper)
         
-        # 3. Initialize Highlighting & Interaction Controllers
-        self.highlight_manager = HighlightManager()
-        self.interaction_manager = InteractionManager(self, self.board_state, self.highlight_manager)
-        
-        logger.info("Decoupled ChessBoard widget successfully initialized.")
+        logger.info("Decoupled BoardWidget successfully initialized.")
+
+    def set_models(self, board_state, highlight_manager) -> None:
+        """
+        Injects the core data models from the controlling interface.
+        """
+        self._board_state = board_state
+        self._highlight_manager = highlight_manager
+        logger.info("Core data models successfully injected into BoardWidget.")
 
     def sizeHint(self) -> QSize:
         """Suggests a standard layout starting size."""
@@ -47,44 +60,52 @@ class ChessBoard(QWidget):
     def resizeEvent(self, event: QResizeEvent) -> None:
         """
         Triggered when the board widget undergoes window resizing.
-        Updates board sizing offsets and adjusts/caches scaled piece pixmaps.
+        Updates board sizing offsets and updates our geometries dataclass.
         """
         logger.debug("Resizing ChessBoard: updating board geometries.")
         self.coord_helper.update_geometry()
+        
+        # Mirror current geometries inside our geometry dataclass
+        self.board_geometry.board_size = self.coord_helper.board_size
+        self.board_geometry.square_size = self.coord_helper.square_size
+        self.board_geometry.x_offset = self.coord_helper.x_offset
+        self.board_geometry.y_offset = self.coord_helper.y_offset
+        
         self.piece_renderer.update_scaled_pieces()
         super().resizeEvent(event)
 
     def paintEvent(self, event: QPaintEvent) -> None:
         """
-        Executes board painting pipeline.
-        Invokes sub-renderers synchronously inside standard event loop frame.
+        Executes board painting pipeline using the RenderContext snapshot.
         """
+        if self._board_state is None or self._highlight_manager is None:
+            logger.warning("ChessBoard paintEvent skipped: State models are not injected yet.")
+            return
+            
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
         
-        # Step A: Draw chess squares and background coordinates
-        self.board_renderer.draw_board(painter)
-        self.board_renderer.draw_coordinates(painter)
+        # Assemble active context frame
+        context = RenderContext(
+            geometry=self.board_geometry,
+            theme=self.theme,
+            board_state=self._board_state,
+            highlight_manager=self._highlight_manager
+        )
         
-        # Step B: Draw active selections, checks, move dots, capture rings, and last moves
-        self.board_renderer.draw_highlights(painter, self.highlight_manager, self.board_state)
-        
-        # Step C: Draw actual chess piece sprites
-        self.piece_renderer.draw_pieces(painter, self.board_state)
+        # Render layers sequentially
+        self.board_renderer.draw(painter, context)
+        self.coord_renderer.draw(painter, context)
+        self.highlight_renderer.draw(painter, context)
+        self.piece_renderer.draw_pieces(painter, self._board_state)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         """
         Maps clicked screen coordinates to a chess board square index 
-        and routes the event directly into the InteractionManager.
+        and emits the square_clicked signal (can be None if clicked outside).
         """
-        # Map pixel to native A8=0 index
         square = self.coord_helper.pixel_to_square(event.position())
-        
-        if square is not None:
-            self.interaction_manager.handle_square_click(square)
-        else:
-            # Clicked outside active grid: clear selections
-            self.highlight_manager.clear_selection()
-            self.update()
-            
+        logger.debug(f"ChessBoard mousePress: mapped to square {square}, emitting signal.")
+        self.square_clicked.emit(square)
         super().mousePressEvent(event)
+

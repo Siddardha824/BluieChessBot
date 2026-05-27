@@ -1,5 +1,7 @@
 # gui/models/board_state.py
 
+from cmath import pi
+
 import chess
 from typing import List, Optional
 from .move import Move
@@ -58,8 +60,12 @@ class BoardState:
         from_pc = self._convert_square(move.from_square)
         to_pc = self._convert_square(move.to_square)
         
-        # Determine if this move is a pawn promotion
         piece = self._board.piece_at(from_pc)
+
+        if piece is None:
+            return False
+
+        # Determine if this move is a pawn promotion
         is_pawn = piece and piece.piece_type == chess.PAWN
         target_rank = chess.square_rank(to_pc)
         is_promotion_rank = (target_rank == 7 and piece.color == chess.WHITE) or \
@@ -83,8 +89,12 @@ class BoardState:
         from_pc = self._convert_square(move.from_square)
         to_pc = self._convert_square(move.to_square)
         
-        # Determine if this move is a pawn promotion
         piece = self._board.piece_at(from_pc)
+
+        if piece is None:
+            return False
+
+        # Determine if this move is a pawn promotion
         is_pawn = piece and piece.piece_type == chess.PAWN
         target_rank = chess.square_rank(to_pc)
         is_promotion_rank = (target_rank == 7 and piece.color == chess.WHITE) or \
