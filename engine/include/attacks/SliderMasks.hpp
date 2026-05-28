@@ -1,5 +1,6 @@
 #pragma once
 
+// #include "core/Bitboard.hpp"
 #include "core/Types.hpp"
 #include <array>
 
@@ -18,8 +19,8 @@ constexpr Bitboard maskBishopAttacks(Square square)
     Bitboard attacks = 0ULL;
 
     // Convert the square index to rank and file
-    int rank = square / 8;
-    int file = square % 8;
+    int rank = static_cast<int>(toIndex(square)) / 8;
+    int file = static_cast<int>(toIndex(square)) % 8;
 
     // Calculate the bishop attacks in 4 diagonal directions
     /*
@@ -67,8 +68,8 @@ constexpr Bitboard maskRookAttacks(Square square)
     Bitboard attacks = 0ULL;
 
     // Convert the square index to rank and file
-    int rank = square / 8;
-    int file = square % 8;
+    int rank = static_cast<int>(toIndex(square)) / 8;
+    int file = static_cast<int>(toIndex(square)) % 8;
 
     // Calculate the rook attacks in 4 directions
     /*

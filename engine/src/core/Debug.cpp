@@ -1,8 +1,8 @@
 #include <iomanip>
 #include <iostream>
 
-#include "core/Debug.hpp"
 #include "core/Bitboard.hpp"
+#include "core/Debug.hpp"
 #include "core/Types.hpp"
 
 namespace Bluie

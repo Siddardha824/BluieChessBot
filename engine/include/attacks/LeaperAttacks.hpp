@@ -91,11 +91,11 @@ constexpr Bitboard generateKingAttack(Square square)
     */
 
     attacks |= (piece >> 9) & Bitboards::Masks::NOT_H_FILE; // Direction 1
-    attacks |= (piece >> 8);                     // Direction 2
+    attacks |= (piece >> 8);                                // Direction 2
     attacks |= (piece >> 7) & Bitboards::Masks::NOT_A_FILE; // Direction 3
     attacks |= (piece << 1) & Bitboards::Masks::NOT_A_FILE; // Direction 4
     attacks |= (piece << 9) & Bitboards::Masks::NOT_A_FILE; // Direction 5
-    attacks |= (piece << 8);                     // Direction 6
+    attacks |= (piece << 8);                                // Direction 6
     attacks |= (piece << 7) & Bitboards::Masks::NOT_H_FILE; // Direction 7
     attacks |= (piece >> 1) & Bitboards::Masks::NOT_H_FILE; // Direction 8
 

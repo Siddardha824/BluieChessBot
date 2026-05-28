@@ -9,17 +9,15 @@ namespace Bluie
 /**
  * @class MoveGen
  * @brief Generates all the possible pseudo legal moves and legal moves.
- * 
- * 
- * 
+ *
+ *
+ *
  */
 
 class MoveGen
 {
-public:
+  public:
     MoveList getPseudoLegalMoves(Board board);
+};
 
-
-}
-
-} // name space Bluie
+} // namespace Bluie

@@ -11,13 +11,13 @@ namespace Bluie
 /**
  * @class Board
  * @brief Represents the full state of a chess position.
- * 
- * Manages piece bitboards, combined side occupancies, active player turn, 
+ *
+ * Manages piece bitboards, combined side occupancies, active player turn,
  * en passant square, and castling rights.
  */
 class Board
 {
-public:
+  public:
     /**
      * @brief Construct a new Board in the default state (empty).
      */
@@ -42,14 +42,32 @@ public:
     void makeMove(Move move);
 
     // Public getters and setters for UCI and telemetry integration
-    Side getTurn() const { return turn; }
-    void setTurn(Side side) { turn = side; }
+    Side getTurn() const
+    {
+        return turn;
+    }
+    void setTurn(Side side)
+    {
+        turn = side;
+    }
 
-    Square getEnPassant() const { return enPassant; }
-    void setEnPassant(Square sq) { enPassant = sq; }
+    Square getEnPassant() const
+    {
+        return enPassant;
+    }
+    void setEnPassant(Square sq)
+    {
+        enPassant = sq;
+    }
 
-    uint8_t getCastle() const { return casstle; }
-    void setCastle(uint8_t c) { casstle = c; }
+    uint8_t getCastle() const
+    {
+        return casstle;
+    }
+    void setCastle(uint8_t c)
+    {
+        casstle = c;
+    }
 
     Bitboard getPieceBitboard(Piece p) const;
     void setPieceBitboard(Piece p, Bitboard bb);
@@ -57,13 +75,50 @@ public:
     Bitboard getOccupancy(Side side) const;
     void updateOccupancies();
 
-private:
+    int getHalfmoveClock() const
+    {
+        return halfmoveClock;
+    }
+    void setHalfmoveClock(int clock)
+    {
+        halfmoveClock = clock;
+    }
+
+    int getFullmoveNumber() const
+    {
+        return fullmoveNumber;
+    }
+    void setFullmoveNumber(int num)
+    {
+        fullmoveNumber = num;
+    }
+
+    uint64_t getZobristHash() const
+    {
+        return zobristHash;
+    }
+    void setZobristHash(uint64_t hash)
+    {
+        zobristHash = hash;
+    }
+
+    /**
+     * @brief Performs position integrity validation checks.
+     * @return True if position is valid, False otherwise.
+     */
+    bool validate() const;
+
+  private:
     std::array<Bitboard, 12> pieceBitboards; ///< Bitboards for the 12 piece types (WK to bp)
-    std::array<Bitboard, 3> occupancy;       ///< Combined occupancies: [0]=Black, [1]=White, [2]=All
+    std::array<Bitboard, 3> occupancy; ///< Combined occupancies: [0]=Black, [1]=White, [2]=All
 
     Side turn;        ///< Side whose turn it is to move (WHITE or BLACK)
     Square enPassant; ///< En passant target square (NO_SQUARE if none exists)
     uint8_t casstle;  ///< Castling rights bitmask (WKca)
+
+    int halfmoveClock;    ///< 50-move rule halfmove clock
+    int fullmoveNumber;   ///< Fullmove sequence number
+    uint64_t zobristHash; ///< 64-bit Zobrist position hash
 };
 
 } // namespace Bluie

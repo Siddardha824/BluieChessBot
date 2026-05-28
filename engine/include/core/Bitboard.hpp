@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/Types.hpp"
+#include <bit>
 
 namespace Bluie
 {
@@ -12,11 +13,15 @@ namespace Bitboards
  */
 namespace Masks
 {
-inline constexpr Bluie::Bitboard NOT_A_FILE = 0xFEFEFEFEFEFEFEFEULL; ///< Everything except the A-file
-inline constexpr Bluie::Bitboard NOT_H_FILE = 0x7F7F7F7F7F7F7F7FULL; ///< Everything except the H-file
+inline constexpr Bluie::Bitboard NOT_A_FILE =
+    0xFEFEFEFEFEFEFEFEULL; ///< Everything except the A-file
+inline constexpr Bluie::Bitboard NOT_H_FILE =
+    0x7F7F7F7F7F7F7F7FULL; ///< Everything except the H-file
 
-inline constexpr Bluie::Bitboard NOT_AB_FILE = 0xFCFCFCFCFCFCFCFCULL; ///< Everything except A and B files
-inline constexpr Bluie::Bitboard NOT_GH_FILE = 0x3F3F3F3F3F3F3F3FULL; ///< Everything except G and H files
+inline constexpr Bluie::Bitboard NOT_AB_FILE =
+    0xFCFCFCFCFCFCFCFCULL; ///< Everything except A and B files
+inline constexpr Bluie::Bitboard NOT_GH_FILE =
+    0x3F3F3F3F3F3F3F3FULL; ///< Everything except G and H files
 
 } // namespace Masks
 
@@ -31,7 +36,7 @@ inline constexpr Bluie::Bitboard NOT_GH_FILE = 0x3F3F3F3F3F3F3F3FULL; ///< Every
  */
 constexpr Bluie::Bitboard squareToBitboard(Square square)
 {
-    return 1ULL << square;
+    return 1ULL << toIndex(square);
 }
 
 /**
@@ -41,7 +46,7 @@ constexpr Bluie::Bitboard squareToBitboard(Square square)
  */
 constexpr void setBit(Bluie::Bitboard& b, Square square)
 {
-    b |= (1ULL << square);
+    b |= (1ULL << toIndex(square));
 }
 
 /**
@@ -51,7 +56,7 @@ constexpr void setBit(Bluie::Bitboard& b, Square square)
  */
 constexpr void clearBit(Bluie::Bitboard& b, Square square)
 {
-    b &= ~(1ULL << square);
+    b &= ~(1ULL << toIndex(square));
 }
 
 /**
@@ -62,7 +67,7 @@ constexpr void clearBit(Bluie::Bitboard& b, Square square)
  */
 constexpr bool getBit(Bluie::Bitboard b, Square square)
 {
-    return (b & (1ULL << square)) != 0;
+    return (b & (1ULL << toIndex(square))) != 0;
 }
 
 /**
@@ -73,40 +78,27 @@ constexpr bool getBit(Bluie::Bitboard b, Square square)
  */
 constexpr void movePiece(Bluie::Bitboard& b, Square fromSquare, Square toSquare)
 {
-    b ^= ((1ULL << fromSquare) | (1ULL << toSquare));
+    b ^= ((1ULL << toIndex(fromSquare)) | (1ULL << toIndex(toSquare)));
 }
 
 /**
- * @brief Count the number of active bits (set to 1) using Brian Kernighan's algorithm.
+ * @brief Count the number of active bits (set to 1) using C++20 std::popcount.
  * @param bitboard The bitboard to count.
  * @return Count of active bits.
  */
 constexpr int countBits(Bluie::Bitboard bitboard)
 {
-    int count = 0;
-    while (bitboard)
-    {
-        count++;
-        bitboard &= bitboard - 1; // Resets the least significant set bit
-    }
-    return count;
+    return static_cast<int>(std::popcount(bitboard));
 }
 
 /**
- * @brief Get the square index of the Least Significant set Bit (LSB).
+ * @brief Get the square index of the Least Significant set Bit (LSB) using C++20 std::countr_zero.
  * @param bitboard The bitboard to scan.
  * @return Index of the LSB (0-63), or -1 if the bitboard is empty.
  */
 constexpr int getLSBIndex(Bluie::Bitboard bitboard)
 {
-    if (bitboard)
-    {
-        return countBits((bitboard & -bitboard) - 1);
-    }
-    else
-    {
-        return -1;
-    }
+    return bitboard ? static_cast<int>(std::countr_zero(bitboard)) : -1;
 }
 
 /**

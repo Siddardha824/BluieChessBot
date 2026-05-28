@@ -1,11 +1,10 @@
 #include "tools/Tests.hpp"
-#include "attacks/Attacks.hpp"
 #include "attacks/AttackTables.hpp"
+#include "attacks/Attacks.hpp" // IWYU pragma: keep
 #include "core/Debug.hpp"
-#include "attacks/MagicNumbers.hpp"
-#include "tools/MagicGenerator.hpp"
-#include "tools/AttacksOnTheFly.hpp"
 #include "core/Types.hpp"
+#include "tools/AttacksOnTheFly.hpp"
+#include "tools/MagicGenerator.hpp"
 
 #include <fstream>
 #include <iomanip>
@@ -32,7 +31,8 @@ void testMagicAttacks()
 
         for (int index = 0; index < rookOccupancyIndices; ++index)
         {
-            Bitboard occupancy = setOccupancy(index, Attacks::rookRelevantBits[square], rookOccupancyMask);
+            Bitboard occupancy =
+                setOccupancy(index, Attacks::rookRelevantBits[square], rookOccupancyMask);
 
             Bitboard expected = rookAttacksOnTheFly(sq, occupancy);
 
@@ -118,16 +118,18 @@ void writeAttackTablesHeaderFile()
 
         for (int index = 0; index < occupancyIndices; ++index)
         {
-            Bitboard occupancy =
-                setOccupancy(index, Attacks::bishopRelevantBits[square], Attacks::bishopOccupancyMasks[square]);
-            std::size_t magicIndex = Attacks::getBishopMagicIndex(static_cast<Square>(square), occupancy);
+            Bitboard occupancy = setOccupancy(index, Attacks::bishopRelevantBits[square],
+                                              Attacks::bishopOccupancyMasks[square]);
+            std::size_t magicIndex =
+                Attacks::getBishopMagicIndex(static_cast<Square>(square), occupancy);
             Bitboard attacks = bishopAttacksOnTheFly(static_cast<Square>(square), occupancy);
             table[magicIndex] = attacks;
         }
 
         for (int index = 0; index < occupancyIndices; ++index)
         {
-            file << "        0x" << std::hex << std::setw(16) << std::setfill('0') << table[index] << "ULL,";
+            file << "        0x" << std::hex << std::setw(16) << std::setfill('0') << table[index]
+                 << "ULL,";
             if ((index + 1) % 4 == 0)
                 file << '\n';
         }
@@ -145,16 +147,18 @@ void writeAttackTablesHeaderFile()
 
         for (int index = 0; index < occupancyIndices; ++index)
         {
-            Bitboard occupancy =
-                setOccupancy(index, Attacks::rookRelevantBits[square], Attacks::rookOccupancyMasks[square]);
-            std::size_t magicIndex = Attacks::getRookMagicIndex(static_cast<Square>(square), occupancy);
+            Bitboard occupancy = setOccupancy(index, Attacks::rookRelevantBits[square],
+                                              Attacks::rookOccupancyMasks[square]);
+            std::size_t magicIndex =
+                Attacks::getRookMagicIndex(static_cast<Square>(square), occupancy);
             Bitboard attacks = rookAttacksOnTheFly(static_cast<Square>(square), occupancy);
             table[magicIndex] = attacks;
         }
 
         for (int index = 0; index < occupancyIndices; ++index)
         {
-            file << "        0x" << std::hex << std::setw(16) << std::setfill('0') << table[index] << "ULL,";
+            file << "        0x" << std::hex << std::setw(16) << std::setfill('0') << table[index]
+                 << "ULL,";
             if ((index + 1) % 4 == 0)
                 file << '\n';
         }

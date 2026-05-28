@@ -1,11 +1,11 @@
 #pragma once
 
 #include "board/Board.hpp"
-#include <string>
-#include <vector>
-#include <thread>
 #include <atomic>
 #include <mutex>
+#include <string>
+#include <thread>
+#include <vector>
 
 namespace Bluie
 {
@@ -13,13 +13,13 @@ namespace Bluie
 /**
  * @class UCI
  * @brief Universal Chess Interface (UCI) protocol controller for the C++ engine.
- * 
+ *
  * Manages asynchronous standard stream parsing and routes communications
  * between standard input command queues and calculation threads.
  */
 class UCI
 {
-public:
+  public:
     /**
      * @brief Constructor. Initializes handshake state and atomic status.
      */
@@ -35,7 +35,7 @@ public:
      */
     void loop();
 
-private:
+  private:
     /**
      * @brief Decodes a single command line text.
      */
@@ -71,9 +71,9 @@ private:
      */
     void runSearch(int depth, int movetime);
 
-    Board board;                    ///< The active chess board position state
+    Board board;                   ///< The active chess board position state
     std::atomic<bool> isSearching; ///< Atomic flag indicating active calculation state
-    std::thread searchThread;       ///< Thread handle for asynchronous calculations
+    std::thread searchThread;      ///< Thread handle for asynchronous calculations
     std::mutex coutMutex;          ///< Mutex guarding standard output stream prints
 };
 

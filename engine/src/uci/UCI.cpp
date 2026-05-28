@@ -1,11 +1,11 @@
 #include "uci/UCI.hpp"
+#include "attacks/Attacks.hpp" // IWYU pragma: keep
+#include "core/Bitboard.hpp"
+#include <chrono>
+#include <cmath>
 #include <iostream>
 #include <sstream>
 #include <vector>
-#include <chrono>
-#include <cmath>
-#include "attacks/Attacks.hpp"
-#include "core/Bitboard.hpp"
 
 namespace Bluie
 {
@@ -43,7 +43,8 @@ void UCI::loop()
     std::string line;
     while (std::getline(std::cin, line))
     {
-        if (line.empty()) continue;
+        if (line.empty())
+            continue;
         parseCommand(line);
     }
 }
@@ -51,10 +52,11 @@ void UCI::loop()
 void UCI::parseCommand(const std::string& line)
 {
     auto tokens = tokenize(line);
-    if (tokens.empty()) return;
-    
+    if (tokens.empty())
+        return;
+
     std::string cmd = tokens[0];
-    
+
     if (cmd == "uci")
     {
         std::lock_guard<std::mutex> lock(coutMutex);
@@ -104,9 +106,9 @@ void UCI::parseCommand(const std::string& line)
 void UCI::parsePosition(const std::vector<std::string>& tokens)
 {
     stopSearch();
-    
+
     size_t movesIdx = tokens.size();
-    
+
     if (tokens.size() > 1)
     {
         if (tokens[1] == "startpos")
@@ -138,7 +140,7 @@ void UCI::parsePosition(const std::vector<std::string>& tokens)
             }
         }
     }
-    
+
     // Play any moves following the position specifier
     for (size_t i = movesIdx; i < tokens.size(); ++i)
     {
@@ -153,10 +155,10 @@ void UCI::parsePosition(const std::vector<std::string>& tokens)
 void UCI::parseGo(const std::vector<std::string>& tokens)
 {
     stopSearch();
-    
+
     int depth = 10;
     int movetime = 0;
-    
+
     for (size_t i = 1; i < tokens.size(); ++i)
     {
         if (tokens[i] == "depth" && i + 1 < tokens.size())
@@ -172,32 +174,33 @@ void UCI::parseGo(const std::vector<std::string>& tokens)
             depth = 30; // Max depth bounds
         }
     }
-    
+
     isSearching = true;
     searchThread = std::thread(&UCI::runSearch, this, depth, movetime);
 }
 
 Move UCI::parseMove(const std::string& moveStr)
 {
-    if (moveStr.length() < 4) return Move::NO_MOVE;
-    
+    if (moveStr.length() < 4)
+        return Move::NO_MOVE;
+
     int fromCol = moveStr[0] - 'a';
     int fromRow = '8' - moveStr[1];
     int toCol = moveStr[2] - 'a';
     int toRow = '8' - moveStr[3];
-    
-    if (fromCol < 0 || fromCol > 7 || fromRow < 0 || fromRow > 7 ||
-        toCol < 0 || toCol > 7 || toRow < 0 || toRow > 7)
+
+    if (fromCol < 0 || fromCol > 7 || fromRow < 0 || fromRow > 7 || toCol < 0 || toCol > 7 ||
+        toRow < 0 || toRow > 7)
     {
         return Move::NO_MOVE;
     }
-    
+
     Square from = static_cast<Square>(fromRow * 8 + fromCol);
     Square to = static_cast<Square>(toRow * 8 + toCol);
-    
+
     // Scan piece bitboards to identify moving piece
-    uint64_t fromBit = (1ULL << (63 - static_cast<int>(from)));
-    Piece movingPiece = NO_PIECE;
+    uint64_t fromBit = (1ULL << toIndex(from));
+    Piece movingPiece = Piece::NO_PIECE;
     for (int p = 0; p < 12; ++p)
     {
         if (board.getPieceBitboard(static_cast<Piece>(p)) & fromBit)
@@ -206,11 +209,12 @@ Move UCI::parseMove(const std::string& moveStr)
             break;
         }
     }
-    
-    if (movingPiece == NO_PIECE) return Move::NO_MOVE;
-    
+
+    if (movingPiece == Piece::NO_PIECE)
+        return Move::NO_MOVE;
+
     // Check if target square is a capture
-    uint64_t toBit = (1ULL << (63 - static_cast<int>(to)));
+    uint64_t toBit = (1ULL << toIndex(to));
     bool isCap = false;
     for (int p = 0; p < 12; ++p)
     {
@@ -220,50 +224,63 @@ Move UCI::parseMove(const std::string& moveStr)
             break;
         }
     }
-    
-    Move::Flag flag = Move::QUIET;
-    
+
+    Move::Flag flag = Move::Flag::QUIET;
+
     // 1. Pawn Double Push
-    if ((movingPiece == P || movingPiece == p) && std::abs(static_cast<int>(to) - static_cast<int>(from)) == 16)
+    if ((movingPiece == Piece::P || movingPiece == Piece::p) &&
+        std::abs(static_cast<int>(toIndex(to)) - static_cast<int>(toIndex(from))) == 16)
     {
-        flag = Move::DOUBLE_PAWN_PUSH;
+        flag = Move::Flag::DOUBLE_PAWN_PUSH;
     }
     // 2. Castlings
-    else if (movingPiece == K && from == e1 && to == g1) flag = Move::KING_CASTLE;
-    else if (movingPiece == K && from == e1 && to == c1) flag = Move::QUEEN_CASTLE;
-    else if (movingPiece == k && from == e8 && to == g8) flag = Move::KING_CASTLE;
-    else if (movingPiece == k && from == e8 && to == c8) flag = Move::QUEEN_CASTLE;
+    else if (movingPiece == Piece::K && from == Square::e1 && to == Square::g1)
+        flag = Move::Flag::KING_CASTLE;
+    else if (movingPiece == Piece::K && from == Square::e1 && to == Square::c1)
+        flag = Move::Flag::QUEEN_CASTLE;
+    else if (movingPiece == Piece::k && from == Square::e8 && to == Square::g8)
+        flag = Move::Flag::KING_CASTLE;
+    else if (movingPiece == Piece::k && from == Square::e8 && to == Square::c8)
+        flag = Move::Flag::QUEEN_CASTLE;
     // 3. En Passant Capture
-    else if ((movingPiece == P || movingPiece == p) && !isCap && (fromCol != toCol))
+    else if ((movingPiece == Piece::P || movingPiece == Piece::p) && !isCap && (fromCol != toCol))
     {
-        flag = Move::EN_PASSANT;
+        flag = Move::Flag::EN_PASSANT;
         isCap = true; // EP captures are captures
     }
     // 4. Promotions
-    else if ((movingPiece == P && toRow == 0) || (movingPiece == p && toRow == 7))
+    else if ((movingPiece == Piece::P && toRow == 0) || (movingPiece == Piece::p && toRow == 7))
     {
         char promoChar = (moveStr.length() >= 5) ? moveStr[4] : 'q';
         if (isCap)
         {
-            if (promoChar == 'q') flag = Move::PC_QUEEN;
-            else if (promoChar == 'r') flag = Move::PC_ROOK;
-            else if (promoChar == 'b') flag = Move::PC_BISHOP;
-            else if (promoChar == 'n') flag = Move::PC_KNIGHT;
+            if (promoChar == 'q')
+                flag = Move::Flag::PC_QUEEN;
+            else if (promoChar == 'r')
+                flag = Move::Flag::PC_ROOK;
+            else if (promoChar == 'b')
+                flag = Move::Flag::PC_BISHOP;
+            else if (promoChar == 'n')
+                flag = Move::Flag::PC_KNIGHT;
         }
         else
         {
-            if (promoChar == 'q') flag = Move::PR_QUEEN;
-            else if (promoChar == 'r') flag = Move::PR_ROOK;
-            else if (promoChar == 'b') flag = Move::PR_BISHOP;
-            else if (promoChar == 'n') flag = Move::PR_KNIGHT;
+            if (promoChar == 'q')
+                flag = Move::Flag::PR_QUEEN;
+            else if (promoChar == 'r')
+                flag = Move::Flag::PR_ROOK;
+            else if (promoChar == 'b')
+                flag = Move::Flag::PR_BISHOP;
+            else if (promoChar == 'n')
+                flag = Move::Flag::PR_KNIGHT;
         }
     }
     // 5. Standard Captures
     else if (isCap)
     {
-        flag = Move::CAPTURE;
+        flag = Move::Flag::CAPTURE;
     }
-    
+
     return Move(from, to, flag);
 }
 
@@ -279,45 +296,43 @@ void UCI::stopSearch()
 void UCI::runSearch(int depth, int movetime)
 {
     auto startTime = std::chrono::steady_clock::now();
-    
+
     int eval_cp = 15;
-    
+
     for (int d = 1; d <= depth && isSearching; ++d)
     {
         // Simulate thinking time offset
         std::this_thread::sleep_for(std::chrono::milliseconds(140));
-        
+
         auto now = std::chrono::steady_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count();
-        
+        auto duration =
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count();
+
         if (movetime > 0 && duration >= movetime)
         {
             break;
         }
-        
+
         eval_cp += (d % 2 == 0) ? 14 : -9;
         long long nodes = d * 1842;
         long long nps = (duration > 0) ? (nodes * 1000 / duration) : 32000;
-        
+
         {
             std::lock_guard<std::mutex> lock(coutMutex);
-            std::cout << "info depth " << d 
-                      << " score cp " << eval_cp 
-                      << " nodes " << nodes 
-                      << " nps " << nps 
-                      << " time " << duration
-                      << " pv e2e4 e7e5 g1f3 b8c6" << std::endl;
+            std::cout << "info depth " << d << " score cp " << eval_cp << " nodes " << nodes
+                      << " nps " << nps << " time " << duration << " pv e2e4 e7e5 g1f3 b8c6"
+                      << std::endl;
         }
     }
-    
+
     // Choose a valid fallback algebraic move coordinate based on active turn
-    std::string bestMoveStr = (board.getTurn() == WHITE) ? "e2e4" : "e7e5";
-    
+    std::string bestMoveStr = (board.getTurn() == Side::WHITE) ? "e2e4" : "e7e5";
+
     {
         std::lock_guard<std::mutex> lock(coutMutex);
         std::cout << "bestmove " << bestMoveStr << std::endl;
     }
-    
+
     isSearching = false;
 }
 
@@ -329,9 +344,9 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
         std::cout << "info string error: bluie-debug requires a subcommand" << std::endl;
         return;
     }
-    
+
     std::string sub = tokens[1];
-    
+
     if (sub == "board")
     {
         // 1. Reconstruct FEN placement
@@ -342,9 +357,9 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
             for (int file = 0; file < 8; ++file)
             {
                 int sq = rank * 8 + file;
-                uint64_t bit = 1ULL << (63 - sq);
-                Piece foundPiece = NO_PIECE;
-                
+                uint64_t bit = 1ULL << sq;
+                Piece foundPiece = Piece::NO_PIECE;
+
                 for (int p = 0; p < 12; ++p)
                 {
                     if (board.getPieceBitboard(static_cast<Piece>(p)) & bit)
@@ -353,8 +368,8 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
                         break;
                     }
                 }
-                
-                if (foundPiece != NO_PIECE)
+
+                if (foundPiece != Piece::NO_PIECE)
                 {
                     if (emptyCount > 0)
                     {
@@ -364,19 +379,44 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
                     char pChar = '?';
                     switch (foundPiece)
                     {
-                        case P: pChar = 'P'; break;
-                        case N: pChar = 'N'; break;
-                        case B: pChar = 'B'; break;
-                        case R: pChar = 'R'; break;
-                        case Q: pChar = 'Q'; break;
-                        case K: pChar = 'K'; break;
-                        case p: pChar = 'p'; break;
-                        case n: pChar = 'n'; break;
-                        case b: pChar = 'b'; break;
-                        case r: pChar = 'r'; break;
-                        case q: pChar = 'q'; break;
-                        case k: pChar = 'k'; break;
-                        default: break;
+                    case Piece::P:
+                        pChar = 'P';
+                        break;
+                    case Piece::N:
+                        pChar = 'N';
+                        break;
+                    case Piece::B:
+                        pChar = 'B';
+                        break;
+                    case Piece::R:
+                        pChar = 'R';
+                        break;
+                    case Piece::Q:
+                        pChar = 'Q';
+                        break;
+                    case Piece::K:
+                        pChar = 'K';
+                        break;
+                    case Piece::p:
+                        pChar = 'p';
+                        break;
+                    case Piece::n:
+                        pChar = 'n';
+                        break;
+                    case Piece::b:
+                        pChar = 'b';
+                        break;
+                    case Piece::r:
+                        pChar = 'r';
+                        break;
+                    case Piece::q:
+                        pChar = 'q';
+                        break;
+                    case Piece::k:
+                        pChar = 'k';
+                        break;
+                    default:
+                        break;
                     }
                     fenPlacement += pChar;
                 }
@@ -394,128 +434,160 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
                 fenPlacement += "/";
             }
         }
-        
+
         // Turn
-        std::string turnStr = (board.getTurn() == WHITE) ? "w" : "b";
-        
+        std::string turnStr = (board.getTurn() == Side::WHITE) ? "w" : "b";
+
         // Castling rights
         std::string castleStr = "";
         uint8_t c = board.getCastle();
-        if (c & 1) castleStr += "K";
-        if (c & 2) castleStr += "Q";
-        if (c & 4) castleStr += "k";
-        if (c & 8) castleStr += "q";
-        if (castleStr.empty()) castleStr = "-";
-        
+        if (c & 1)
+            castleStr += "K";
+        if (c & 2)
+            castleStr += "Q";
+        if (c & 4)
+            castleStr += "k";
+        if (c & 8)
+            castleStr += "q";
+        if (castleStr.empty())
+            castleStr = "-";
+
         // En Passant target
         std::string epStr = "-";
-        if (board.getEnPassant() != NO_SQUARE)
+        if (board.getEnPassant() != Square::NO_SQUARE)
         {
-            epStr = squareToCoordinates[board.getEnPassant()];
+            epStr = squareToCoordinates[toIndex(board.getEnPassant())];
         }
-        
+
         std::lock_guard<std::mutex> lock(coutMutex);
-        std::cout << "info string DEBUG BOARD FEN " << fenPlacement << " " << turnStr << " " << castleStr << " " << epStr << std::endl;
+        std::cout << "info string DEBUG BOARD FEN " << fenPlacement << " " << turnStr << " "
+                  << castleStr << " " << epStr << " " << board.getHalfmoveClock() << " "
+                  << board.getFullmoveNumber() << std::endl;
         std::cout << "info string DEBUG BOARD TURN " << turnStr << std::endl;
         std::cout << "info string DEBUG BOARD CASTLING " << castleStr << std::endl;
         std::cout << "info string DEBUG BOARD EP " << epStr << std::endl;
+        std::cout << "info string DEBUG BOARD CLOCKS " << board.getHalfmoveClock() << " "
+                  << board.getFullmoveNumber() << std::endl;
     }
     else if (sub == "bitboards")
     {
         std::lock_guard<std::mutex> lock(coutMutex);
-        
+
         // 12 pieces
-        std::array<std::string, 12> pieceNames = {
-            "WHITE_PAWNS", "WHITE_KNIGHTS", "WHITE_BISHOPS", "WHITE_ROOKS", "WHITE_QUEENS", "WHITE_KINGS",
-            "BLACK_PAWNS", "BLACK_KNIGHTS", "BLACK_BISHOPS", "BLACK_ROOKS", "BLACK_QUEENS", "BLACK_KINGS"
-        };
-        
+        std::array<std::string, 12> pieceNames = {"WHITE_PAWNS", "WHITE_KNIGHTS", "WHITE_BISHOPS",
+                                                  "WHITE_ROOKS", "WHITE_QUEENS",  "WHITE_KINGS",
+                                                  "BLACK_PAWNS", "BLACK_KNIGHTS", "BLACK_BISHOPS",
+                                                  "BLACK_ROOKS", "BLACK_QUEENS",  "BLACK_KINGS"};
+
         for (int p = 0; p < 12; ++p)
         {
             uint64_t bb = board.getPieceBitboard(static_cast<Piece>(p));
-            std::cout << "info string DEBUG BITBOARD " << pieceNames[p] << " " << std::hex << bb << std::dec << std::endl;
+            std::cout << "info string DEBUG BITBOARD " << pieceNames[p] << " " << std::hex << bb
+                      << std::dec << std::endl;
         }
-        
+
         // 3 occupancies
-        std::cout << "info string DEBUG BITBOARD WHITE_OCCUPANCY " << std::hex << board.getOccupancy(WHITE) << std::dec << std::endl;
-        std::cout << "info string DEBUG BITBOARD BLACK_OCCUPANCY " << std::hex << board.getOccupancy(BLACK) << std::dec << std::endl;
-        std::cout << "info string DEBUG BITBOARD COMBINED_OCCUPANCY " << std::hex << board.getOccupancy(NONE) << std::dec << std::endl;
+        std::cout << "info string DEBUG BITBOARD WHITE_OCCUPANCY " << std::hex
+                  << board.getOccupancy(Side::WHITE) << std::dec << std::endl;
+        std::cout << "info string DEBUG BITBOARD BLACK_OCCUPANCY " << std::hex
+                  << board.getOccupancy(Side::BLACK) << std::dec << std::endl;
+        std::cout << "info string DEBUG BITBOARD COMBINED_OCCUPANCY " << std::hex
+                  << board.getOccupancy(Side::NONE) << std::dec << std::endl;
     }
     else if (sub == "occupancy")
     {
         std::lock_guard<std::mutex> lock(coutMutex);
-        std::cout << "info string DEBUG OCCUPANCY WHITE " << std::hex << board.getOccupancy(WHITE) << std::dec << std::endl;
-        std::cout << "info string DEBUG OCCUPANCY BLACK " << std::hex << board.getOccupancy(BLACK) << std::dec << std::endl;
-        std::cout << "info string DEBUG OCCUPANCY ALL " << std::hex << board.getOccupancy(NONE) << std::dec << std::endl;
+        std::cout << "info string DEBUG OCCUPANCY WHITE " << std::hex
+                  << board.getOccupancy(Side::WHITE) << std::dec << std::endl;
+        std::cout << "info string DEBUG OCCUPANCY BLACK " << std::hex
+                  << board.getOccupancy(Side::BLACK) << std::dec << std::endl;
+        std::cout << "info string DEBUG OCCUPANCY ALL " << std::hex
+                  << board.getOccupancy(Side::NONE) << std::dec << std::endl;
     }
     else if (sub == "attacks")
     {
         if (tokens.size() < 3)
         {
             std::lock_guard<std::mutex> lock(coutMutex);
-            std::cout << "info string error: bluie-debug attacks requires a side (white/black)" << std::endl;
+            std::cout << "info string error: bluie-debug attacks requires a side (white/black)"
+                      << std::endl;
             return;
         }
-        
+
         std::string sideStr = tokens[2];
-        Side sideToGen = WHITE;
+        Side sideToGen = Side::WHITE;
         if (sideStr == "black" || sideStr == "b")
         {
-            sideToGen = BLACK;
+            sideToGen = Side::BLACK;
         }
-        
+
         uint64_t attacksBB = 0ULL;
-        uint64_t occAll = board.getOccupancy(NONE);
-        
-        int startPiece = (sideToGen == WHITE) ? 0 : 6;
+        uint64_t occAll = board.getOccupancy(Side::NONE);
+
+        int startPiece = (sideToGen == Side::WHITE) ? 0 : 6;
         int endPiece = startPiece + 6;
-        
+
         for (int pInt = startPiece; pInt < endPiece; ++pInt)
         {
             Piece currentPiece = static_cast<Piece>(pInt);
             uint64_t bb = board.getPieceBitboard(currentPiece);
-            
+
             while (bb)
             {
                 int sq = Bitboards::getLSBIndex(bb);
                 Square fromSq = static_cast<Square>(sq);
-                
+
                 switch (currentPiece)
                 {
-                    case P: case p:
-                        attacksBB |= Attacks::pawnAttacks[sideToGen][sq];
-                        break;
-                    case N: case n:
-                        attacksBB |= Attacks::knightAttacks[sq];
-                        break;
-                    case K: case k:
-                        attacksBB |= Attacks::kingAttacks[sq];
-                        break;
-                    case B: case b:
-                        attacksBB |= Attacks::bishopAttacks[sq][Attacks::getBishopMagicIndex(fromSq, occAll)];
-                        break;
-                    case R: case r:
-                        attacksBB |= Attacks::rookAttacks[sq][Attacks::getRookMagicIndex(fromSq, occAll)];
-                        break;
-                    case Q: case q:
-                        attacksBB |= Attacks::getQueenAttack(fromSq, occAll);
-                        break;
-                    default:
-                        break;
+                case Piece::P:
+                case Piece::p:
+                    attacksBB |= Attacks::pawnAttacks[toIndex(sideToGen)][sq];
+                    break;
+                case Piece::N:
+                case Piece::n:
+                    attacksBB |= Attacks::knightAttacks[sq];
+                    break;
+                case Piece::K:
+                case Piece::k:
+                    attacksBB |= Attacks::kingAttacks[sq];
+                    break;
+                case Piece::B:
+                case Piece::b:
+                    attacksBB |=
+                        Attacks::bishopAttacks[sq][Attacks::getBishopMagicIndex(fromSq, occAll)];
+                    break;
+                case Piece::R:
+                case Piece::r:
+                    attacksBB |=
+                        Attacks::rookAttacks[sq][Attacks::getRookMagicIndex(fromSq, occAll)];
+                    break;
+                case Piece::Q:
+                case Piece::q:
+                    attacksBB |= Attacks::getQueenAttack(fromSq, occAll);
+                    break;
+                default:
+                    break;
                 }
-                
+
                 Bitboards::popLSB(bb);
             }
         }
-        
+
         std::lock_guard<std::mutex> lock(coutMutex);
-        std::cout << "info string DEBUG ATTACKS " << (sideToGen == WHITE ? "WHITE" : "BLACK") << " " << std::hex << attacksBB << std::dec << std::endl;
+        std::cout << "info string DEBUG ATTACKS " << (sideToGen == Side::WHITE ? "WHITE" : "BLACK")
+                  << " " << std::hex << attacksBB << std::dec << std::endl;
+    }
+    else if (sub == "validate")
+    {
+        std::lock_guard<std::mutex> lock(coutMutex);
+        bool isValid = board.validate();
+        std::cout << "info string DEBUG VALIDATE " << (isValid ? "OK" : "INVALID") << std::endl;
     }
     else if (sub == "legalmoves")
     {
         // Placeholder stub: returns mock move based on turn
         std::lock_guard<std::mutex> lock(coutMutex);
-        std::string mockMoves = (board.getTurn() == WHITE) ? "e2e4" : "e7e5";
+        std::string mockMoves = (board.getTurn() == Side::WHITE) ? "e2e4" : "e7e5";
         std::cout << "info string DEBUG LEGALS " << mockMoves << std::endl;
     }
     else if (sub == "piecemoves")
@@ -535,13 +607,14 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
         if (tokens.size() < 3)
         {
             std::lock_guard<std::mutex> lock(coutMutex);
-            std::cout << "info string error: bluie-debug moveparse requires a move coordinate" << std::endl;
+            std::cout << "info string error: bluie-debug moveparse requires a move coordinate"
+                      << std::endl;
             return;
         }
-        
+
         std::string moveStr = tokens[2];
         Move move = parseMove(moveStr);
-        
+
         std::lock_guard<std::mutex> lock(coutMutex);
         if (move == Move::NO_MOVE)
         {
@@ -549,10 +622,10 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
         }
         else
         {
-            std::cout << "info string DEBUG MOVEPARSE " << moveStr 
-                      << " FROM " << squareToCoordinates[move.getFrom()] 
-                      << " TO " << squareToCoordinates[move.getTo()] 
-                      << " FLAGS " << std::hex << move.getFlags() << std::dec << std::endl;
+            std::cout << "info string DEBUG MOVEPARSE " << moveStr << " FROM "
+                      << squareToCoordinates[toIndex(move.getFrom())] << " TO "
+                      << squareToCoordinates[toIndex(move.getTo())] << " FLAGS " << std::hex
+                      << toIndex(move.getFlags()) << std::dec << std::endl;
         }
     }
     else if (sub == "searchinfo")

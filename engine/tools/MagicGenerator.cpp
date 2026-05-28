@@ -1,11 +1,11 @@
 #include "tools/MagicGenerator.hpp"
 #include "attacks/SliderMasks.hpp"
-#include "tools/AttacksOnTheFly.hpp"
 #include "core/Bitboard.hpp"
 #include "core/Types.hpp"
+#include "tools/AttacksOnTheFly.hpp"
 #include "tools/Random.hpp"
-#include <cstddef>
 #include <array>
+#include <cstddef>
 #include <iostream>
 
 namespace Bluie
@@ -37,7 +37,8 @@ Bitboard findMagicNumber(Square square, int relevantBits, bool bishop)
     std::array<Bitboard, MAX_OCCUPANCIES> usedAttacks{};
 
     // init attack mask for a current piece
-    Bitboard attackMask = bishop ? Attacks::bishopOccupancyMasks[square] : Attacks::rookOccupancyMasks[square];
+    Bitboard attackMask = bishop ? Attacks::bishopOccupancyMasks[toIndex(square)]
+                                 : Attacks::rookOccupancyMasks[toIndex(square)];
 
     // init occupancy indices
     int occupancyIndices = 1 << relevantBits;

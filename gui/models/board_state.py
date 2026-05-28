@@ -1,7 +1,5 @@
 # gui/models/board_state.py
 
-from cmath import pi
-
 import chess
 from typing import List, Optional
 from .move import Move
