@@ -2,6 +2,7 @@
 #include "attacks/Attacks.hpp" // IWYU pragma: keep
 #include "attacks/AttacksAPI.hpp"
 #include "tools/Tests.hpp"
+#include "core/MoveGen.hpp"
 #include <chrono>
 #include <cmath>
 #include <iostream>
@@ -326,8 +327,24 @@ void UCI::runSearch(int depth, int movetime)
         }
     }
 
-    // Choose a valid fallback algebraic move coordinate based on active turn
-    std::string bestMoveStr = (board.getTurn() == Side::WHITE) ? "e2e4" : "e7e5";
+    // Query actual legal moves from MoveGen
+    MoveGen moveGen;
+    MoveList moves = moveGen.getLegalMoves(board);
+
+    std::string bestMoveStr = "0000";
+    if (moves.count > 0)
+    {
+        Move m = moves.moves[0];
+        Square from = m.getFrom();
+        Square to = m.getTo();
+        Move::Flag flag = m.getFlags();
+        
+        bestMoveStr = std::string(squareToCoordinates[toIndex(from)]) + std::string(squareToCoordinates[toIndex(to)]);
+        if (flag == Move::Flag::PR_QUEEN || flag == Move::Flag::PC_QUEEN) bestMoveStr += "q";
+        else if (flag == Move::Flag::PR_ROOK || flag == Move::Flag::PC_ROOK) bestMoveStr += "r";
+        else if (flag == Move::Flag::PR_BISHOP || flag == Move::Flag::PC_BISHOP) bestMoveStr += "b";
+        else if (flag == Move::Flag::PR_KNIGHT || flag == Move::Flag::PC_KNIGHT) bestMoveStr += "n";
+    }
 
     {
         std::lock_guard<std::mutex> lock(coutMutex);
@@ -583,10 +600,25 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
     }
     else if (sub == "legalmoves")
     {
-        // Placeholder stub: returns mock move based on turn
         std::lock_guard<std::mutex> lock(coutMutex);
-        std::string mockMoves = (board.getTurn() == Side::WHITE) ? "e2e4" : "e7e5";
-        std::cout << "info string DEBUG LEGALS " << mockMoves << std::endl;
+        MoveGen moveGen;
+        MoveList moves = moveGen.getLegalMoves(board);
+        
+        std::cout << "info string DEBUG LEGALS";
+        for (int i = 0; i < moves.count; ++i)
+        {
+            Move m = moves.moves[i];
+            Square from = m.getFrom();
+            Square to = m.getTo();
+            Move::Flag flag = m.getFlags();
+            
+            std::cout << " " << squareToCoordinates[toIndex(from)] << squareToCoordinates[toIndex(to)];
+            if (flag == Move::Flag::PR_QUEEN || flag == Move::Flag::PC_QUEEN) std::cout << "q";
+            else if (flag == Move::Flag::PR_ROOK || flag == Move::Flag::PC_ROOK) std::cout << "r";
+            else if (flag == Move::Flag::PR_BISHOP || flag == Move::Flag::PC_BISHOP) std::cout << "b";
+            else if (flag == Move::Flag::PR_KNIGHT || flag == Move::Flag::PC_KNIGHT) std::cout << "n";
+        }
+        std::cout << std::endl;
     }
     else if (sub == "piecemoves")
     {
@@ -596,9 +628,28 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
     }
     else if (sub == "perft")
     {
-        // Placeholder stub: returns perft node count 0
+        if (tokens.size() < 3)
+        {
+            std::lock_guard<std::mutex> lock(coutMutex);
+            std::cout << "info string error: bluie-debug perft requires a depth" << std::endl;
+            return;
+        }
+        int depth = std::stoi(tokens[2]);
+        
+        auto start = std::chrono::high_resolution_clock::now();
+        uint64_t nodes = Tools::perft(depth, board);
+        auto end = std::chrono::high_resolution_clock::now();
+        
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        
         std::lock_guard<std::mutex> lock(coutMutex);
-        std::cout << "info string DEBUG PERFTTOTAL 0" << std::endl;
+        std::cout << "info string DEBUG PERFTTOTAL " << nodes << std::endl;
+        std::cout << "info string DEBUG PERFTTIME " << duration << " ms" << std::endl;
+        if (duration > 0)
+        {
+            double nps = (static_cast<double>(nodes) / static_cast<double>(duration)) * 1000.0;
+            std::cout << "info string DEBUG PERFTNPS " << static_cast<uint64_t>(nps) << std::endl;
+        }
     }
     else if (sub == "moveparse")
     {

@@ -14,6 +14,7 @@ include_directories(include .)
 add_executable(BluieChessBot
     src/Bluie.cpp
     src/core/Debug.cpp
+    src/core/MoveGen.cpp
     src/board/Board.cpp
     src/uci/UCI.cpp
     src/attacks/AttacksAPI.cpp

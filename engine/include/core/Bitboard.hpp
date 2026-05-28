@@ -23,6 +23,11 @@ inline constexpr Bluie::Bitboard NOT_AB_FILE =
 inline constexpr Bluie::Bitboard NOT_GH_FILE =
     0x3F3F3F3F3F3F3F3FULL; ///< Everything except G and H files
 
+inline constexpr Bluie::Bitboard RANK_2 =
+    0x00FF000000000000ULL; ///< White starting pawns rank (indices 48-55)
+inline constexpr Bluie::Bitboard RANK_7 =
+    0x000000000000FF00ULL; ///< Black starting pawns rank (indices 8-15)
+
 } // namespace Masks
 
 /*-----------------------------------------------*\

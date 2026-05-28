@@ -5,6 +5,7 @@
 #include "board/Board.hpp"
 #include "core/Debug.hpp"
 #include "core/Types.hpp"
+#include "core/MoveGen.hpp"
 #include "tools/AttacksOnTheFly.hpp"
 #include "tools/MagicGenerator.hpp"
 
@@ -305,10 +306,68 @@ void testSquareAttacked()
     std::cout << "All testSquareAttacked unit tests passed successfully!\n";
 }
 
+uint64_t perft(int depth, Board& board)
+{
+    if (depth <= 0) return 1ULL;
+
+    MoveGen moveGen;
+    MoveList moves = moveGen.getLegalMoves(board);
+    
+    if (depth == 1) return static_cast<uint64_t>(moves.count);
+
+    uint64_t nodes = 0ULL;
+    for (int i = 0; i < moves.count; ++i)
+    {
+        Board temp = board;
+        temp.makeMove(moves.moves[i]);
+        nodes += perft(depth - 1, temp);
+    }
+    return nodes;
+}
+
+void testMoveGenPerft()
+{
+    std::cout << "Running testMoveGenPerft starting position assertions...\n";
+    
+    Board board;
+    board.parseFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
+    uint64_t d1 = perft(1, board);
+    if (d1 != 20)
+    {
+        std::cout << "FAIL: Perft depth 1 starting position. Expected: 20, Got: " << d1 << "\n";
+        return;
+    }
+
+    uint64_t d2 = perft(2, board);
+    if (d2 != 400)
+    {
+        std::cout << "FAIL: Perft depth 2 starting position. Expected: 400, Got: " << d2 << "\n";
+        return;
+    }
+
+    uint64_t d3 = perft(3, board);
+    if (d3 != 8902)
+    {
+        std::cout << "FAIL: Perft depth 3 starting position. Expected: 8902, Got: " << d3 << "\n";
+        return;
+    }
+
+    uint64_t d4 = perft(4, board);
+    if (d4 != 197281)
+    {
+        std::cout << "FAIL: Perft depth 4 starting position. Expected: 197281, Got: " << d4 << "\n";
+        return;
+    }
+
+    std::cout << "All starting position Perft assertions passed successfully!\n";
+}
+
 void runAllTests()
 {
     testMagicAttacks();
     testSquareAttacked();
+    testMoveGenPerft();
 }
 
 } // namespace Tools

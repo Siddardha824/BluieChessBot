@@ -17,7 +17,8 @@ namespace Bluie
 class MoveGen
 {
   public:
-    MoveList getPseudoLegalMoves(Board board);
+    MoveList getPseudoLegalMoves(const Board& board);
+    MoveList getLegalMoves(const Board& board);
 };
 
 } // namespace Bluie

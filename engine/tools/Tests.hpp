@@ -1,9 +1,17 @@
 #pragma once
 
+#include "board/Board.hpp"
+#include <cstdint>
+
 namespace Bluie
 {
 namespace Tools
 {
+
+/**
+ * @brief Performs a recursive Perft walk on the board and returns leaf node counts.
+ */
+uint64_t perft(int depth, Board& board);
 
 /**
  * @brief Run correctness tests for bishop and rook magic lookup tables.
