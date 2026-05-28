@@ -83,8 +83,11 @@ class MainWindow(QMainWindow):
         outer_layout.addLayout(middle_layout, stretch=4)
         
         # 3. Bottom Debug Console
-        self.debug_console = DebugConsoleWidget(theme=self.board.theme)
-        self.debug_console.setFixedHeight(140)
+        self.debug_console = DebugConsoleWidget(
+            theme=self.board.theme,
+            engine_manager=self.game_controller.engine_manager
+        )
+        self.debug_console.setFixedHeight(180)
         
         outer_layout.addWidget(self.debug_console, stretch=1)
         

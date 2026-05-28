@@ -1,13 +1,12 @@
 #include "uci/UCI.hpp"
+#include "attacks/Attacks.hpp" // IWYU pragma: keep
+#include "attacks/AttacksAPI.hpp"
+#include "tools/Tests.hpp"
+#include <chrono>
+#include <cmath>
 #include <iostream>
 #include <sstream>
 #include <vector>
-#include <chrono>
-#include <cmath>
-#include "attacks/Attacks.hpp"
-#include "attacks/AttacksAPI.hpp"
-#include "core/Bitboard.hpp"
-#include "tools/Tests.hpp"
 
 namespace Bluie
 {
@@ -541,19 +540,22 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
         if (tokens.size() < 4)
         {
             std::lock_guard<std::mutex> lock(coutMutex);
-            std::cout << "info string error: bluie-debug attacksto requires a square coordinate and side"
-                      << std::endl;
+            std::cout
+                << "info string error: bluie-debug attacksto requires a square coordinate and side"
+                << std::endl;
             return;
         }
 
         std::string squareStr = tokens[2];
         std::string sideStr = tokens[3];
 
-        if (squareStr.length() < 2) return;
+        if (squareStr.length() < 2)
+            return;
         int col = squareStr[0] - 'a';
         int row = '8' - squareStr[1];
 
-        if (col < 0 || col > 7 || row < 0 || row > 7) return;
+        if (col < 0 || col > 7 || row < 0 || row > 7)
+            return;
         Square sq = static_cast<Square>(row * 8 + col);
 
         Side attackerSide = Side::WHITE;
@@ -565,9 +567,9 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
         Bitboard attackingBB = Attacks::attacksTo(board, sq, attackerSide);
 
         std::lock_guard<std::mutex> lock(coutMutex);
-        std::cout << "info string DEBUG ATTACKSTO " << squareStr << " " 
-                  << (attackerSide == Side::WHITE ? "WHITE" : "BLACK") << " " 
-                  << std::hex << attackingBB << std::dec << std::endl;
+        std::cout << "info string DEBUG ATTACKSTO " << squareStr << " "
+                  << (attackerSide == Side::WHITE ? "WHITE" : "BLACK") << " " << std::hex
+                  << attackingBB << std::dec << std::endl;
     }
     else if (sub == "validate")
     {
