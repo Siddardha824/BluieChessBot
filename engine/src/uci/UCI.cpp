@@ -651,6 +651,57 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
             std::cout << "info string DEBUG PERFTNPS " << static_cast<uint64_t>(nps) << std::endl;
         }
     }
+    else if (sub == "divide")
+    {
+        if (tokens.size() < 3)
+        {
+            std::lock_guard<std::mutex> lock(coutMutex);
+            std::cout << "info string error: bluie-debug divide requires a depth" << std::endl;
+            return;
+        }
+        int depth = std::stoi(tokens[2]);
+        
+        MoveGen moveGen;
+        MoveList moves = moveGen.getLegalMoves(board);
+        
+        uint64_t totalNodes = 0;
+        
+        std::lock_guard<std::mutex> lock(coutMutex);
+        std::cout << "info string DEBUG DIVIDESTART depth " << depth << std::endl;
+        
+        for (int i = 0; i < moves.count; ++i)
+        {
+            Move m = moves.moves[i];
+            Board temp = board;
+            temp.makeMove(m);
+            
+            uint64_t nodes = 0;
+            if (depth > 1)
+            {
+                nodes = Tools::perft(depth - 1, temp);
+            }
+            else
+            {
+                nodes = 1;
+            }
+            
+            totalNodes += nodes;
+            
+            Square from = m.getFrom();
+            Square to = m.getTo();
+            Move::Flag flag = m.getFlags();
+            
+            std::cout << "info string DEBUG DIVIDEMOVE " 
+                      << squareToCoordinates[toIndex(from)] 
+                      << squareToCoordinates[toIndex(to)];
+            if (flag == Move::Flag::PR_QUEEN || flag == Move::Flag::PC_QUEEN) std::cout << "q";
+            else if (flag == Move::Flag::PR_ROOK || flag == Move::Flag::PC_ROOK) std::cout << "r";
+            else if (flag == Move::Flag::PR_BISHOP || flag == Move::Flag::PC_BISHOP) std::cout << "b";
+            else if (flag == Move::Flag::PR_KNIGHT || flag == Move::Flag::PC_KNIGHT) std::cout << "n";
+            std::cout << ": " << nodes << std::endl;
+        }
+        std::cout << "info string DEBUG DIVIDETOTAL " << totalNodes << std::endl;
+    }
     else if (sub == "moveparse")
     {
         if (tokens.size() < 3)
