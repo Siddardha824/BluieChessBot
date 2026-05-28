@@ -99,3 +99,14 @@ class MoveListWidget(QWidget):
     def clear(self) -> None:
         """Clears all moves from the panel."""
         self.table.setRowCount(0)
+
+    def update_theme(self, theme) -> None:
+        """Dynamically repaints the table widget colors."""
+        self.theme = theme
+        bg_hex = self.theme.panel_background.name()
+        text_hex = self.theme.panel_text.name()
+        border_hex = self.theme.panel_border.name()
+        self.table.setStyleSheet(
+            f"QTableWidget {{ background-color: {bg_hex}; color: {text_hex}; border: 1px solid {border_hex}; }}"
+            f"QTableWidget::item {{ padding: 4px; font-weight: 500; border: none; }}"
+        )

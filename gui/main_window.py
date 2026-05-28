@@ -152,6 +152,9 @@ class MainWindow(QMainWindow):
         # Wire two-way reactive page synchronization
         app_state.signals.page_changed.connect(self._sync_active_page)
 
+        # Wire reactive dynamic theme swapper repaints
+        app_state.signals.theme_changed.connect(self._handle_theme_changed)
+
         # Connect clicking event from BoardWidget to Controller slot using safe lambda
         self.board.square_clicked.connect(lambda idx: self.game_controller.handle_square_clicked(idx))
         
@@ -223,6 +226,36 @@ class MainWindow(QMainWindow):
         idx = page_indices.get(page_key, 0)
         self.stacked_widget.setCurrentIndex(idx)
         logger.info(f"MainWindow dynamically synced active view to: {page_key}")
+
+    def _handle_theme_changed(self, theme_name: str) -> None:
+        """Propagates active theme repaint styles recursively across all views on-the-fly."""
+        from gui.themes.theme_manager import theme_manager
+        active_theme = theme_manager.get_theme()
+        
+        # 1. Update the local theme references in panels
+        self.board.theme = active_theme
+        self.eval_bar.theme = active_theme
+        
+        # 2. Trigger updates on panels
+        self.board.update()
+        self.eval_bar.update()
+        self.debug_console.update_theme(active_theme)
+        self.engine_info.update_theme(active_theme)
+        self.move_list.update_theme(active_theme)
+        
+        # 3. Trigger updates on stacked views
+        self.dashboard_view.update_theme()
+        self.analysis_view.update_theme()
+        self.training_view.update_theme()
+        self.testing_view.update_theme()
+        self.benchmark_view.update_theme()
+        self.tools_view.update_theme()
+        self.settings_view.update_theme()
+        self.nav_sidebar.update_theme()
+        
+        # Apply custom root background updates
+        self.centralWidget().setStyleSheet(f"background-color: {active_theme.panel_background.name()};")
+        logger.info(f"MainWindow dynamic repaint of active themes finished: {theme_name}")
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """

@@ -154,3 +154,13 @@ class DebugConsoleWidget(QWidget):
         
         # Smooth scroll to ensure the latest logs are always visible
         self.text_area.moveCursor(self.text_area.textCursor().MoveOperation.End)
+
+    def update_theme(self, theme) -> None:
+        """Dynamically redraws the log stylesheet when themes change."""
+        self.theme = theme
+        bg_hex = self.theme.panel_background.name()
+        text_hex = self.theme.panel_text.name()
+        border_hex = self.theme.panel_border.name()
+        self.text_area.setStyleSheet(
+            f"QTextEdit {{ background-color: {bg_hex}; color: {text_hex}; border: 1px solid {border_hex}; font-family: Consolas; font-size: 11px; }}"
+        )

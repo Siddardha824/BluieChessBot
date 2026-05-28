@@ -7,6 +7,7 @@ from gui.board.highlights import HighlightManager
 from gui.models.move import Move
 from gui.models.pieces import get_color
 from gui.engine.engine_manager import EngineManager
+from gui.core.app_state import app_state
 from gui.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -48,6 +49,9 @@ class GameController:
             lambda otype, hex_bb: self.handle_debug_overlay_received(otype, hex_bb)
         )
         
+        # Wire global engine settings overrides from AppState
+        app_state.signals.engine_config_changed.connect(lambda opts: self._handle_engine_config_changed(opts))
+        
         # 5. Start the engine process automatically on bootstrap
         if os.path.exists(self.engine_path):
             self.engine_manager.start_engine(self.engine_path)
@@ -69,6 +73,11 @@ class GameController:
     def sync_position_and_query_legals(self) -> None:
         """Sends current FEN to the engine and requests the up-to-date legal moves list."""
         if self.engine_manager.engine_status != "Disconnected":
+            # Transmit active engine preferences loaded from preferences.json
+            opts = app_state.engine_options
+            self.engine_manager.send_command(f"setoption name Hash value {opts.get('Hash', 64)}")
+            self.engine_manager.send_command(f"setoption name Threads value {opts.get('Threads', 1)}")
+            
             fen = self.board_state.get_fen()
             self.engine_manager.send_position(fen)
             self.engine_manager.send_command("bluie-debug legalmoves")
@@ -340,6 +349,14 @@ class GameController:
                 self.signals.state_changed.emit()
         except Exception as e:
             logger.error(f"Failed to parse debug overlay value '{value}' for type '{otype}': {e}")
+
+    def _handle_engine_config_changed(self, options: dict) -> None:
+        """Sends updated standard UCI options to the engine subprocess dynamically."""
+        if self.engine_manager.engine_status != "Disconnected":
+            if "Hash" in options:
+                self.engine_manager.send_command(f"setoption name Hash value {options['Hash']}")
+            if "Threads" in options:
+                self.engine_manager.send_command(f"setoption name Threads value {options['Threads']}")
 
     def cleanup(self) -> None:
         """

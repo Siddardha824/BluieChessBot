@@ -159,3 +159,10 @@ class EngineInfoWidget(QWidget):
         }
         mode = mode_map.get(index, "NONE")
         self.overlay_mode_changed.emit(mode)
+
+    def update_theme(self, theme) -> None:
+        """Dynamically repaints panel background and grid stylesheets."""
+        self.theme = theme
+        bg_hex = self.theme.panel_background.name()
+        border_hex = self.theme.panel_border.name()
+        self.setStyleSheet(f"background-color: {bg_hex}; border: 1px solid {border_hex};")
