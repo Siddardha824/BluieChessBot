@@ -5,6 +5,7 @@ from PySide6.QtGui import QCloseEvent
 from gui.board.board_widget import ChessBoard
 from gui.controllers.game_controller import GameController
 from gui.panels import MoveListWidget, DebugConsoleWidget, EngineInfoWidget, EvalBarWidget
+from gui.panels.centipawn_graph_widget import CentipawnGraphWidget
 from gui.widgets.nav_sidebar import NavSidebar
 from gui.views.dashboard_view import DashboardView
 from gui.views.analysis_view import AnalysisView
@@ -102,9 +103,11 @@ class MainWindow(QMainWindow):
         right_layout.setSpacing(10)
         
         self.move_list = MoveListWidget(theme=self.board.theme)
+        self.centipawn_graph = CentipawnGraphWidget(theme=self.board.theme)
         self.engine_info = EngineInfoWidget(theme=self.board.theme)
         
         right_layout.addWidget(self.move_list, stretch=3)
+        right_layout.addWidget(self.centipawn_graph, stretch=1)
         right_layout.addWidget(self.engine_info, stretch=2)
         
         # Keep sidebar size standard to preserve chessboard central aspect ratio
@@ -163,6 +166,9 @@ class MainWindow(QMainWindow):
         
         # Wire Phase 2 move histories
         self.game_controller.signals.move_executed.connect(lambda san: self.move_list.add_move(san))
+        self.game_controller.signals.move_executed.connect(
+            lambda san: self.centipawn_graph.add_score(self.eval_bar.evaluation)
+        )
         
         # Stream user move events in console log
         self.game_controller.signals.move_executed.connect(
@@ -171,6 +177,12 @@ class MainWindow(QMainWindow):
         
         # Wire Phase 3 move undone connection
         self.game_controller.signals.move_undone.connect(lambda: self.move_list.remove_last_move())
+        self.game_controller.signals.move_undone.connect(
+            lambda: self.centipawn_graph.history.pop() if len(self.centipawn_graph.history) > 1 else None
+        )
+        self.game_controller.signals.move_undone.connect(
+            lambda: self.centipawn_graph.update()
+        )
         
         # Wire Engine Signals directly to sub-panels
         engine_mgr = self.game_controller.engine_manager
@@ -184,6 +196,9 @@ class MainWindow(QMainWindow):
         engine_mgr.info_received.connect(lambda state: self.engine_info.update_analysis_state(state))
         engine_mgr.info_received.connect(
             lambda state: self.eval_bar.set_evaluation(state.score, state.is_mate, state.mate_in)
+        )
+        engine_mgr.info_received.connect(
+            lambda state: self.centipawn_graph.update_score(state.score)
         )
         
         # 3. Connect engine process alerts and state status descriptions
@@ -242,6 +257,7 @@ class MainWindow(QMainWindow):
         self.debug_console.update_theme(active_theme)
         self.engine_info.update_theme(active_theme)
         self.move_list.update_theme(active_theme)
+        self.centipawn_graph.update_theme(active_theme)
         
         # 3. Trigger updates on stacked views
         self.dashboard_view.update_theme()
