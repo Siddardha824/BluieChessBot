@@ -61,7 +61,7 @@ class MainWindow(QMainWindow):
         self.analysis_view = AnalysisView()
         self.training_view = TrainingView()
         self.testing_view = TestingView(engine_manager=self.game_controller.engine_manager)
-        self.benchmark_view = BenchmarkView()
+        self.benchmark_view = BenchmarkView(engine_manager=self.game_controller.engine_manager)
         self.tools_view = ToolsView()
         self.settings_view = SettingsView()
         

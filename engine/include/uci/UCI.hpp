@@ -47,6 +47,11 @@ class UCI
     void handleDebug(const std::vector<std::string>& tokens);
 
     /**
+     * @brief Executes multi-threaded search benchmark.
+     */
+    void handleBench(const std::vector<std::string>& tokens);
+
+    /**
      * @brief Parses position strings (e.g. 'position startpos moves e2e4...').
      */
     void parsePosition(const std::vector<std::string>& tokens);

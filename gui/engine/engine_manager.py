@@ -43,6 +43,8 @@ class EngineManager(QObject):
     divide_start = Signal(int)             # Emits target depth
     divide_move = Signal(str, int)         # Emits (move_coordinate, leaf_count)
     divide_total = Signal(int)             # Emits aggregate leaf count
+    bench_start = Signal(int, int, int)    # Emits (depth, threads, hash)
+    bench_total = Signal(int, int, int)    # Emits (nps, nodes, time_ms)
 
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent)
@@ -211,6 +213,16 @@ class EngineManager(QObject):
                         elif sub == "DIVIDETOTAL" and len(parts) >= 5:
                             total_val = int(parts[4])
                             self.divide_total.emit(total_val)
+                        elif sub == "BENCHSTART" and len(parts) >= 7:
+                            d = int(parts[4])
+                            t = int(parts[5])
+                            h = int(parts[6])
+                            self.bench_start.emit(d, t, h)
+                        elif sub == "BENCHTOTAL" and len(parts) >= 7:
+                            nps = int(parts[4])
+                            nodes = int(parts[5])
+                            time_ms = int(parts[6])
+                            self.bench_total.emit(nps, nodes, time_ms)
                 except Exception as e:
                     logger.error(f"Error parsing debug overlay line '{raw_line}': {e}")
                 continue

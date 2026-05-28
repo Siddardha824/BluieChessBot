@@ -126,6 +126,10 @@ void UCI::parseCommand(const std::string& line)
     {
         handleDebug(tokens);
     }
+    else if (cmd == "bench")
+    {
+        handleBench(tokens);
+    }
 }
 
 void UCI::parsePosition(const std::vector<std::string>& tokens)
@@ -761,6 +765,79 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
     {
         std::lock_guard<std::mutex> lock(coutMutex);
         std::cout << "info string error: unknown bluie-debug subcommand " << sub << std::endl;
+    }
+}
+
+void UCI::handleBench(const std::vector<std::string>& tokens)
+{
+    int depth = 5;
+    int threads = numThreads;
+    int hash = hashSizeMB;
+
+    if (tokens.size() > 1)
+    {
+        try {
+            depth = std::stoi(tokens[1]);
+        } catch(...) {}
+    }
+    if (tokens.size() > 2)
+    {
+        try {
+            threads = std::stoi(tokens[2]);
+        } catch(...) {}
+    }
+    if (tokens.size() > 3)
+    {
+        try {
+            hash = std::stoi(tokens[3]);
+        } catch(...) {}
+    }
+
+    if (depth < 1) depth = 1;
+    if (depth > 6) depth = 6;
+    if (threads < 1) threads = 1;
+    if (threads > 32) threads = 32;
+    if (hash < 16) hash = 16;
+    if (hash > 65536) hash = 65536;
+
+    {
+        std::lock_guard<std::mutex> lock(coutMutex);
+        std::cout << "info string DEBUG BENCHSTART " << depth << " " << threads << " " << hash << std::endl;
+    }
+
+    auto startTime = std::chrono::steady_clock::now();
+    std::vector<std::thread> workers;
+    std::vector<uint64_t> threadNodes(threads, 0ULL);
+
+    for (int t = 0; t < threads; ++t)
+    {
+        workers.push_back(std::thread([depth, &threadNodes, t]() {
+            Board localBoard;
+            localBoard.parseFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            threadNodes[t] = Tools::perft(depth, localBoard);
+        }));
+    }
+
+    for (auto& w : workers)
+    {
+        w.join();
+    }
+
+    auto endTime = std::chrono::steady_clock::now();
+    long long totalTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+    if (totalTimeMs == 0) totalTimeMs = 1;
+
+    uint64_t totalNodes = 0;
+    for (uint64_t n : threadNodes)
+    {
+        totalNodes += n;
+    }
+
+    uint64_t totalNps = (totalNodes * 1000ULL) / totalTimeMs;
+
+    {
+        std::lock_guard<std::mutex> lock(coutMutex);
+        std::cout << "info string DEBUG BENCHTOTAL " << totalNps << " " << totalNodes << " " << totalTimeMs << std::endl;
     }
 }
 
