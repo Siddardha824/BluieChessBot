@@ -5,3 +5,4 @@ build/
 gui-old/
 designs/
 .antigravitycli/
+preferences.json

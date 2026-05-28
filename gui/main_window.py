@@ -13,6 +13,7 @@ from gui.views.testing_view import TestingView
 from gui.views.benchmark_view import BenchmarkView
 from gui.views.tools_view import ToolsView
 from gui.views.settings_view import SettingsView
+from gui.core.app_state import app_state
 from gui.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -148,6 +149,9 @@ class MainWindow(QMainWindow):
         # Wire navigation sidebar tab clicks
         self.nav_sidebar.page_selected.connect(lambda page_key: self._handle_page_switch(page_key))
 
+        # Wire two-way reactive page synchronization
+        app_state.signals.page_changed.connect(self._sync_active_page)
+
         # Connect clicking event from BoardWidget to Controller slot using safe lambda
         self.board.square_clicked.connect(lambda idx: self.game_controller.handle_square_clicked(idx))
         
@@ -196,10 +200,17 @@ class MainWindow(QMainWindow):
         )
 
     def _handle_page_switch(self, page_key: str) -> None:
-        """Transitions between views inside the stacked widgets stack."""
-        from gui.core.app_state import app_state
+        """Transitions active page state in the global AppState model."""
         app_state.active_page = page_key
+
+    def _sync_active_page(self, page_key: str) -> None:
+        """Keeps navigation sidebar and stacked widget indices in perfect sync reactively."""
+        self.nav_sidebar.set_active_page(page_key)
         
+        # When moving to Dashboard, refresh lifetime telemetry stats dynamically
+        if page_key == "DASHBOARD":
+            self.dashboard_view.refresh_stats()
+
         page_indices = {
             "DASHBOARD": 0,
             "ANALYSIS": 1,
@@ -211,7 +222,7 @@ class MainWindow(QMainWindow):
         }
         idx = page_indices.get(page_key, 0)
         self.stacked_widget.setCurrentIndex(idx)
-        logger.info(f"MainWindow switched active view tab to: {page_key}")
+        logger.info(f"MainWindow dynamically synced active view to: {page_key}")
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """

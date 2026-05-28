@@ -5,6 +5,8 @@ import traceback
 from PySide6.QtWidgets import QApplication
 
 from gui.main_window import MainWindow
+from gui.themes import theme_manager
+from gui.core.app_state import app_state
 from gui.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -19,6 +21,9 @@ def main():
 
         # Initialize the global Qt application
         app = QApplication(sys.argv)
+
+        # Synchronize loaded preferences theme with ThemeManager
+        theme_manager.set_theme(app_state.active_theme)
 
         logger.info("Creating MainWindow")
         window = MainWindow()

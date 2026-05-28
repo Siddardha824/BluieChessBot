@@ -17,3 +17,7 @@ SPRITE_SHEET = ASSETS_DIR / "Pieces.png"
 # Active UI Theme Name
 ACTIVE_THEME = "BLUIE_QUANTUM"  # Pre-defined options: "LICHESS_BLUE", "BLUIE_QUANTUM", "FOREST_GREEN"
 
+# Unified Preferences Profile path
+PREFERENCES_PATH = ROOT_DIR / "preferences.json"
+
+
