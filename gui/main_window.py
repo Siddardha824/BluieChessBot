@@ -1,10 +1,18 @@
 # gui/main_window.py
 
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
+from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QStackedWidget
 from PySide6.QtGui import QCloseEvent
 from gui.board.board_widget import ChessBoard
 from gui.controllers.game_controller import GameController
 from gui.panels import MoveListWidget, DebugConsoleWidget, EngineInfoWidget, EvalBarWidget
+from gui.widgets.nav_sidebar import NavSidebar
+from gui.views.dashboard_view import DashboardView
+from gui.views.analysis_view import AnalysisView
+from gui.views.training_view import TrainingView
+from gui.views.testing_view import TestingView
+from gui.views.benchmark_view import BenchmarkView
+from gui.views.tools_view import ToolsView
+from gui.views.settings_view import SettingsView
 from gui.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -40,12 +48,35 @@ class MainWindow(QMainWindow):
         Creates layout structures and instantiates view components, 
         injecting the controller's state models directly.
         """
-        container = QWidget()
-        container.setStyleSheet("background-color: #1E1E1E;")
+        # A. Create Navigation Sidebar
+        self.nav_sidebar = NavSidebar()
         
-        outer_layout = QVBoxLayout()
-        outer_layout.setContentsMargins(10, 10, 10, 10)
-        outer_layout.setSpacing(10)
+        # B. Create Stacked Views Widget
+        self.stacked_widget = QStackedWidget()
+        
+        # C. Instantiate Modular Tab Views
+        self.dashboard_view = DashboardView()
+        self.analysis_view = AnalysisView()
+        self.training_view = TrainingView()
+        self.testing_view = TestingView()
+        self.benchmark_view = BenchmarkView()
+        self.tools_view = ToolsView()
+        self.settings_view = SettingsView()
+        
+        # D. Add views to stacked stack
+        self.stacked_widget.addWidget(self.dashboard_view)
+        self.stacked_widget.addWidget(self.analysis_view)
+        self.stacked_widget.addWidget(self.training_view)
+        self.stacked_widget.addWidget(self.testing_view)
+        self.stacked_widget.addWidget(self.benchmark_view)
+        self.stacked_widget.addWidget(self.tools_view)
+        self.stacked_widget.addWidget(self.settings_view)
+
+        # E. Create a container widget that encapsulates our entire legacy chess analysis workspace
+        analysis_content = QWidget()
+        analysis_layout = QVBoxLayout(analysis_content)
+        analysis_layout.setContentsMargins(10, 10, 10, 10)
+        analysis_layout.setSpacing(10)
         
         middle_layout = QHBoxLayout()
         middle_layout.setSpacing(10)
@@ -79,8 +110,7 @@ class MainWindow(QMainWindow):
         right_sidebar.setFixedWidth(280)
         
         middle_layout.addWidget(right_sidebar)
-        
-        outer_layout.addLayout(middle_layout, stretch=4)
+        analysis_layout.addLayout(middle_layout, stretch=4)
         
         # 3. Bottom Debug Console
         self.debug_console = DebugConsoleWidget(
@@ -89,15 +119,35 @@ class MainWindow(QMainWindow):
         )
         self.debug_console.setFixedHeight(180)
         
-        outer_layout.addWidget(self.debug_console, stretch=1)
+        analysis_layout.addWidget(self.debug_console, stretch=1)
         
-        container.setLayout(outer_layout)
-        self.setCentralWidget(container)
+        # Inject the actual chess workspace inside the modular AnalysisView
+        # Removes the placeholder notice widget
+        if self.analysis_view.main_layout.count() > 0:
+            placeholder = self.analysis_view.main_layout.itemAt(0).widget()
+            if placeholder:
+                placeholder.setParent(None)
+        self.analysis_view.main_layout.addWidget(analysis_content)
+
+        # F. Assemble root layout (HBoxLayout: Left Sidebar | Central QStackedWidget)
+        root_widget = QWidget()
+        root_widget.setStyleSheet("background-color: #0B0813;")  # Custom cosmic background
+        root_layout = QHBoxLayout(root_widget)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.setSpacing(0)
+        
+        root_layout.addWidget(self.nav_sidebar)
+        root_layout.addWidget(self.stacked_widget)
+        
+        self.setCentralWidget(root_widget)
 
     def wire_connections(self) -> None:
         """
         Locks in uni-directional events using Qt Signals & Slots.
         """
+        # Wire navigation sidebar tab clicks
+        self.nav_sidebar.page_selected.connect(lambda page_key: self._handle_page_switch(page_key))
+
         # Connect clicking event from BoardWidget to Controller slot using safe lambda
         self.board.square_clicked.connect(lambda idx: self.game_controller.handle_square_clicked(idx))
         
@@ -144,6 +194,24 @@ class MainWindow(QMainWindow):
         self.engine_info.overlay_mode_changed.connect(
             lambda mode: self.game_controller.set_debug_overlay_mode(mode)
         )
+
+    def _handle_page_switch(self, page_key: str) -> None:
+        """Transitions between views inside the stacked widgets stack."""
+        from gui.core.app_state import app_state
+        app_state.active_page = page_key
+        
+        page_indices = {
+            "DASHBOARD": 0,
+            "ANALYSIS": 1,
+            "TRAINING": 2,
+            "TESTING": 3,
+            "BENCHMARK": 4,
+            "TOOLS": 5,
+            "SETTINGS": 6
+        }
+        idx = page_indices.get(page_key, 0)
+        self.stacked_widget.setCurrentIndex(idx)
+        logger.info(f"MainWindow switched active view tab to: {page_key}")
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """
