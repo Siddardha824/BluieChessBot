@@ -1,11 +1,13 @@
 #include "uci/UCI.hpp"
-#include "attacks/Attacks.hpp" // IWYU pragma: keep
-#include "core/Bitboard.hpp"
-#include <chrono>
-#include <cmath>
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <chrono>
+#include <cmath>
+#include "attacks/Attacks.hpp"
+#include "attacks/AttacksAPI.hpp"
+#include "core/Bitboard.hpp"
+#include "tools/Tests.hpp"
 
 namespace Bluie
 {
@@ -522,54 +524,11 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
         }
 
         uint64_t attacksBB = 0ULL;
-        uint64_t occAll = board.getOccupancy(Side::NONE);
-
-        int startPiece = (sideToGen == Side::WHITE) ? 0 : 6;
-        int endPiece = startPiece + 6;
-
-        for (int pInt = startPiece; pInt < endPiece; ++pInt)
+        for (int sq = 0; sq < 64; ++sq)
         {
-            Piece currentPiece = static_cast<Piece>(pInt);
-            uint64_t bb = board.getPieceBitboard(currentPiece);
-
-            while (bb)
+            if (Attacks::isSquareAttacked(board, static_cast<Square>(sq), sideToGen))
             {
-                int sq = Bitboards::getLSBIndex(bb);
-                Square fromSq = static_cast<Square>(sq);
-
-                switch (currentPiece)
-                {
-                case Piece::P:
-                case Piece::p:
-                    attacksBB |= Attacks::pawnAttacks[toIndex(sideToGen)][sq];
-                    break;
-                case Piece::N:
-                case Piece::n:
-                    attacksBB |= Attacks::knightAttacks[sq];
-                    break;
-                case Piece::K:
-                case Piece::k:
-                    attacksBB |= Attacks::kingAttacks[sq];
-                    break;
-                case Piece::B:
-                case Piece::b:
-                    attacksBB |=
-                        Attacks::bishopAttacks[sq][Attacks::getBishopMagicIndex(fromSq, occAll)];
-                    break;
-                case Piece::R:
-                case Piece::r:
-                    attacksBB |=
-                        Attacks::rookAttacks[sq][Attacks::getRookMagicIndex(fromSq, occAll)];
-                    break;
-                case Piece::Q:
-                case Piece::q:
-                    attacksBB |= Attacks::getQueenAttack(fromSq, occAll);
-                    break;
-                default:
-                    break;
-                }
-
-                Bitboards::popLSB(bb);
+                attacksBB |= (1ULL << sq);
             }
         }
 
@@ -577,11 +536,48 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
         std::cout << "info string DEBUG ATTACKS " << (sideToGen == Side::WHITE ? "WHITE" : "BLACK")
                   << " " << std::hex << attacksBB << std::dec << std::endl;
     }
+    else if (sub == "attacksto")
+    {
+        if (tokens.size() < 4)
+        {
+            std::lock_guard<std::mutex> lock(coutMutex);
+            std::cout << "info string error: bluie-debug attacksto requires a square coordinate and side"
+                      << std::endl;
+            return;
+        }
+
+        std::string squareStr = tokens[2];
+        std::string sideStr = tokens[3];
+
+        if (squareStr.length() < 2) return;
+        int col = squareStr[0] - 'a';
+        int row = '8' - squareStr[1];
+
+        if (col < 0 || col > 7 || row < 0 || row > 7) return;
+        Square sq = static_cast<Square>(row * 8 + col);
+
+        Side attackerSide = Side::WHITE;
+        if (sideStr == "black" || sideStr == "b")
+        {
+            attackerSide = Side::BLACK;
+        }
+
+        Bitboard attackingBB = Attacks::attacksTo(board, sq, attackerSide);
+
+        std::lock_guard<std::mutex> lock(coutMutex);
+        std::cout << "info string DEBUG ATTACKSTO " << squareStr << " " 
+                  << (attackerSide == Side::WHITE ? "WHITE" : "BLACK") << " " 
+                  << std::hex << attackingBB << std::dec << std::endl;
+    }
     else if (sub == "validate")
     {
         std::lock_guard<std::mutex> lock(coutMutex);
         bool isValid = board.validate();
         std::cout << "info string DEBUG VALIDATE " << (isValid ? "OK" : "INVALID") << std::endl;
+    }
+    else if (sub == "runtests")
+    {
+        Tools::runAllTests();
     }
     else if (sub == "legalmoves")
     {

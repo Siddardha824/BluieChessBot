@@ -21,5 +21,10 @@ void testMagicAttacks();
  */
 void writeAttackTablesHeaderFile();
 
+/**
+ * @brief Runs all attack system tests.
+ */
+void runAllTests();
+
 } // namespace Tools
 } // namespace Bluie

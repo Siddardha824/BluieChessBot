@@ -16,6 +16,7 @@ add_executable(BluieChessBot
     src/core/Debug.cpp
     src/board/Board.cpp
     src/uci/UCI.cpp
+    src/attacks/AttacksAPI.cpp
     tools/Random.cpp
     tools/AttacksOnTheFly.cpp
     tools/MagicGenerator.cpp
