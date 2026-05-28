@@ -40,6 +40,9 @@ class EngineManager(QObject):
     status_changed = Signal(str)           # Emits engine status description
     engine_error = Signal(str)             # Emits process error descriptions
     debug_overlay_received = Signal(str, str) # Emits (overlay_type, hex_bitboard)
+    divide_start = Signal(int)             # Emits target depth
+    divide_move = Signal(str, int)         # Emits (move_coordinate, leaf_count)
+    divide_total = Signal(int)             # Emits aggregate leaf count
 
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent)
@@ -198,6 +201,16 @@ class EngineManager(QObject):
                         elif sub == "LEGALS":
                             moves_str = " ".join(parts[4:]) if len(parts) > 4 else ""
                             self.debug_overlay_received.emit("ENGINE_LEGALS", moves_str)
+                        elif sub == "DIVIDESTART" and len(parts) >= 6:
+                            depth_val = int(parts[5])
+                            self.divide_start.emit(depth_val)
+                        elif sub == "DIVIDEMOVE" and len(parts) >= 6:
+                            move_part = parts[4].replace(":", "")
+                            nodes_val = int(parts[5])
+                            self.divide_move.emit(move_part, nodes_val)
+                        elif sub == "DIVIDETOTAL" and len(parts) >= 5:
+                            total_val = int(parts[4])
+                            self.divide_total.emit(total_val)
                 except Exception as e:
                     logger.error(f"Error parsing debug overlay line '{raw_line}': {e}")
                 continue
