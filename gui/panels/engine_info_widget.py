@@ -72,7 +72,8 @@ class EngineInfoWidget(QWidget):
             "White Attacks",
             "Black Attacks",
             "Attacks to Selected (White)",
-            "Attacks to Selected (Black)"
+            "Attacks to Selected (Black)",
+            "Engine Legal Moves"
         ])
         self.overlay_dropdown.currentIndexChanged.connect(self._handle_overlay_changed)
         
@@ -153,7 +154,8 @@ class EngineInfoWidget(QWidget):
             1: "WHITE_ATTACKS",
             2: "BLACK_ATTACKS",
             3: "ATTACKSTO_WHITE",
-            4: "ATTACKSTO_BLACK"
+            4: "ATTACKSTO_BLACK",
+            5: "ENGINE_LEGALS"
         }
         mode = mode_map.get(index, "NONE")
         self.overlay_mode_changed.emit(mode)

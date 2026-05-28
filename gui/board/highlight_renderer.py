@@ -81,6 +81,8 @@ class HighlightRenderer:
                 overlay_color = QColor(0, 191, 165, 80)  # High-contrast Emerald Teal for White Attacks
             elif "BLACK" in overlay_mode:
                 overlay_color = QColor(239, 83, 80, 80)   # Premium Crimson Red for Black Attacks
+            elif "ENGINE_LEGALS" in overlay_mode:
+                overlay_color = QColor(124, 77, 255, 100) # Premium Royal Blue / Indigo for Engine Legal Moves
                 
             for dest in hl.debug_overlay_squares:
                 rect = get_rect(dest)

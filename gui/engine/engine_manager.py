@@ -184,17 +184,20 @@ class EngineManager(QObject):
             if "info string DEBUG " in raw_line:
                 try:
                     parts = raw_line.split()
-                    if len(parts) >= 6:
-                        sub = parts[3]  # "ATTACKS" or "ATTACKSTO"
-                        if sub == "ATTACKS":
+                    if len(parts) >= 4:
+                        sub = parts[3]  # "ATTACKS", "ATTACKSTO", or "LEGALS"
+                        if sub == "ATTACKS" and len(parts) >= 6:
                             side = parts[4]  # "WHITE" or "BLACK"
                             hex_val = parts[5]
                             self.debug_overlay_received.emit(f"ATTACKS_{side}", hex_val)
-                        elif sub == "ATTACKSTO":
+                        elif sub == "ATTACKSTO" and len(parts) >= 6:
                             sq = parts[4]  # "e3"
                             side = parts[5]  # "WHITE" or "BLACK"
                             hex_val = parts[6] if len(parts) > 6 else "0"
                             self.debug_overlay_received.emit(f"ATTACKSTO_{sq}_{side}", hex_val)
+                        elif sub == "LEGALS":
+                            moves_str = " ".join(parts[4:]) if len(parts) > 4 else ""
+                            self.debug_overlay_received.emit("ENGINE_LEGALS", moves_str)
                 except Exception as e:
                     logger.error(f"Error parsing debug overlay line '{raw_line}': {e}")
                 continue

@@ -51,10 +51,27 @@ class GameController:
         # 5. Start the engine process automatically on bootstrap
         if os.path.exists(self.engine_path):
             self.engine_manager.start_engine(self.engine_path)
+            # Query legal moves when engine becomes ready
+            self.engine_manager.status_changed.connect(
+                lambda status: self._handle_engine_status_for_legals(status)
+            )
+            # Fallback query after 800ms in case the status signal was already emitted
+            QTimer.singleShot(800, self.sync_position_and_query_legals)
         else:
             logger.warning(f"Engine executable not found at startup: {self.engine_path}. Awaiting manual launch.")
             
         logger.info("GameController successfully initialized and engine process started.")
+
+    def _handle_engine_status_for_legals(self, status: str) -> None:
+        if status == "Ready":
+            self.sync_position_and_query_legals()
+
+    def sync_position_and_query_legals(self) -> None:
+        """Sends current FEN to the engine and requests the up-to-date legal moves list."""
+        if self.engine_manager.engine_status != "Disconnected":
+            fen = self.board_state.get_fen()
+            self.engine_manager.send_position(fen)
+            self.engine_manager.send_command("bluie-debug legalmoves")
 
     def _execute_and_register_move(self, move: Move) -> str | None:
         """
@@ -86,6 +103,7 @@ class GameController:
         # 4. Trigger views repaint
         self.signals.state_changed.emit()
         self.query_active_debug_overlay()
+        self.sync_position_and_query_legals()
         return san_move
 
     def handle_square_clicked(self, square_idx: int | None) -> None:
@@ -252,6 +270,7 @@ class GameController:
             # 5. Trigger views repaint
             self.signals.state_changed.emit()
             self.query_active_debug_overlay()
+            self.sync_position_and_query_legals()
             logger.info("Successfully undone the last played move.")
 
     def set_debug_overlay_mode(self, mode: str) -> None:
@@ -276,6 +295,8 @@ class GameController:
             self.engine_manager.send_command("bluie-debug attacks white")
         elif mode == "BLACK_ATTACKS":
             self.engine_manager.send_command("bluie-debug attacks black")
+        elif mode == "ENGINE_LEGALS":
+            self.engine_manager.send_command("bluie-debug legalmoves")
         elif mode.startswith("ATTACKSTO_"):
             sq_idx = self.highlight_manager.selected_square
             if sq_idx is not None:
@@ -290,19 +311,35 @@ class GameController:
                 self.highlight_manager.debug_overlay_squares = []
                 self.signals.state_changed.emit()
 
-    def handle_debug_overlay_received(self, otype: str, hex_bb: str) -> None:
-        """Parses the received engine threat bitboard and triggers a board repaint."""
+    def handle_debug_overlay_received(self, otype: str, value: str) -> None:
+        """Parses the received engine threat bitboard or legal moves list and triggers a board repaint."""
         try:
-            val = int(hex_bb, 16)
-            squares = []
-            for i in range(64):
-                if (val >> i) & 1:
-                    squares.append(i)
-                    
-            self.highlight_manager.debug_overlay_squares = squares
-            self.signals.state_changed.emit()
-        except ValueError:
-            logger.error(f"Failed to parse debug overlay bitboard hex: {hex_bb}")
+            if otype == "ENGINE_LEGALS":
+                # Stash it directly in BoardState!
+                self.board_state.cached_engine_legal_moves = value.split()
+                
+                # If the active debug overlay mode is ENGINE_LEGALS, highlight all destination squares
+                if self.highlight_manager.debug_overlay_mode == "ENGINE_LEGALS":
+                    squares = []
+                    for move_str in self.board_state.cached_engine_legal_moves:
+                        if len(move_str) >= 4:
+                            to_coord = move_str[2:4]
+                            to_idx = self.board_state.coordinate_to_index(to_coord)
+                            if to_idx is not None and to_idx not in squares:
+                                squares.append(to_idx)
+                    self.highlight_manager.debug_overlay_squares = squares
+                    self.signals.state_changed.emit()
+            else:
+                val = int(value, 16)
+                squares = []
+                for i in range(64):
+                    if (val >> i) & 1:
+                        squares.append(i)
+                        
+                self.highlight_manager.debug_overlay_squares = squares
+                self.signals.state_changed.emit()
+        except Exception as e:
+            logger.error(f"Failed to parse debug overlay value '{value}' for type '{otype}': {e}")
 
     def cleanup(self) -> None:
         """
