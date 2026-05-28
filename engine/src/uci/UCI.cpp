@@ -28,7 +28,7 @@ static std::vector<std::string> tokenize(const std::string& input)
     return tokens;
 }
 
-UCI::UCI() : isSearching(false)
+UCI::UCI() : isSearching(false), hashSizeMB(64), numThreads(1)
 {
     // Disable piping lag buffers on stdout to ensure immediate communication
     std::setvbuf(stdout, NULL, _IONBF, 0);
@@ -75,7 +75,30 @@ void UCI::parseCommand(const std::string& line)
     }
     else if (cmd == "setoption")
     {
-        // Accept and acknowledge parameters setting silently
+        if (tokens.size() >= 5 && tokens[1] == "name" && tokens[3] == "value")
+        {
+            std::string name = tokens[2];
+            std::string valStr = tokens[4];
+            
+            if (name == "Hash")
+            {
+                try {
+                    int val = std::stoi(valStr);
+                    hashSizeMB = val;
+                    std::lock_guard<std::mutex> lock(coutMutex);
+                    std::cout << "info string ACK: Hash set to " << hashSizeMB << " MB" << std::endl;
+                } catch(...) {}
+            }
+            else if (name == "Threads")
+            {
+                try {
+                    int val = std::stoi(valStr);
+                    numThreads = val;
+                    std::lock_guard<std::mutex> lock(coutMutex);
+                    std::cout << "info string ACK: Threads set to " << numThreads << std::endl;
+                } catch(...) {}
+            }
+        }
     }
     else if (cmd == "ucinewgame")
     {

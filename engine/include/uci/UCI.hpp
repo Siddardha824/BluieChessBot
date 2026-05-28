@@ -75,6 +75,8 @@ class UCI
     std::atomic<bool> isSearching; ///< Atomic flag indicating active calculation state
     std::thread searchThread;      ///< Thread handle for asynchronous calculations
     std::mutex coutMutex;          ///< Mutex guarding standard output stream prints
+    int hashSizeMB;                ///< Transposition table allocation size in megabytes
+    int numThreads;                ///< Number of search calculation threads
 };
 
 } // namespace Bluie
