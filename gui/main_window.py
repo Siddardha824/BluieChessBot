@@ -139,6 +139,11 @@ class MainWindow(QMainWindow):
         engine_mgr.bestmove_received.connect(
             lambda move: self.debug_console.log_message("INFO", f"Engine chose move: {move}")
         )
+        
+        # Wire Debug Overlay dropdown changes from right panel to GameController
+        self.engine_info.overlay_mode_changed.connect(
+            lambda mode: self.game_controller.set_debug_overlay_mode(mode)
+        )
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """

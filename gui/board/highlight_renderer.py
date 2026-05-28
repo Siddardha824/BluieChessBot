@@ -1,6 +1,6 @@
 # gui/board/highlight_renderer.py
 
-from PySide6.QtGui import QPainter, QPen
+from PySide6.QtGui import QPainter, QPen, QColor
 from PySide6.QtCore import Qt, QRect
 from typing import TYPE_CHECKING
 
@@ -70,5 +70,20 @@ class HighlightRenderer:
                 painter.setPen(pen)
                 painter.setBrush(Qt.BrushStyle.NoBrush)
                 painter.drawEllipse(center, radius, radius)
+
+        # 5. Debug Overlay Squares (clean, premium translucent fills without borders to prevent clutter)
+        if hasattr(hl, "debug_overlay_squares") and hl.debug_overlay_squares:
+            overlay_mode = getattr(hl, "debug_overlay_mode", "NONE")
+            
+            overlay_color = QColor(255, 179, 0, 80)  # Vibrant Amber Gold for Attacks to Selected
+            
+            if "WHITE" in overlay_mode:
+                overlay_color = QColor(0, 191, 165, 80)  # High-contrast Emerald Teal for White Attacks
+            elif "BLACK" in overlay_mode:
+                overlay_color = QColor(239, 83, 80, 80)   # Premium Crimson Red for Black Attacks
+                
+            for dest in hl.debug_overlay_squares:
+                rect = get_rect(dest)
+                painter.fillRect(rect, overlay_color)
                 
         painter.restore()

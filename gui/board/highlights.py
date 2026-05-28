@@ -15,6 +15,9 @@ class HighlightManager:
         self.last_move_to: Optional[int] = None
         
         self.check_square: Optional[int] = None
+        
+        self.debug_overlay_squares: List[int] = []
+        self.debug_overlay_mode: str = "NONE"
 
     def select_square(self, square_idx: Optional[int], legal_destinations: List[int] | None = None) -> None:
         """
@@ -51,3 +54,5 @@ class HighlightManager:
         self.last_move_from = None
         self.last_move_to = None
         self.check_square = None
+        self.debug_overlay_squares = []
+        self.debug_overlay_mode = "NONE"

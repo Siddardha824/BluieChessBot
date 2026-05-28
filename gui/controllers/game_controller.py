@@ -44,6 +44,9 @@ class GameController:
         
         # 4. Connect engine signals directly to Python slot methods using safe lambdas
         self.engine_manager.bestmove_received.connect(lambda move: self.handle_engine_best_move(move))
+        self.engine_manager.debug_overlay_received.connect(
+            lambda otype, hex_bb: self.handle_debug_overlay_received(otype, hex_bb)
+        )
         
         # 5. Start the engine process automatically on bootstrap
         if os.path.exists(self.engine_path):
@@ -82,6 +85,7 @@ class GameController:
             
         # 4. Trigger views repaint
         self.signals.state_changed.emit()
+        self.query_active_debug_overlay()
         return san_move
 
     def handle_square_clicked(self, square_idx: int | None) -> None:
@@ -98,6 +102,7 @@ class GameController:
             logger.debug("GameController clearing selection due to click outside board boundaries.")
             self.highlight_manager.clear_selection()
             self.signals.state_changed.emit()
+            self.query_active_debug_overlay()
             return
 
         piece = self.board_state.piece_at(square_idx)
@@ -105,16 +110,19 @@ class GameController:
         
         logger.debug(f"GameController processing click on square {square_idx} containing '{piece}'. Active selection: {selected_idx}")
 
+        is_overlay_active = self.highlight_manager.debug_overlay_mode.startswith("ATTACKSTO_")
+
         # --- Case A: No square is currently selected ---
         if selected_idx is None:
-            # Ignore clicks on empty squares
-            if piece == '.':
-                return
-                
-            # Restrict selection to pieces matching the active turn's color
-            if get_color(piece) != self.board_state.turn:
-                logger.debug("GameController ignored click: not the active side to move's piece.")
-                return
+            # If debug overlay mode is active, allow selecting empty or opponent squares
+            if piece == '.' or get_color(piece) != self.board_state.turn:
+                if is_overlay_active:
+                    self.highlight_manager.select_square(square_idx, [])
+                    self.signals.state_changed.emit()
+                    self.query_active_debug_overlay()
+                    return
+                else:
+                    return
                 
             # Select the piece and cache legal move target squares
             legal_destinations = self.board_state.get_legal_moves(square_idx)
@@ -127,6 +135,7 @@ class GameController:
             if square_idx == selected_idx:
                 self.highlight_manager.clear_selection()
                 self.signals.state_changed.emit()
+                self.query_active_debug_overlay()
                 return
 
             # B2. Clicking a legal target square executes the move
@@ -153,11 +162,17 @@ class GameController:
                 self.highlight_manager.select_square(square_idx, legal_destinations)
                 self.signals.state_changed.emit()
                 
-            # B4. Clicking anywhere else (illegal move / empty square) cancels selection
+            # B4. Clicking anywhere else (illegal move / empty square) cancels selection or switches for debug
             else:
-                logger.debug("GameController clearing selection due to illegal square click.")
-                self.highlight_manager.clear_selection()
-                self.signals.state_changed.emit()
+                if is_overlay_active:
+                    logger.debug(f"GameController switching selection directly to square {square_idx} for debug threats")
+                    self.highlight_manager.select_square(square_idx, [])
+                    self.signals.state_changed.emit()
+                else:
+                    logger.debug("GameController clearing selection due to illegal square click.")
+                    self.highlight_manager.clear_selection()
+                    self.signals.state_changed.emit()
+        self.query_active_debug_overlay()
 
     def is_engine_turn(self) -> bool:
         """
@@ -236,7 +251,58 @@ class GameController:
             
             # 5. Trigger views repaint
             self.signals.state_changed.emit()
+            self.query_active_debug_overlay()
             logger.info("Successfully undone the last played move.")
+
+    def set_debug_overlay_mode(self, mode: str) -> None:
+        """Sets the active debug overlay mode and triggers query."""
+        self.highlight_manager.debug_overlay_mode = mode
+        self.query_active_debug_overlay()
+
+    def query_active_debug_overlay(self) -> None:
+        """Sends the appropriate uci debug command to request threat overlays."""
+        mode = self.highlight_manager.debug_overlay_mode
+        if mode == "NONE":
+            self.highlight_manager.debug_overlay_squares = []
+            self.signals.state_changed.emit()
+            return
+            
+        fen = self.board_state.get_fen()
+        
+        # Sync board position to engine
+        self.engine_manager.send_position(fen)
+        
+        if mode == "WHITE_ATTACKS":
+            self.engine_manager.send_command("bluie-debug attacks white")
+        elif mode == "BLACK_ATTACKS":
+            self.engine_manager.send_command("bluie-debug attacks black")
+        elif mode.startswith("ATTACKSTO_"):
+            sq_idx = self.highlight_manager.selected_square
+            if sq_idx is not None:
+                files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+                col = sq_idx % 8
+                row = 8 - (sq_idx // 8)
+                sq_str = f"{files[col]}{row}"
+                
+                side = "white" if "WHITE" in mode else "black"
+                self.engine_manager.send_command(f"bluie-debug attacksto {sq_str} {side}")
+            else:
+                self.highlight_manager.debug_overlay_squares = []
+                self.signals.state_changed.emit()
+
+    def handle_debug_overlay_received(self, otype: str, hex_bb: str) -> None:
+        """Parses the received engine threat bitboard and triggers a board repaint."""
+        try:
+            val = int(hex_bb, 16)
+            squares = []
+            for i in range(64):
+                if (val >> i) & 1:
+                    squares.append(i)
+                    
+            self.highlight_manager.debug_overlay_squares = squares
+            self.signals.state_changed.emit()
+        except ValueError:
+            logger.error(f"Failed to parse debug overlay bitboard hex: {hex_bb}")
 
     def cleanup(self) -> None:
         """

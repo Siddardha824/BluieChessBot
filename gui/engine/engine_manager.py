@@ -39,6 +39,7 @@ class EngineManager(QObject):
     uci_io_logged = Signal(str, str)        # Emits (raw_text, direction "IN" or "OUT")
     status_changed = Signal(str)           # Emits engine status description
     engine_error = Signal(str)             # Emits process error descriptions
+    debug_overlay_received = Signal(str, str) # Emits (overlay_type, hex_bitboard)
 
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent)
@@ -179,6 +180,25 @@ class EngineManager(QObject):
             # Log as IN stream
             self.uci_io_logged.emit(raw_line, "IN")
             
+            # Intercept custom debug overlay outputs
+            if "info string DEBUG " in raw_line:
+                try:
+                    parts = raw_line.split()
+                    if len(parts) >= 6:
+                        sub = parts[3]  # "ATTACKS" or "ATTACKSTO"
+                        if sub == "ATTACKS":
+                            side = parts[4]  # "WHITE" or "BLACK"
+                            hex_val = parts[5]
+                            self.debug_overlay_received.emit(f"ATTACKS_{side}", hex_val)
+                        elif sub == "ATTACKSTO":
+                            sq = parts[4]  # "e3"
+                            side = parts[5]  # "WHITE" or "BLACK"
+                            hex_val = parts[6] if len(parts) > 6 else "0"
+                            self.debug_overlay_received.emit(f"ATTACKSTO_{sq}_{side}", hex_val)
+                except Exception as e:
+                    logger.error(f"Error parsing debug overlay line '{raw_line}': {e}")
+                continue
+
             # Parse line using static UCIParser
             try:
                 parsed = UCIParser.parse_line(raw_line, is_white_turn=self.is_white_turn)

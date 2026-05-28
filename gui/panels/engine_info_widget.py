@@ -1,9 +1,11 @@
 # gui/panels/engine_info_widget.py
 
-from PySide6.QtWidgets import QWidget, QFormLayout, QLabel, QVBoxLayout
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QFormLayout, QLabel, QVBoxLayout, QComboBox
+from PySide6.QtCore import Qt, Signal
 
 class EngineInfoWidget(QWidget):
+    overlay_mode_changed = Signal(str)
+
     def __init__(self, theme=None, parent=None):
         """
         Initializes the Engine Info Panel.
@@ -58,6 +60,26 @@ class EngineInfoWidget(QWidget):
             
             self.form.addRow(name_lbl, val_lbl)
             
+        # Dropdown (ComboBox) for Debug Overlay Modes
+        self.overlay_dropdown = QComboBox()
+        self.overlay_dropdown.setStyleSheet(
+            f"QComboBox {{ background-color: {self.theme.panel_background.name()}; color: {self.theme.panel_text.name()}; "
+            f"border: 1px solid {self.theme.panel_border.name()}; border-radius: 3px; padding: 2px 15px 2px 4px; font-family: 'Outfit'; font-size: 11px; }}"
+            f"QComboBox QAbstractItemView {{ background-color: {self.theme.panel_background.name()}; color: {self.theme.panel_text.name()}; selection-background-color: {self.theme.panel_border.name()}; }}"
+        )
+        self.overlay_dropdown.addItems([
+            "None",
+            "White Attacks",
+            "Black Attacks",
+            "Attacks to Selected (White)",
+            "Attacks to Selected (Black)"
+        ])
+        self.overlay_dropdown.currentIndexChanged.connect(self._handle_overlay_changed)
+        
+        overlay_lbl = QLabel("Debug Overlay:")
+        overlay_lbl.setStyleSheet(label_style)
+        self.form.addRow(overlay_lbl, self.overlay_dropdown)
+
         layout.addLayout(self.form)
         layout.addStretch()
 
@@ -124,3 +146,14 @@ class EngineInfoWidget(QWidget):
         self.score_val.setStyleSheet(f"font-weight: bold; color: {self.theme.panel_text.name()}; font-family: 'Outfit'; font-size: 13px;")
         self.pv_val.setText("-")
         self.best_move_val.setText("-")
+
+    def _handle_overlay_changed(self, index: int) -> None:
+        mode_map = {
+            0: "NONE",
+            1: "WHITE_ATTACKS",
+            2: "BLACK_ATTACKS",
+            3: "ATTACKSTO_WHITE",
+            4: "ATTACKSTO_BLACK"
+        }
+        mode = mode_map.get(index, "NONE")
+        self.overlay_mode_changed.emit(mode)
