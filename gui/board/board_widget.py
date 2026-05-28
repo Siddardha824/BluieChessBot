@@ -11,7 +11,7 @@ from .coordinate_renderer import CoordinateRenderer
 from .highlight_renderer import HighlightRenderer
 from .piece_renderer import PieceRenderer
 from .render_context import RenderContext
-from gui.themes.default_theme import DefaultTheme
+from gui.themes import theme_manager, ActiveTheme
 from gui.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -20,7 +20,7 @@ class ChessBoard(QWidget):
     # Qt Signal emitted when a mouse press occurs (passes square index or None if clicked outside)
     square_clicked = Signal(object)
 
-    def __init__(self, parent=None):
+    def __init__(self, theme=None, parent=None):
         """
         Initializes the interactive ChessBoard QWidget.
         Acts as a pure presentation view component, relying on injected models and signals.
@@ -34,7 +34,7 @@ class ChessBoard(QWidget):
         
         # 2. View Geometry & Theme
         self.board_geometry = BoardGeometry()
-        self.theme = DefaultTheme()
+        self.theme = theme if theme is not None else theme_manager.get_theme()
         self.coord_helper = CoordinateHelper(self)
         
         # 3. Individual decoupled Layer Renderers

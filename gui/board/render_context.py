@@ -5,13 +5,13 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .board_geometry import BoardGeometry
-    from gui.themes.default_theme import DefaultTheme
+    from gui.themes import ActiveTheme
     from gui.models.board_state import BoardState
     from .highlights import HighlightManager
 
 @dataclass
 class RenderContext:
     geometry: "BoardGeometry"
-    theme: "DefaultTheme"
+    theme: "ActiveTheme"
     board_state: "BoardState"
     highlight_manager: "HighlightManager"

@@ -15,8 +15,8 @@ class EvalBarWidget(QWidget):
         self.setMinimumWidth(12)
         self.setMaximumWidth(18)
         
-        from gui.themes.default_theme import DefaultTheme
-        self.theme = theme if theme is not None else DefaultTheme()
+        from gui.themes import theme_manager
+        self.theme = theme if theme is not None else theme_manager.get_theme()
         
         # Center represents 0.0 (even game)
         # Center represents 0.0 (even game)

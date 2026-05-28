@@ -12,8 +12,8 @@ class EngineInfoWidget(QWidget):
         Exposes deep search metrics dynamically formatted and styled using the active theme.
         """
         super().__init__(parent)
-        from gui.themes.default_theme import DefaultTheme
-        self.theme = theme if theme is not None else DefaultTheme()
+        from gui.themes import theme_manager
+        self.theme = theme if theme is not None else theme_manager.get_theme()
         self.setup_ui()
 
     def setup_ui(self) -> None:

@@ -1,124 +1,85 @@
 # gui/themes/theme_manager.py
 
-from dataclasses import dataclass, field
 from PySide6.QtGui import QColor
+from .active_theme import ActiveTheme
 from . import colors
-
-@dataclass
-class ThemePalette:
-    name: str
-    
-    # Chessboard Squares
-    light_square: QColor
-    dark_square: QColor
-    
-    # Highlights
-    selection: QColor
-    legal_move: QColor
-    last_move: QColor
-    check: QColor
-    debug_overlay_white: QColor
-    debug_overlay_black: QColor
-    debug_overlay_legals: QColor
-    
-    # Board Labels
-    text_on_light: QColor
-    text_on_dark: QColor
-    
-    # Panel UI
-    panel_background: QColor
-    panel_text: QColor
-    panel_text_muted: QColor
-    panel_border: QColor
-    
-    # Console
-    console_in: QColor
-    console_out: QColor
-    console_info: QColor
-    console_error: QColor
-    
-    # Evaluation Bar
-    eval_white: QColor
-    eval_black: QColor
-    
-    font_family: str = "Outfit"
-    font_size: int = 11
+from gui.core.config import ACTIVE_THEME
 
 
-# Preset Palette Definitions
-LICHESS_THEME = ThemePalette(
+# Preset active theme instances mapped directly to colors.py tokens
+LICHESS_THEME = ActiveTheme(
     name="LiChess Blue/Grey",
-    light_square=QColor("#EFEFED"),
-    dark_square=QColor("#70A2CA"),
-    selection=QColor(247, 247, 105, 130),
-    legal_move=QColor(25, 45, 65, 120),
-    last_move=QColor(255, 255, 150, 100),
-    check=QColor(240, 80, 80, 140),
-    debug_overlay_white=QColor(0, 191, 165, 80),
-    debug_overlay_black=QColor(239, 83, 80, 80),
+    light_square=colors.LIGHT_SQUARE,
+    dark_square=colors.DARK_SQUARE,
+    selection=colors.SELECTION_COLOR,
+    legal_move=colors.LEGAL_MOVE_COLOR,
+    last_move=colors.LAST_MOVE_COLOR,
+    check=colors.CHECK_COLOR,
+    debug_overlay_white=colors.CONSOLE_INFO,    # White attacks uses console info color
+    debug_overlay_black=colors.CONSOLE_ERROR,   # Black attacks uses console error color
     debug_overlay_legals=QColor(124, 77, 255, 100),
-    text_on_light=QColor("#70A2CA"),
-    text_on_dark=QColor("#EFEFED"),
-    panel_background=QColor("#1E1E1E"),
-    panel_text=QColor("#D4D4D4"),
-    panel_text_muted=QColor("#888888"),
-    panel_border=QColor("#3F3F3F"),
-    console_in=QColor("#4FC1FF"),
-    console_out=QColor("#9CDCFE"),
-    console_info=QColor("#B5CEA8"),
-    console_error=QColor("#F44336"),
-    eval_white=QColor("#EFEFED"),
-    eval_black=QColor("#313131")
+    text_on_light=colors.TEXT_LIGHT_SQUARE,
+    text_on_dark=colors.TEXT_DARK_SQUARE,
+    panel_background=colors.PANEL_BG,
+    panel_text=colors.PANEL_TEXT,
+    panel_text_muted=colors.PANEL_TEXT_MUTED,
+    panel_border=colors.PANEL_BORDER,
+    console_in=colors.CONSOLE_IN,
+    console_out=colors.CONSOLE_OUT,
+    console_info=colors.CONSOLE_INFO,
+    console_error=colors.CONSOLE_ERROR,
+    eval_white=colors.EVAL_WHITE,
+    eval_black=colors.EVAL_BLACK
 )
 
-BLUIE_QUANTUM_THEME = ThemePalette(
+BLUIE_QUANTUM_THEME = ActiveTheme(
     name="Bluie Quantum (Signature)",
-    light_square=QColor("#D8D2EC"),          # Lavender Space Dust
-    dark_square=QColor("#2B1D61"),           # Quantum Indigo/Violet
-    selection=QColor(0, 229, 255, 120),      # Pulsing Neon Cyan Selection
-    legal_move=QColor(0, 229, 255, 100),     # Glowing Cyan Legal Dot
-    last_move=QColor(124, 77, 255, 90),      # Translucent Space Purple
-    check=QColor(255, 64, 129, 140),         # Cosmic Hot Pink Check
-    debug_overlay_white=QColor(0, 191, 165, 80),
-    debug_overlay_black=QColor(239, 83, 80, 80),
+    light_square=colors.QUANTUM_LIGHT_SQUARE,
+    dark_square=colors.QUANTUM_DARK_SQUARE,
+    selection=colors.QUANTUM_SELECTION,
+    legal_move=colors.QUANTUM_LEGAL_MOVE,
+    last_move=colors.QUANTUM_LAST_MOVE,
+    check=colors.QUANTUM_CHECK,
+    debug_overlay_white=colors.QUANTUM_CONSOLE_IN,
+    debug_overlay_black=colors.QUANTUM_CONSOLE_ERROR,
     debug_overlay_legals=QColor(124, 77, 255, 100),
-    text_on_light=QColor("#2B1D61"),
-    text_on_dark=QColor("#D8D2EC"),
-    panel_background=QColor("#0B0813"),      # Deep obsidian panel base
-    panel_text=QColor("#E0F7FA"),            # Arctic Silver text
-    panel_text_muted=QColor("#78909C"),      # Cool slate gray muted text
-    panel_border=QColor("#00E5FF"),          # Sleek Neon Cyan border
-    console_in=QColor("#00E5FF"),            # Vibrant Neon Cyan stream
-    console_out=QColor("#E040FB"),           # Electric Fuchsia stream
-    console_info=QColor("#B2FF59"),          # Bright Lime telemetry
-    console_error=QColor("#FF1744"),         # Hot Neon Red alerts
-    eval_white=QColor("#D8D2EC"),
-    eval_black=QColor("#120E22")
+    text_on_light=colors.QUANTUM_TEXT_LIGHT,
+    text_on_dark=colors.QUANTUM_TEXT_DARK,
+    panel_background=colors.QUANTUM_PANEL_BG,
+    panel_text=colors.QUANTUM_PANEL_TEXT,
+    panel_text_muted=colors.QUANTUM_PANEL_TEXT_MUTED,
+    panel_border=colors.QUANTUM_PANEL_BORDER,
+    console_in=colors.QUANTUM_CONSOLE_IN,
+    console_out=colors.QUANTUM_CONSOLE_OUT,
+    console_info=colors.QUANTUM_CONSOLE_INFO,
+    console_error=colors.QUANTUM_CONSOLE_ERROR,
+    eval_white=colors.QUANTUM_EVAL_WHITE,
+    eval_black=colors.QUANTUM_EVAL_BLACK
 )
 
-FOREST_GREEN_THEME = ThemePalette(
+FOREST_GREEN_THEME = ActiveTheme(
     name="Classic Forest Green",
-    light_square=QColor("#FFFFDD"),
-    dark_square=QColor("#86A666"),
-    selection=QColor(247, 247, 105, 130),
-    legal_move=QColor(50, 80, 40, 120),
-    last_move=QColor(255, 255, 150, 100),
-    check=QColor(240, 80, 80, 140),
-    debug_overlay_white=QColor(0, 191, 165, 80),
-    debug_overlay_black=QColor(239, 83, 80, 80),
+    light_square=colors.GREEN_LIGHT_SQUARE,
+    dark_square=colors.GREEN_DARK_SQUARE,
+    selection=colors.GREEN_SELECTION,
+    legal_move=colors.GREEN_LEGAL_MOVE,
+    last_move=colors.GREEN_LAST_MOVE,
+    check=colors.GREEN_CHECK,
+    debug_overlay_white=colors.GREEN_CONSOLE_IN,
+    debug_overlay_black=colors.GREEN_CONSOLE_ERROR,
     debug_overlay_legals=QColor(124, 77, 255, 100),
-    text_on_light=QColor("#86A666"),
-    text_on_dark=QColor("#FFFFDD"),
-    panel_background=QColor("#1C2321"),
-    panel_text=QColor("#D8F3DC"),
-    panel_text_muted=QColor("#74C69D"),
-    panel_border=QColor("#2D6A4F"),
-    console_in=QColor("#74C69D"),
-    console_out=QColor("#95D5B2"),
-    console_info=QColor("#D8F3DC"),
-    console_error=QColor("#FF87AB"),
-    eval_white=QColor("#FFFFDD"),
-    eval_black=QColor("#1B4332")
+    text_on_light=colors.GREEN_TEXT_LIGHT,
+    text_on_dark=colors.GREEN_TEXT_DARK,
+    panel_background=colors.GREEN_PANEL_BG,
+    panel_text=colors.GREEN_PANEL_TEXT,
+    panel_text_muted=colors.GREEN_PANEL_TEXT_MUTED,
+    panel_border=colors.GREEN_PANEL_BORDER,
+    console_in=colors.GREEN_CONSOLE_IN,
+    console_out=colors.GREEN_CONSOLE_OUT,
+    console_info=colors.GREEN_CONSOLE_INFO,
+    console_error=colors.GREEN_CONSOLE_ERROR,
+    eval_white=colors.GREEN_EVAL_WHITE,
+    eval_black=colors.GREEN_EVAL_BLACK
 )
 
 
@@ -140,11 +101,11 @@ class ThemeManager:
             "BLUIE_QUANTUM": BLUIE_QUANTUM_THEME,
             "FOREST_GREEN": FOREST_GREEN_THEME
         }
-        self._current_theme_name = "BLUIE_QUANTUM"
+        self._current_theme_name = ACTIVE_THEME
         self._initialized = True
 
-    def get_theme(self) -> ThemePalette:
-        """Returns the active ThemePalette object based on settings."""
+    def get_theme(self) -> ActiveTheme:
+        """Returns the active ActiveTheme configuration based on settings."""
         return self.themes.get(self._current_theme_name, BLUIE_QUANTUM_THEME)
 
     def set_theme(self, name: str) -> None:

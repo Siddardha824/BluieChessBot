@@ -13,3 +13,7 @@ ASSETS_DIR = GUI_DIR / "assets"
 
 # Piece spritesheet asset path
 SPRITE_SHEET = ASSETS_DIR / "Pieces.png"
+
+# Active UI Theme Name
+ACTIVE_THEME = "BLUIE_QUANTUM"  # Pre-defined options: "LICHESS_BLUE", "BLUIE_QUANTUM", "FOREST_GREEN"
+
