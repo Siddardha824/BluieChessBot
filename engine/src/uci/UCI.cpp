@@ -761,6 +761,18 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
         std::lock_guard<std::mutex> lock(coutMutex);
         std::cout << "info string DEBUG SEARCHINFO ACTIVE" << std::endl;
     }
+    else if (sub == "validate")
+    {
+        std::lock_guard<std::mutex> lock(coutMutex);
+        if (board.validate())
+        {
+            std::cout << "info string bluie-valid yes" << std::endl;
+        }
+        else
+        {
+            std::cout << "info string bluie-valid no" << std::endl;
+        }
+    }
     else
     {
         std::lock_guard<std::mutex> lock(coutMutex);

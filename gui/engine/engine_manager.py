@@ -45,6 +45,7 @@ class EngineManager(QObject):
     divide_total = Signal(int)             # Emits aggregate leaf count
     bench_start = Signal(int, int, int)    # Emits (depth, threads, hash)
     bench_total = Signal(int, int, int)    # Emits (nps, nodes, time_ms)
+    validate_received = Signal(bool)       # Emits (is_valid)
 
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent)
@@ -223,6 +224,9 @@ class EngineManager(QObject):
                             nodes = int(parts[5])
                             time_ms = int(parts[6])
                             self.bench_total.emit(nps, nodes, time_ms)
+                        elif sub == "VALIDATE" and len(parts) >= 5:
+                            status_val = parts[4]
+                            self.validate_received.emit(status_val == "OK")
                 except Exception as e:
                     logger.error(f"Error parsing debug overlay line '{raw_line}': {e}")
                 continue
