@@ -3,7 +3,7 @@
 import psutil
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSlider, QGridLayout
 from PySide6.QtCore import Qt, QPointF, QRectF
-from PySide6.QtGui import QPainter, QColor, QPen, QBrush, QPolygonF
+from PySide6.QtGui import QPainter, QColor, QPen, QBrush, QPolygonF, QFont
 from gui.themes.theme_manager import theme_manager
 
 class NPSRadialGauge(QWidget):
@@ -51,15 +51,17 @@ class NPSRadialGauge(QWidget):
 
         # Render numeric details in the center core
         painter.setPen(QColor(224, 247, 250))  # Arctic silver
-        painter.setFont(theme_manager.get_font("Outfit", 18, weight=700))
+        painter.setFont(QFont("Outfit", 18, QFont.Weight.Bold))
         nps_text = f"{self.nps / 1e6:.2f} M" if self.nps >= 1e6 else f"{int(self.nps):,}"
         painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, nps_text)
 
         # Draw units label under the central numbers
         painter.setPen(QColor(176, 190, 197))  # Soft body text
-        painter.setFont(theme_manager.get_font("Outfit", 9, weight=400))
+        painter.setFont(QFont("Outfit", 9, QFont.Weight.Normal))
         label_rect = QRectF(rect.left(), rect.top() + 45, rect.width(), rect.height() - 45)
         painter.drawText(label_rect, Qt.AlignmentFlag.AlignCenter, "Nodes / Sec")
+        
+        painter.end()
 
 
 class ThreadScalingChart(QWidget):
@@ -105,8 +107,9 @@ class ThreadScalingChart(QWidget):
         if not self.points:
             # Draw placeholder state
             painter.setPen(QColor(176, 190, 197, 80))
-            painter.setFont(theme_manager.get_font("Outfit", 11, weight=400))
+            painter.setFont(QFont("Outfit", 11, QFont.Weight.Normal))
             painter.drawText(QRectF(0, 0, w, h), Qt.AlignmentFlag.AlignCenter, "No scaling data yet. Run Benchmark.")
+            painter.end()
             return
 
         # Determine limits
@@ -119,7 +122,7 @@ class ThreadScalingChart(QWidget):
         # Draw horizontal grid ticks
         grid_pen = QPen(QColor(255, 255, 255, 15), 1, Qt.PenStyle.DashLine)
         label_pen = QPen(QColor(176, 190, 197, 180))
-        painter.setFont(theme_manager.get_font("Outfit", 8))
+        painter.setFont(QFont("Outfit", 8))
         
         ticks = 3
         for i in range(ticks + 1):
@@ -171,6 +174,8 @@ class ThreadScalingChart(QWidget):
             threads_count = self.points[idx][0]
             painter.setPen(label_pen)
             painter.drawText(pt.x() - 10, h - bottom_pad + 5, 20, 15, Qt.AlignmentFlag.AlignCenter, f"T{threads_count}")
+        
+        painter.end()
 
 
 class BenchmarkView(QWidget):

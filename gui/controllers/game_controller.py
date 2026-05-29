@@ -21,6 +21,7 @@ class GameControllerSignals(QObject):
     state_changed = Signal()
     move_executed = Signal(str)  # Emits SAN notation string on successful moves
     move_undone = Signal()  # Emits when the last move is popped/undone
+    game_over = Signal(str)  # Emits a game outcome string when the game ends
 
 class GameController:
     def __init__(self, parent: QObject | None = None):
@@ -113,6 +114,25 @@ class GameController:
         self.signals.state_changed.emit()
         self.query_active_debug_overlay()
         self.sync_position_and_query_legals()
+
+        # 5. Check if the played move ended the game
+        if self.board_state._board.is_game_over():
+            board = self.board_state._board
+            if board.is_checkmate():
+                winner = "Black" if board.turn else "White"
+                outcome = f"Checkmate! {winner} wins."
+            elif board.is_stalemate():
+                outcome = "Stalemate! The game is a draw."
+            elif board.is_insufficient_material():
+                outcome = "Draw due to insufficient material."
+            elif board.is_fivefold_repetition() or board.is_threefold_repetition():
+                outcome = "Draw due to repetition."
+            else:
+                outcome = "Game over."
+            
+            logger.info(f"Game Over detected: {outcome}")
+            self.signals.game_over.emit(outcome)
+
         return san_move
 
     def handle_square_clicked(self, square_idx: int | None) -> None:
@@ -176,7 +196,7 @@ class GameController:
                     self.signals.state_changed.emit()
                     
                     # --- Play Loop: Check if it's the engine's turn to respond ---
-                    if self.is_engine_turn():
+                    if self.is_engine_turn() and not self.board_state._board.is_game_over():
                         # Use a single-shot timer to let the GUI paint the human's move first!
                         QTimer.singleShot(150, self.trigger_engine_move)
                 else:
@@ -232,6 +252,26 @@ class GameController:
             return
             
         logger.info(f"Engine played move: {move_str}")
+
+        # Check for engine null move (checkmate/stalemate game over indicators)
+        if move_str == "0000" or self.board_state._board.is_game_over():
+            board = self.board_state._board
+            if board.is_checkmate():
+                winner = "Black" if board.turn else "White"
+                outcome = f"Checkmate! {winner} wins."
+            elif board.is_stalemate():
+                outcome = "Stalemate! The game is a draw."
+            elif board.is_insufficient_material():
+                outcome = "Draw due to insufficient material."
+            elif board.is_fivefold_repetition() or board.is_threefold_repetition():
+                outcome = "Draw due to repetition."
+            else:
+                outcome = "Game over."
+            
+            logger.info(f"Game Over detected by engine calculation: {outcome}")
+            self.signals.game_over.emit(outcome)
+            return
+
         try:
             move = Move.from_uci(move_str)
             if self._execute_and_register_move(move) is not None:

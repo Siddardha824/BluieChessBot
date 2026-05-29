@@ -8,10 +8,11 @@ namespace Bluie
 
 /**
  * @class MoveGen
- * @brief Generates all the possible pseudo legal moves and legal moves.
+ * @brief High-performance chess move generation system.
  *
- *
- *
+ * Implements standard bitboard-based move generation. Generates all possible
+ * pseudo-legal moves (sliding, leaper, pawns) and filters them into strictly
+ * legal moves by verifying king safety after a hypothetical move simulation.
  */
 
 class MoveGen

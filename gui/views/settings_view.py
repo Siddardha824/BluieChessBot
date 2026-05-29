@@ -225,8 +225,8 @@ class SettingsView(QWidget):
     def _handle_theme_swapped(self, idx: int) -> None:
         theme_key = self.theme_combo.currentData()
         if theme_key:
-            app_state.active_theme = theme_key
             theme_manager.set_theme(theme_key)
+            app_state.active_theme = theme_key
 
     def update_stylesheets(self) -> None:
         bg_hex = self.theme.panel_background.name()

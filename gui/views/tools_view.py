@@ -3,7 +3,7 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                                QPushButton, QLineEdit, QGridLayout, QApplication)
 from PySide6.QtCore import Qt, QRectF, QSize, Signal
-from PySide6.QtGui import QPainter, QColor, QPen, QBrush, QPixmap, QMouseEvent
+from PySide6.QtGui import QPainter, QColor, QPen, QBrush, QPixmap, QMouseEvent, QFont
 from gui.themes.theme_manager import theme_manager
 from gui.core.config import SPRITE_SHEET
 from gui.utils.logger import get_logger
@@ -102,7 +102,7 @@ class PiecePalette(QWidget):
             # Icon
             if tool == 'ERASER':
                 painter.setPen(QColor(255, 64, 129))
-                painter.setFont(theme_manager.get_font("Outfit", 12, weight=700))
+                painter.setFont(QFont("Outfit", 12, QFont.Weight.Bold))
                 painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, "Clear Sq")
             else:
                 pixmap = self.pieces.get(tool)
@@ -111,6 +111,8 @@ class PiecePalette(QWidget):
                     px = rect.x() + (rect.width() - 32) / 2
                     py = rect.y() + (rect.height() - 32) / 2
                     painter.drawPixmap(int(px), int(py), 32, 32, pixmap)
+        
+        painter.end()
 
 
 class BoardEditorCanvas(QWidget):
@@ -231,6 +233,8 @@ class BoardEditorCanvas(QWidget):
         painter.setPen(QPen(QColor(0, 229, 255), 2))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawRect(0, 0, w, h)
+        
+        painter.end()
 
 
 class ToolsView(QWidget):

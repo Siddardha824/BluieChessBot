@@ -197,7 +197,7 @@ class TestingView(QWidget):
             self.table.setSortingEnabled(False)
             self.table.setRowCount(0)
             self.total_lbl.setText("Running...")
-            self.highlight_manager.clear()
+            self.highlight_manager.reset()
             self.board.update()
 
             fen = self.fen_input.text().strip()

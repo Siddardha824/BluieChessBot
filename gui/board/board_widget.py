@@ -17,13 +17,22 @@ from gui.utils.logger import get_logger
 logger = get_logger(__name__)
 
 class ChessBoard(QWidget):
+    """
+    Sleek, interactive, layered custom presentation QWidget for the chessboard canvas.
+    
+    Implements a highly decoupled rendering architecture separating model data from drawing pipelines.
+    Listens for user clicks, maps window pixel points to chess algebraic square indexes, and delegates
+    visual representations dynamically to downstream specialized paint layer components (board, coordinates,
+    piece textures, overlays).
+    """
     # Qt Signal emitted when a mouse press occurs (passes square index or None if clicked outside)
     square_clicked = Signal(object)
 
     def __init__(self, theme=None, parent=None):
         """
-        Initializes the interactive ChessBoard QWidget.
-        Acts as a pure presentation view component, relying on injected models and signals.
+        Initializes the interactive ChessBoard QWidget workspace frame.
+        
+        Configures geometry helpers and constructs independent decoupled rendering components.
         """
         super().__init__(parent)
         self.setMinimumSize(400, 400)

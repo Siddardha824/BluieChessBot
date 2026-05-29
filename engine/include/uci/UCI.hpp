@@ -76,12 +76,12 @@ class UCI
      */
     void runSearch(int depth, int movetime);
 
-    Board board;                   ///< The active chess board position state
-    std::atomic<bool> isSearching; ///< Atomic flag indicating active calculation state
-    std::thread searchThread;      ///< Thread handle for asynchronous calculations
-    std::mutex coutMutex;          ///< Mutex guarding standard output stream prints
-    int hashSizeMB;                ///< Transposition table allocation size in megabytes
-    int numThreads;                ///< Number of search calculation threads
+    Board board;                   ///< The active chess board position state used to track the current position.
+    std::atomic<bool> isSearching; ///< Atomic flag indicating active calculation state, read/written across threads.
+    std::thread searchThread;      ///< Thread handle for running asynchronous search operations in the background.
+    std::mutex coutMutex;          ///< Mutex guarding standard output stream prints to prevent race conditions during UCI logging.
+    int hashSizeMB;                ///< Transposition table allocation size in megabytes, configurable via uci option.
+    int numThreads;                ///< Number of search calculation threads, configurable via uci option.
 };
 
 } // namespace Bluie
