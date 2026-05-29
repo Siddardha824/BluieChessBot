@@ -1,9 +1,9 @@
 #include "uci/UCI.hpp"
 #include "attacks/Attacks.hpp" // IWYU pragma: keep
 #include "attacks/AttacksAPI.hpp"
-#include "tools/Tests.hpp"
 #include "core/MoveGen.hpp"
 #include "core/Search.hpp"
+#include "tools/Tests.hpp"
 #include <chrono>
 #include <cmath>
 #include <iostream>
@@ -63,7 +63,7 @@ void UCI::parseCommand(const std::string& line)
     if (cmd == "uci")
     {
         std::lock_guard<std::mutex> lock(coutMutex);
-        std::cout << "id name Bluie Bot\n";
+        std::cout << "id name Bluie Bot v 1.0.0\n";
         std::cout << "id author Siddardha\n";
         std::cout << "option name Hash type spin default 128 min 16 max 65536\n";
         std::cout << "option name Threads type spin default 4 min 1 max 32\n";
@@ -80,24 +80,33 @@ void UCI::parseCommand(const std::string& line)
         {
             std::string name = tokens[2];
             std::string valStr = tokens[4];
-            
+
             if (name == "Hash")
             {
-                try {
+                try
+                {
                     int val = std::stoi(valStr);
                     hashSizeMB = val;
                     std::lock_guard<std::mutex> lock(coutMutex);
-                    std::cout << "info string ACK: Hash set to " << hashSizeMB << " MB" << std::endl;
-                } catch(...) {}
+                    std::cout << "info string ACK: Hash set to " << hashSizeMB << " MB"
+                              << std::endl;
+                }
+                catch (...)
+                {
+                }
             }
             else if (name == "Threads")
             {
-                try {
+                try
+                {
                     int val = std::stoi(valStr);
                     numThreads = val;
                     std::lock_guard<std::mutex> lock(coutMutex);
                     std::cout << "info string ACK: Threads set to " << numThreads << std::endl;
-                } catch(...) {}
+                }
+                catch (...)
+                {
+                }
             }
         }
     }
@@ -331,9 +340,11 @@ void UCI::runSearch(int depth, int movetime)
     SearchResult result = Search::findBestMove(board, depth);
 
     auto endTime = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
 
-    long long nps = (duration > 0) ? (static_cast<long long>(result.nodes) * 1000 / duration) : result.nodes;
+    long long nps =
+        (duration > 0) ? (static_cast<long long>(result.nodes) * 1000 / duration) : result.nodes;
 
     // Convert the best move to coordinate string representation
     std::string bestMoveStr = "0000";
@@ -342,17 +353,22 @@ void UCI::runSearch(int depth, int movetime)
         Square from = result.bestMove.getFrom();
         Square to = result.bestMove.getTo();
         Move::Flag flag = result.bestMove.getFlags();
-        
-        bestMoveStr = std::string(squareToCoordinates[toIndex(from)]) + std::string(squareToCoordinates[toIndex(to)]);
-        if (flag == Move::Flag::PR_QUEEN || flag == Move::Flag::PC_QUEEN) bestMoveStr += "q";
-        else if (flag == Move::Flag::PR_ROOK || flag == Move::Flag::PC_ROOK) bestMoveStr += "r";
-        else if (flag == Move::Flag::PR_BISHOP || flag == Move::Flag::PC_BISHOP) bestMoveStr += "b";
-        else if (flag == Move::Flag::PR_KNIGHT || flag == Move::Flag::PC_KNIGHT) bestMoveStr += "n";
+
+        bestMoveStr = std::string(squareToCoordinates[toIndex(from)]) +
+                      std::string(squareToCoordinates[toIndex(to)]);
+        if (flag == Move::Flag::PR_QUEEN || flag == Move::Flag::PC_QUEEN)
+            bestMoveStr += "q";
+        else if (flag == Move::Flag::PR_ROOK || flag == Move::Flag::PC_ROOK)
+            bestMoveStr += "r";
+        else if (flag == Move::Flag::PR_BISHOP || flag == Move::Flag::PC_BISHOP)
+            bestMoveStr += "b";
+        else if (flag == Move::Flag::PR_KNIGHT || flag == Move::Flag::PC_KNIGHT)
+            bestMoveStr += "n";
     }
 
     {
         std::lock_guard<std::mutex> lock(coutMutex);
-        
+
         // Print search telemetry info line
         std::cout << "info depth " << depth << " ";
         if (result.score > 25000)
@@ -371,11 +387,9 @@ void UCI::runSearch(int depth, int movetime)
         {
             std::cout << "score cp " << result.score;
         }
-        
-        std::cout << " nodes " << result.nodes
-                  << " nps " << nps
-                  << " time " << duration
-                  << " pv " << bestMoveStr << std::endl;
+
+        std::cout << " nodes " << result.nodes << " nps " << nps << " time " << duration << " pv "
+                  << bestMoveStr << std::endl;
 
         std::cout << "bestmove " << bestMoveStr << std::endl;
     }
@@ -632,7 +646,7 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
         std::lock_guard<std::mutex> lock(coutMutex);
         MoveGen moveGen;
         MoveList moves = moveGen.getLegalMoves(board);
-        
+
         std::cout << "info string DEBUG LEGALS";
         for (int i = 0; i < moves.count; ++i)
         {
@@ -640,12 +654,17 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
             Square from = m.getFrom();
             Square to = m.getTo();
             Move::Flag flag = m.getFlags();
-            
-            std::cout << " " << squareToCoordinates[toIndex(from)] << squareToCoordinates[toIndex(to)];
-            if (flag == Move::Flag::PR_QUEEN || flag == Move::Flag::PC_QUEEN) std::cout << "q";
-            else if (flag == Move::Flag::PR_ROOK || flag == Move::Flag::PC_ROOK) std::cout << "r";
-            else if (flag == Move::Flag::PR_BISHOP || flag == Move::Flag::PC_BISHOP) std::cout << "b";
-            else if (flag == Move::Flag::PR_KNIGHT || flag == Move::Flag::PC_KNIGHT) std::cout << "n";
+
+            std::cout << " " << squareToCoordinates[toIndex(from)]
+                      << squareToCoordinates[toIndex(to)];
+            if (flag == Move::Flag::PR_QUEEN || flag == Move::Flag::PC_QUEEN)
+                std::cout << "q";
+            else if (flag == Move::Flag::PR_ROOK || flag == Move::Flag::PC_ROOK)
+                std::cout << "r";
+            else if (flag == Move::Flag::PR_BISHOP || flag == Move::Flag::PC_BISHOP)
+                std::cout << "b";
+            else if (flag == Move::Flag::PR_KNIGHT || flag == Move::Flag::PC_KNIGHT)
+                std::cout << "n";
         }
         std::cout << std::endl;
     }
@@ -664,13 +683,13 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
             return;
         }
         int depth = std::stoi(tokens[2]);
-        
+
         auto start = std::chrono::high_resolution_clock::now();
         uint64_t nodes = Tools::perft(depth, board);
         auto end = std::chrono::high_resolution_clock::now();
-        
+
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-        
+
         std::lock_guard<std::mutex> lock(coutMutex);
         std::cout << "info string DEBUG PERFTTOTAL " << nodes << std::endl;
         std::cout << "info string DEBUG PERFTTIME " << duration << " ms" << std::endl;
@@ -689,21 +708,21 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
             return;
         }
         int depth = std::stoi(tokens[2]);
-        
+
         MoveGen moveGen;
         MoveList moves = moveGen.getLegalMoves(board);
-        
+
         uint64_t totalNodes = 0;
-        
+
         std::lock_guard<std::mutex> lock(coutMutex);
         std::cout << "info string DEBUG DIVIDESTART depth " << depth << std::endl;
-        
+
         for (int i = 0; i < moves.count; ++i)
         {
             Move m = moves.moves[i];
             Board temp = board;
             temp.makeMove(m);
-            
+
             uint64_t nodes = 0;
             if (depth > 1)
             {
@@ -713,20 +732,23 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
             {
                 nodes = 1;
             }
-            
+
             totalNodes += nodes;
-            
+
             Square from = m.getFrom();
             Square to = m.getTo();
             Move::Flag flag = m.getFlags();
-            
-            std::cout << "info string DEBUG DIVIDEMOVE " 
-                      << squareToCoordinates[toIndex(from)] 
+
+            std::cout << "info string DEBUG DIVIDEMOVE " << squareToCoordinates[toIndex(from)]
                       << squareToCoordinates[toIndex(to)];
-            if (flag == Move::Flag::PR_QUEEN || flag == Move::Flag::PC_QUEEN) std::cout << "q";
-            else if (flag == Move::Flag::PR_ROOK || flag == Move::Flag::PC_ROOK) std::cout << "r";
-            else if (flag == Move::Flag::PR_BISHOP || flag == Move::Flag::PC_BISHOP) std::cout << "b";
-            else if (flag == Move::Flag::PR_KNIGHT || flag == Move::Flag::PC_KNIGHT) std::cout << "n";
+            if (flag == Move::Flag::PR_QUEEN || flag == Move::Flag::PC_QUEEN)
+                std::cout << "q";
+            else if (flag == Move::Flag::PR_ROOK || flag == Move::Flag::PC_ROOK)
+                std::cout << "r";
+            else if (flag == Move::Flag::PR_BISHOP || flag == Move::Flag::PC_BISHOP)
+                std::cout << "b";
+            else if (flag == Move::Flag::PR_KNIGHT || flag == Move::Flag::PC_KNIGHT)
+                std::cout << "n";
             std::cout << ": " << nodes << std::endl;
         }
         std::cout << "info string DEBUG DIVIDETOTAL " << totalNodes << std::endl;
@@ -763,18 +785,6 @@ void UCI::handleDebug(const std::vector<std::string>& tokens)
         std::lock_guard<std::mutex> lock(coutMutex);
         std::cout << "info string DEBUG SEARCHINFO ACTIVE" << std::endl;
     }
-    else if (sub == "validate")
-    {
-        std::lock_guard<std::mutex> lock(coutMutex);
-        if (board.validate())
-        {
-            std::cout << "info string bluie-valid yes" << std::endl;
-        }
-        else
-        {
-            std::cout << "info string bluie-valid no" << std::endl;
-        }
-    }
     else
     {
         std::lock_guard<std::mutex> lock(coutMutex);
@@ -790,33 +800,52 @@ void UCI::handleBench(const std::vector<std::string>& tokens)
 
     if (tokens.size() > 1)
     {
-        try {
+        try
+        {
             depth = std::stoi(tokens[1]);
-        } catch(...) {}
+        }
+        catch (...)
+        {
+        }
     }
     if (tokens.size() > 2)
     {
-        try {
+        try
+        {
             threads = std::stoi(tokens[2]);
-        } catch(...) {}
+        }
+        catch (...)
+        {
+        }
     }
     if (tokens.size() > 3)
     {
-        try {
+        try
+        {
             hash = std::stoi(tokens[3]);
-        } catch(...) {}
+        }
+        catch (...)
+        {
+        }
     }
 
-    if (depth < 1) depth = 1;
-    if (depth > 6) depth = 6;
-    if (threads < 1) threads = 1;
-    if (threads > 32) threads = 32;
-    if (hash < 16) hash = 16;
-    if (hash > 65536) hash = 65536;
+    if (depth < 1)
+        depth = 1;
+    if (depth > 6)
+        depth = 6;
+    if (threads < 1)
+        threads = 1;
+    if (threads > 32)
+        threads = 32;
+    if (hash < 16)
+        hash = 16;
+    if (hash > 65536)
+        hash = 65536;
 
     {
         std::lock_guard<std::mutex> lock(coutMutex);
-        std::cout << "info string DEBUG BENCHSTART " << depth << " " << threads << " " << hash << std::endl;
+        std::cout << "info string DEBUG BENCHSTART " << depth << " " << threads << " " << hash
+                  << std::endl;
     }
 
     auto startTime = std::chrono::steady_clock::now();
@@ -825,11 +854,13 @@ void UCI::handleBench(const std::vector<std::string>& tokens)
 
     for (int t = 0; t < threads; ++t)
     {
-        workers.push_back(std::thread([depth, &threadNodes, t]() {
-            Board localBoard;
-            localBoard.parseFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-            threadNodes[t] = Tools::perft(depth, localBoard);
-        }));
+        workers.push_back(std::thread(
+            [depth, &threadNodes, t]()
+            {
+                Board localBoard;
+                localBoard.parseFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+                threadNodes[t] = Tools::perft(depth, localBoard);
+            }));
     }
 
     for (auto& w : workers)
@@ -838,8 +869,10 @@ void UCI::handleBench(const std::vector<std::string>& tokens)
     }
 
     auto endTime = std::chrono::steady_clock::now();
-    long long totalTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
-    if (totalTimeMs == 0) totalTimeMs = 1;
+    long long totalTimeMs =
+        std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+    if (totalTimeMs == 0)
+        totalTimeMs = 1;
 
     uint64_t totalNodes = 0;
     for (uint64_t n : threadNodes)
@@ -851,7 +884,8 @@ void UCI::handleBench(const std::vector<std::string>& tokens)
 
     {
         std::lock_guard<std::mutex> lock(coutMutex);
-        std::cout << "info string DEBUG BENCHTOTAL " << totalNps << " " << totalNodes << " " << totalTimeMs << std::endl;
+        std::cout << "info string DEBUG BENCHTOTAL " << totalNps << " " << totalNodes << " "
+                  << totalTimeMs << std::endl;
     }
 }
 

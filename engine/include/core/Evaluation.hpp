@@ -1,7 +1,6 @@
 #pragma once
 
 #include "board/Board.hpp"
-#include "core/Types.hpp"
 #include <array>
 
 namespace Bluie
