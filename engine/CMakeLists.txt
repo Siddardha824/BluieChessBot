@@ -15,6 +15,8 @@ add_executable(BluieChessBot
     src/Bluie.cpp
     src/core/Debug.cpp
     src/core/MoveGen.cpp
+    src/core/Evaluation.cpp
+    src/core/Search.cpp
     src/board/Board.cpp
     src/uci/UCI.cpp
     src/attacks/AttacksAPI.cpp

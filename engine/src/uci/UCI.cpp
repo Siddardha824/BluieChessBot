@@ -3,6 +3,7 @@
 #include "attacks/AttacksAPI.hpp"
 #include "tools/Tests.hpp"
 #include "core/MoveGen.hpp"
+#include "core/Search.hpp"
 #include <chrono>
 #include <cmath>
 #include <iostream>
@@ -326,45 +327,21 @@ void UCI::runSearch(int depth, int movetime)
 {
     auto startTime = std::chrono::steady_clock::now();
 
-    int eval_cp = 15;
+    // Call pure brute-force Negamax search
+    SearchResult result = Search::findBestMove(board, depth);
 
-    for (int d = 1; d <= depth && isSearching; ++d)
-    {
-        // Simulate thinking time offset
-        std::this_thread::sleep_for(std::chrono::milliseconds(140));
+    auto endTime = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
 
-        auto now = std::chrono::steady_clock::now();
-        auto duration =
-            std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count();
+    long long nps = (duration > 0) ? (static_cast<long long>(result.nodes) * 1000 / duration) : result.nodes;
 
-        if (movetime > 0 && duration >= movetime)
-        {
-            break;
-        }
-
-        eval_cp += (d % 2 == 0) ? 14 : -9;
-        long long nodes = d * 1842;
-        long long nps = (duration > 0) ? (nodes * 1000 / duration) : 32000;
-
-        {
-            std::lock_guard<std::mutex> lock(coutMutex);
-            std::cout << "info depth " << d << " score cp " << eval_cp << " nodes " << nodes
-                      << " nps " << nps << " time " << duration << " pv e2e4 e7e5 g1f3 b8c6"
-                      << std::endl;
-        }
-    }
-
-    // Query actual legal moves from MoveGen
-    MoveGen moveGen;
-    MoveList moves = moveGen.getLegalMoves(board);
-
+    // Convert the best move to coordinate string representation
     std::string bestMoveStr = "0000";
-    if (moves.count > 0)
+    if (result.bestMove != Move::NO_MOVE)
     {
-        Move m = moves.moves[0];
-        Square from = m.getFrom();
-        Square to = m.getTo();
-        Move::Flag flag = m.getFlags();
+        Square from = result.bestMove.getFrom();
+        Square to = result.bestMove.getTo();
+        Move::Flag flag = result.bestMove.getFlags();
         
         bestMoveStr = std::string(squareToCoordinates[toIndex(from)]) + std::string(squareToCoordinates[toIndex(to)]);
         if (flag == Move::Flag::PR_QUEEN || flag == Move::Flag::PC_QUEEN) bestMoveStr += "q";
@@ -375,6 +352,31 @@ void UCI::runSearch(int depth, int movetime)
 
     {
         std::lock_guard<std::mutex> lock(coutMutex);
+        
+        // Print search telemetry info line
+        std::cout << "info depth " << depth << " ";
+        if (result.score > 25000)
+        {
+            int plies = 30000 - result.score;
+            int mateInMoves = (plies + 1) / 2;
+            std::cout << "score mate " << mateInMoves;
+        }
+        else if (result.score < -25000)
+        {
+            int plies = result.score + 30000;
+            int mateInMoves = -((plies + 1) / 2);
+            std::cout << "score mate " << mateInMoves;
+        }
+        else
+        {
+            std::cout << "score cp " << result.score;
+        }
+        
+        std::cout << " nodes " << result.nodes
+                  << " nps " << nps
+                  << " time " << duration
+                  << " pv " << bestMoveStr << std::endl;
+
         std::cout << "bestmove " << bestMoveStr << std::endl;
     }
 
