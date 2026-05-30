@@ -2,405 +2,129 @@
 
 import os
 from PySide6.QtCore import QObject, Signal, QTimer
-from gui.models.board_state import BoardState
-from gui.board.highlights import HighlightManager
-from gui.models.move import Move
-from gui.models.pieces import get_color
-from gui.engine.engine_manager import EngineManager
-from gui.core.app_state import app_state
 from gui.utils.logger import get_logger
 
-logger = get_logger(__name__)
+from gui.controllers.board_controller import BoardController
+from gui.controllers.handlers.engine_handler import EngineHandler
+from gui.controllers.handlers.overlay_handler import OverlayHandler
 
-class GameControllerSignals(QObject):
-    """
-    Decoupled lightweight QObject container dedicated strictly to managing
-    PySide6 signal allocations. Isulates Qt meta-object bindings from the
-    pure Python GameController.
-    """
-    state_changed = Signal()
-    move_executed = Signal(str)  # Emits SAN notation string on successful moves
-    move_undone = Signal()  # Emits when the last move is popped/undone
-    game_over = Signal(str)  # Emits a game outcome string when the game ends
+from gui.engine.engine_manager import EngineManager
+
+logger = get_logger(__name__)
 
 class GameController:
     def __init__(self, parent: QObject | None = None):
         """
-        Initializes the GameController.
-        Converts GameController to a pure Python class to protect all logic,
-        mathematics, and turn evaluation helpers from Shiboken C++ marshalling errors.
+        Orchestrator connecting decoupled sub-controllers and engine handlers.
+        Converts GameController to a pure Python class to protect Turn evaluations
+        and coordinate highlights from Shiboken C++ marshalling errors.
         """
-        # 1. Instantiate the signals container
-        self.signals = GameControllerSignals()
+        # 1. Instantiate the BoardController that owns the models
+        self.board_controller = BoardController()
         
-        self.board_state = BoardState()
-        self.highlight_manager = HighlightManager()
+        # Expose board state models directly for view rendering injection
+        self.board_state = self.board_controller.board_state
+        self.highlight_manager = self.board_controller.highlight_manager
         
-        # 2. Instantiate the EngineManager, using the signals QObject as the Qt parent context
-        self.engine_manager = EngineManager(self.signals)
-        self.engine_mode = "play_black"  # Modes: "play_black", "play_white", "free_analysis", "two_human"
+        # Forward signals reference for backwards compatibility
+        self.signals = self.board_controller
         
-        # 3. Automatically resolve compiled C++ engine executable path
+        # 2. Instantiate the EngineManager, using board_controller as the Qt parent context
+        self.engine_manager = EngineManager(self.board_controller)
+        
+        # 3. Instantiate highly focused handlers
+        self.engine_handler = EngineHandler(self.engine_manager, self.board_state)
+        self.overlay_handler = OverlayHandler(self.engine_manager, self.board_state, self.highlight_manager)
+        
+        # 4. Resolve compiled C++ engine path
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
         self.engine_path = os.path.join(project_root, "build", "BluieChessBot.exe")
         
-        # 4. Connect engine signals directly to Python slot methods using safe lambdas
-        self.engine_manager.bestmove_received.connect(lambda move: self.handle_engine_best_move(move))
-        self.engine_manager.debug_overlay_received.connect(
-            lambda otype, hex_bb: self.handle_debug_overlay_received(otype, hex_bb)
-        )
+        # Wire interactive events across sub-controllers dynamically
+        self._wire_controller_events()
         
-        # Wire global engine settings overrides from AppState
-        app_state.signals.engine_config_changed.connect(lambda opts: self._handle_engine_config_changed(opts))
-        
-        # 5. Start the engine process automatically on bootstrap
+        # 5. Boot engine subprocess
         if os.path.exists(self.engine_path):
             self.engine_manager.start_engine(self.engine_path)
-            # Query legal moves when engine becomes ready
-            self.engine_manager.status_changed.connect(
-                lambda status: self._handle_engine_status_for_legals(status)
-            )
-            # Fallback query after 800ms in case the status signal was already emitted
-            QTimer.singleShot(800, self.sync_position_and_query_legals)
+            QTimer.singleShot(800, self.engine_handler.sync_position_and_query_legals)
         else:
             logger.warning(f"Engine executable not found at startup: {self.engine_path}. Awaiting manual launch.")
             
-        logger.info("GameController successfully initialized and engine process started.")
+        logger.info("GameController successfully initialized in modular architecture.")
 
-    def _handle_engine_status_for_legals(self, status: str) -> None:
-        if status == "Ready":
-            self.sync_position_and_query_legals()
-
-    def sync_position_and_query_legals(self) -> None:
-        """Sends current FEN to the engine and requests the up-to-date legal moves list."""
-        if self.engine_manager.engine_status != "Disconnected":
-            # Transmit active engine preferences loaded from preferences.json
-            opts = app_state.engine_options
-            self.engine_manager.send_command(f"setoption name Hash value {opts.get('Hash', 64)}")
-            self.engine_manager.send_command(f"setoption name Threads value {opts.get('Threads', 1)}")
-            
-            fen = self.board_state.get_fen()
-            self.engine_manager.send_position(fen)
-            self.engine_manager.send_command("bluie-debug legalmoves")
-
-    def _execute_and_register_move(self, move: Move) -> str | None:
-        """
-        Executes a move on the board, updates highlight markers (last move, checks),
-        and emits the move_executed and state_changed signals.
-        Returns the SAN move string if successful, None otherwise.
-        """
-        san_move = self.board_state.make_move(move)
-        if san_move is None:
-            return None
-
-        # 1. Emit executed move SAN
-        self.signals.move_executed.emit(san_move)
+    def _wire_controller_events(self) -> None:
+        """Wires coordinates and events across components dynamically."""
+        # A. Bind Engine completions to EngineHandler
+        self.engine_manager.bestmove_received.connect(self.engine_handler.handle_engine_best_move)
         
-        # 2. Highlight last move source and destination squares
-        self.highlight_manager.set_last_move(move.from_square, move.to_square)
+        # B. Repaint requests from overlay go directly to BoardController signals
+        self.overlay_handler.request_repaint.connect(self.board_controller.state_changed)
         
-        # 3. Handle check alert highlights
-        if self.board_state.is_check():
-            # Find the active King's square index matching the turn
-            king_char = 'K' if self.board_state.turn else 'k'
-            for i in range(64):
-                if self.board_state.piece_at(i) == king_char:
-                    self.highlight_manager.set_check_square(i)
-                    break
-        else:
-            self.highlight_manager.set_check_square(None)
-            
-        # 4. Trigger views repaint
-        self.signals.state_changed.emit()
-        self.query_active_debug_overlay()
-        self.sync_position_and_query_legals()
+        # C. When human selections change, query threat overlays
+        self.board_controller.selection_changed.connect(self.overlay_handler.query_active_debug_overlay)
+        
+        # D. When a move is executed, decide who plays next
+        self.board_controller.move_executed.connect(self._on_move_executed_coordination)
+        
+        # E. When a move is undone, sync overlays and legal moves list
+        self.board_controller.move_undone.connect(self.overlay_handler.query_active_debug_overlay)
+        self.board_controller.move_undone.connect(self.engine_handler.sync_position_and_query_legals)
+        
+        # F. Bind Engine played moves directly to board updates
+        self.engine_handler.best_move_played.connect(self._on_engine_move_played)
+        self.engine_handler.best_move_illegal.connect(self._on_engine_move_illegal)
+        self.engine_handler.game_over_by_engine.connect(self.board_controller.game_over.emit)
 
-        # 5. Check if the played move ended the game
-        if self.board_state._board.is_game_over():
-            board = self.board_state._board
-            if board.is_checkmate():
-                winner = "Black" if board.turn else "White"
-                outcome = f"Checkmate! {winner} wins."
-            elif board.is_stalemate():
-                outcome = "Stalemate! The game is a draw."
-            elif board.is_insufficient_material():
-                outcome = "Draw due to insufficient material."
-            elif board.is_fivefold_repetition() or board.is_threefold_repetition():
-                outcome = "Draw due to repetition."
-            else:
-                outcome = "Game over."
-            
-            logger.info(f"Game Over detected: {outcome}")
-            self.signals.game_over.emit(outcome)
+    def _on_move_executed_coordination(self, san: str) -> None:
+        """Decides threat queries and single-shot play schedules on move registrations."""
+        self.overlay_handler.query_active_debug_overlay()
+        self.engine_handler.sync_position_and_query_legals()
+        
+        # Trigger engine play loop if it's the engine's turn to play
+        if self.engine_handler.is_engine_turn() and not self.board_state._board.is_game_over():
+            QTimer.singleShot(150, self.engine_handler.trigger_engine_move)
 
-        return san_move
+    def _on_engine_move_played(self, move) -> None:
+        """BoardController executes engine moves and handles selection updates."""
+        if self.board_controller._execute_and_register_move(move) is not None:
+            self.board_controller.highlight_manager.clear_selection()
+            self.board_controller.state_changed.emit()
+
+    def _on_engine_move_illegal(self, move_str: str) -> None:
+        """Undoes human's last move if calculated engine move was illegal."""
+        logger.error(f"Engine calculated an illegal move: {move_str}. Reverting last move...")
+        self.board_controller.undo_last_move()
+
+    # --- Backward-compatible delegating methods for MainWindow / UI connections ---
+    
+    @property
+    def engine_mode(self) -> str:
+        return self.engine_handler.engine_mode
+        
+    @engine_mode.setter
+    def engine_mode(self, mode: str) -> None:
+        self.engine_handler.engine_mode = mode
 
     def handle_square_clicked(self, square_idx: int | None) -> None:
-        """
-        Coordinated slot to handle square selection and move execution.
-        Mutates models and emits state_changed signal to request views repaint.
-        """
-        # Protect board clicks: ignore clicks during engine turn or when engine is active
-        if self.is_engine_turn() or self.engine_manager.engine_status == "Searching":
-            logger.debug("GameController ignoring human click: engine turn in progress.")
-            return
-
-        if square_idx is None:
-            logger.debug("GameController clearing selection due to click outside board boundaries.")
-            self.highlight_manager.clear_selection()
-            self.signals.state_changed.emit()
-            self.query_active_debug_overlay()
-            return
-
-        piece = self.board_state.piece_at(square_idx)
-        selected_idx = self.highlight_manager.selected_square
-        
-        logger.debug(f"GameController processing click on square {square_idx} containing '{piece}'. Active selection: {selected_idx}")
-
-        is_overlay_active = self.highlight_manager.debug_overlay_mode.startswith("ATTACKSTO_")
-
-        # --- Case A: No square is currently selected ---
-        if selected_idx is None:
-            # If debug overlay mode is active, allow selecting empty or opponent squares
-            if piece == '.' or get_color(piece) != self.board_state.turn:
-                if is_overlay_active:
-                    self.highlight_manager.select_square(square_idx, [])
-                    self.signals.state_changed.emit()
-                    self.query_active_debug_overlay()
-                    return
-                else:
-                    return
-                
-            # Select the piece and cache legal move target squares
-            legal_destinations = self.board_state.get_legal_moves(square_idx)
-            self.highlight_manager.select_square(square_idx, legal_destinations)
-            self.signals.state_changed.emit()
-            
-        # --- Case B: A square is already selected ---
-        else:
-            # B1. Clicking the exact same square deselects it
-            if square_idx == selected_idx:
-                self.highlight_manager.clear_selection()
-                self.signals.state_changed.emit()
-                self.query_active_debug_overlay()
-                return
-
-            # B2. Clicking a legal target square executes the move
-            if square_idx in self.highlight_manager.legal_moves:
-                move = Move(selected_idx, square_idx)
-                if self._execute_and_register_move(move) is not None:
-                    logger.info(f"GameController executed move: {selected_idx} -> {square_idx}")
-                    
-                    # Reset active selection state
-                    self.highlight_manager.clear_selection()
-                    self.signals.state_changed.emit()
-                    
-                    # --- Play Loop: Check if it's the engine's turn to respond ---
-                    if self.is_engine_turn() and not self.board_state._board.is_game_over():
-                        # Use a single-shot timer to let the GUI paint the human's move first!
-                        QTimer.singleShot(150, self.trigger_engine_move)
-                else:
-                    logger.warning(f"GameController failed to execute move: {move}")
-                    
-            # B3. Clicking another friendly piece of the active side directly switches selection
-            elif piece != '.' and get_color(piece) == self.board_state.turn:
-                logger.debug(f"GameController switching selection directly to square {square_idx}")
-                legal_destinations = self.board_state.get_legal_moves(square_idx)
-                self.highlight_manager.select_square(square_idx, legal_destinations)
-                self.signals.state_changed.emit()
-                
-            # B4. Clicking anywhere else (illegal move / empty square) cancels selection or switches for debug
-            else:
-                if is_overlay_active:
-                    logger.debug(f"GameController switching selection directly to square {square_idx} for debug threats")
-                    self.highlight_manager.select_square(square_idx, [])
-                    self.signals.state_changed.emit()
-                else:
-                    logger.debug("GameController clearing selection due to illegal square click.")
-                    self.highlight_manager.clear_selection()
-                    self.signals.state_changed.emit()
-        self.query_active_debug_overlay()
-
-    def is_engine_turn(self) -> bool:
-        """
-        Determines if it is currently the engine's turn to play based on engine_mode configuration.
-        """
-        if self.engine_mode == "play_black" and not self.board_state.turn:
-            return True
-        if self.engine_mode == "play_white" and self.board_state.turn:
-            return True
-        return False
-
-    def trigger_engine_move(self) -> None:
-        """
-        Submits current FEN position and starts search to let engine play.
-        """
-        if not self.is_engine_turn():
-            return
-            
-        logger.info("Triggering background engine search...")
-        fen = self.board_state.get_fen()
-        self.engine_manager.send_position(fen)
-        self.engine_manager.start_search(depth=10)
-
-    def handle_engine_best_move(self, move_str: str) -> None:
-        """
-        Slot responding to engine's calculation completion. Parses coordinate
-        algebraic move representation and executes it on board models.
-        """
-        if not self.is_engine_turn():
-            return
-            
-        logger.info(f"Engine played move: {move_str}")
-
-        # Check for engine null move (checkmate/stalemate game over indicators)
-        if move_str == "0000" or self.board_state._board.is_game_over():
-            board = self.board_state._board
-            if board.is_checkmate():
-                winner = "Black" if board.turn else "White"
-                outcome = f"Checkmate! {winner} wins."
-            elif board.is_stalemate():
-                outcome = "Stalemate! The game is a draw."
-            elif board.is_insufficient_material():
-                outcome = "Draw due to insufficient material."
-            elif board.is_fivefold_repetition() or board.is_threefold_repetition():
-                outcome = "Draw due to repetition."
-            else:
-                outcome = "Game over."
-            
-            logger.info(f"Game Over detected by engine calculation: {outcome}")
-            self.signals.game_over.emit(outcome)
-            return
-
-        try:
-            move = Move.from_uci(move_str)
-            if self._execute_and_register_move(move) is not None:
-                # Reset active selection state just in case
-                self.highlight_manager.clear_selection()
-                self.signals.state_changed.emit()
-            else:
-                logger.error(f"Engine calculated an illegal move: {move_str}. Undoing human's last move to unfreeze play...")
-                self.undo_last_move()
-        except Exception as e:
-            logger.error(f"Failed to play engine calculated move '{move_str}': {e}", exc_info=True)
+        is_active = (self.engine_manager.engine_status == "Searching")
+        is_turn = self.engine_handler.is_engine_turn()
+        self.board_controller.handle_square_clicked(square_idx, is_active, is_turn)
 
     def undo_last_move(self) -> None:
-        """
-        Undoes the last move played on the board, updates highlight states,
-        emits the move_undone signal, and repaints the board.
-        """
-        popped = self.board_state.undo_last_move()
-        if popped is not None:
-            # 1. Update last move highlights from the new top of the stack
-            if len(self.board_state._board.move_stack) > 0:
-                last_move = self.board_state._board.move_stack[-1]
-                from_cpp = self.board_state._convert_square(last_move.from_square)
-                to_cpp = self.board_state._convert_square(last_move.to_square)
-                self.highlight_manager.set_last_move(from_cpp, to_cpp)
-            else:
-                self.highlight_manager.set_last_move(None, None)
-                
-            # 2. Reset check highlights
-            if self.board_state.is_check():
-                king_char = 'K' if self.board_state.turn else 'k'
-                for i in range(64):
-                    if self.board_state.piece_at(i) == king_char:
-                        self.highlight_manager.set_check_square(i)
-                        break
-            else:
-                self.highlight_manager.set_check_square(None)
-                
-            # 3. Clear active selection highlights
-            self.highlight_manager.clear_selection()
-            
-            # 4. Emit signal to update Move List Widget
-            self.signals.move_undone.emit()
-            
-            # 5. Trigger views repaint
-            self.signals.state_changed.emit()
-            self.query_active_debug_overlay()
-            self.sync_position_and_query_legals()
-            logger.info("Successfully undone the last played move.")
+        self.board_controller.undo_last_move()
 
     def set_debug_overlay_mode(self, mode: str) -> None:
-        """Sets the active debug overlay mode and triggers query."""
-        self.highlight_manager.debug_overlay_mode = mode
-        self.query_active_debug_overlay()
+        self.overlay_handler.set_debug_overlay_mode(mode)
 
     def query_active_debug_overlay(self) -> None:
-        """Sends the appropriate uci debug command to request threat overlays."""
-        mode = self.highlight_manager.debug_overlay_mode
-        if mode == "NONE":
-            self.highlight_manager.debug_overlay_squares = []
-            self.signals.state_changed.emit()
-            return
-            
-        fen = self.board_state.get_fen()
-        
-        # Sync board position to engine
-        self.engine_manager.send_position(fen)
-        
-        if mode == "WHITE_ATTACKS":
-            self.engine_manager.send_command("bluie-debug attacks white")
-        elif mode == "BLACK_ATTACKS":
-            self.engine_manager.send_command("bluie-debug attacks black")
-        elif mode == "ENGINE_LEGALS":
-            self.engine_manager.send_command("bluie-debug legalmoves")
-        elif mode.startswith("ATTACKSTO_"):
-            sq_idx = self.highlight_manager.selected_square
-            if sq_idx is not None:
-                files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
-                col = sq_idx % 8
-                row = 8 - (sq_idx // 8)
-                sq_str = f"{files[col]}{row}"
-                
-                side = "white" if "WHITE" in mode else "black"
-                self.engine_manager.send_command(f"bluie-debug attacksto {sq_str} {side}")
-            else:
-                self.highlight_manager.debug_overlay_squares = []
-                self.signals.state_changed.emit()
+        self.overlay_handler.query_active_debug_overlay()
 
-    def handle_debug_overlay_received(self, otype: str, value: str) -> None:
-        """Parses the received engine threat bitboard or legal moves list and triggers a board repaint."""
-        try:
-            if otype == "ENGINE_LEGALS":
-                # Stash it directly in BoardState!
-                self.board_state.cached_engine_legal_moves = value.split()
-                
-                # If the active debug overlay mode is ENGINE_LEGALS, highlight all destination squares
-                if self.highlight_manager.debug_overlay_mode == "ENGINE_LEGALS":
-                    squares = []
-                    for move_str in self.board_state.cached_engine_legal_moves:
-                        if len(move_str) >= 4:
-                            to_coord = move_str[2:4]
-                            to_idx = self.board_state.coordinate_to_index(to_coord)
-                            if to_idx is not None and to_idx not in squares:
-                                squares.append(to_idx)
-                    self.highlight_manager.debug_overlay_squares = squares
-                    self.signals.state_changed.emit()
-            else:
-                val = int(value, 16)
-                squares = []
-                for i in range(64):
-                    if (val >> i) & 1:
-                        squares.append(i)
-                        
-                self.highlight_manager.debug_overlay_squares = squares
-                self.signals.state_changed.emit()
-        except Exception as e:
-            logger.error(f"Failed to parse debug overlay value '{value}' for type '{otype}': {e}")
+    def trigger_engine_move(self) -> None:
+        self.engine_handler.trigger_engine_move()
 
-    def _handle_engine_config_changed(self, options: dict) -> None:
-        """Sends updated standard UCI options to the engine subprocess dynamically."""
-        if self.engine_manager.engine_status != "Disconnected":
-            if "Hash" in options:
-                self.engine_manager.send_command(f"setoption name Hash value {options['Hash']}")
-            if "Threads" in options:
-                self.engine_manager.send_command(f"setoption name Threads value {options['Threads']}")
+    def sync_position_and_query_legals(self) -> None:
+        self.engine_handler.sync_position_and_query_legals()
 
     def cleanup(self) -> None:
-        """
-        Terminates the engine subprocess cleanly. Called on window close.
-        """
-        logger.info("Cleaning up GameController: terminating C++ engine...")
+        logger.info("Cleaning up GameController subprocesses...")
         self.engine_manager.quit_engine()

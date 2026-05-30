@@ -1,20 +1,20 @@
-# gui/panels/move_list_widget.py
+# gui/widgets/move_list_widget.py
 
 from PySide6.QtWidgets import QWidget, QTableWidget, QTableWidgetItem, QVBoxLayout, QHeaderView
 from PySide6.QtCore import Qt
+from gui.views.analysis.styles.analysis_styles import get_move_list_table_style
 
 class MoveListWidget(QWidget):
-    def __init__(self, theme=None, parent=None):
+    def __init__(self, theme, parent=None):
         """
-        Initializes the scrollable Move List Panel.
+        Initializes the scrollable Move List component.
         Displays SAN moves split elegantly across White and Black columns.
         """
         super().__init__(parent)
-        from gui.themes import theme_manager
-        self.theme = theme if theme is not None else theme_manager.get_theme()
-        self.setup_ui()
+        self.theme = theme
+        self._init_ui()
 
-    def setup_ui(self) -> None:
+    def _init_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         
@@ -38,15 +38,8 @@ class MoveListWidget(QWidget):
         self.table.verticalHeader().setVisible(False)
         self.table.horizontalHeader().setVisible(False)
         
-        # Load colors dynamically from active theme to prevent hardcoding!
-        bg_hex = self.theme.panel_background.name()
-        text_hex = self.theme.panel_text.name()
-        border_hex = self.theme.panel_border.name()
-        
-        self.table.setStyleSheet(
-            f"QTableWidget {{ background-color: {bg_hex}; color: {text_hex}; border: 1px solid {border_hex}; }}"
-            f"QTableWidget::item {{ padding: 4px; font-weight: 500; border: none; }}"
-        )
+        # Load colors dynamically from style helper
+        self.table.setStyleSheet(get_move_list_table_style(self.theme))
         
         layout.addWidget(self.table)
 
@@ -103,10 +96,4 @@ class MoveListWidget(QWidget):
     def update_theme(self, theme) -> None:
         """Dynamically repaints the table widget colors."""
         self.theme = theme
-        bg_hex = self.theme.panel_background.name()
-        text_hex = self.theme.panel_text.name()
-        border_hex = self.theme.panel_border.name()
-        self.table.setStyleSheet(
-            f"QTableWidget {{ background-color: {bg_hex}; color: {text_hex}; border: 1px solid {border_hex}; }}"
-            f"QTableWidget::item {{ padding: 4px; font-weight: 500; border: none; }}"
-        )
+        self.table.setStyleSheet(get_move_list_table_style(self.theme))

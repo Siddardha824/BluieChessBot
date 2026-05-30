@@ -2,7 +2,6 @@
 __pycache__/
 .vscode/
 build/
-gui-old/
 designs/
 .antigravitycli/
 preferences.json

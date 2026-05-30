@@ -5,6 +5,7 @@ from typing import List, Optional
 from PySide6.QtCore import QObject, QProcess, Signal, Slot
 from gui.engine.uci_parser import UCIParser
 from gui.models.analysis_state import AnalysisState
+from gui.models.engine_info import EngineInfo
 from gui.utils.logger import get_logger
 
 
@@ -55,6 +56,7 @@ class EngineManager(QObject):
         self.is_white_turn = True
         self.engine_status = "Disconnected"
         self.engine_path = ""
+        self.engine_info = EngineInfo(self)
         
         # Configure process stream channels and environment
         self.process.setProcessChannelMode(QProcess.ProcessChannelMode.SeparateChannels)
@@ -80,6 +82,7 @@ class EngineManager(QObject):
             return False
 
         self.engine_path = executable_path
+        self.engine_info.path = executable_path
         self._update_status("Starting")
         logger.info(f"Starting engine subprocess: {executable_path}")
         
@@ -101,6 +104,18 @@ class EngineManager(QObject):
         cmd_stripped = cmd.strip()
         logger.debug(f"Sending command to engine: {cmd_stripped}")
         
+        # Intercept hash/threads options to keep engine_info in sync
+        if cmd_stripped.startswith("setoption name Hash value "):
+            try:
+                self.engine_info.hash_size = int(cmd_stripped.split()[-1])
+            except ValueError:
+                pass
+        elif cmd_stripped.startswith("setoption name Threads value "):
+            try:
+                self.engine_info.threads = int(cmd_stripped.split()[-1])
+            except ValueError:
+                pass
+
         # Emit command log as OUT direction
         self.uci_io_logged.emit(cmd_stripped, "OUT")
         
@@ -127,7 +142,7 @@ class EngineManager(QObject):
             
         self.send_command(cmd)
 
-    def start_search(self, depth: Optional[int] = None, movetime: Optional[int] = None, infinite: bool = False) -> None:
+    def start_search(self, depth: Optional[int] = None, movetime: Optional[int] = None, nodes: Optional[int] = None, infinite: bool = False) -> None:
         """
         Instructs engine to start calculating using "go".
         """
@@ -140,8 +155,11 @@ class EngineManager(QObject):
                 cmd += f" depth {depth}"
             if movetime is not None:
                 cmd += f" movetime {movetime}"
+            if nodes is not None:
+                cmd += f" nodes {nodes}"
                 
         self.send_command(cmd)
+
 
     def stop_search(self) -> None:
         """
@@ -167,6 +185,13 @@ class EngineManager(QObject):
     def _update_status(self, new_status: str) -> None:
         if self.engine_status != new_status:
             self.engine_status = new_status
+            self.engine_info.status = new_status
+            if new_status == "Disconnected":
+                self.engine_info.connection_status = "Disconnected"
+                self.engine_info.name = "Awaiting Handshake..."
+                self.engine_info.author = ""
+            else:
+                self.engine_info.connection_status = "Connected"
             self.status_changed.emit(new_status)
             logger.debug(f"Engine status changed: {new_status}")
 
@@ -252,6 +277,12 @@ class EngineManager(QObject):
                     
                 elif ptype == "info":
                     self.info_received.emit(parsed["state"])
+                    
+                elif ptype == "id":
+                    if "name" in parsed:
+                        self.engine_info.name = parsed["name"]
+                    if "author" in parsed:
+                        self.engine_info.author = parsed["author"]
                     
             except Exception as e:
                 logger.error(f"Error parsing engine stdout line '{raw_line}': {e}", exc_info=True)
