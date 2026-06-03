@@ -63,7 +63,7 @@ class BoardController(QObject):
                 outcome = "Stalemate! The game is a draw."
             elif board.is_insufficient_material():
                 outcome = "Draw due to insufficient material."
-            elif board.is_fivefold_repetition() or board.is_threefold_repetition():
+            elif board.is_fivefold_repetition() or board.is_repetition(3):
                 outcome = "Draw due to repetition."
             else:
                 outcome = "Game over."

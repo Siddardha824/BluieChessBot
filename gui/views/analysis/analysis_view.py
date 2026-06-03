@@ -29,10 +29,6 @@ class AnalysisView(QWidget):
         self.engine_manager = engine_manager
         
         self._init_ui()
-        
-        # Wire calculations up to telemetry if manager is injected on initialization
-        if self.engine_manager is not None:
-            self.connect_engine(self.engine_manager, None)
 
     def _init_ui(self) -> None:
         # Main layout is vertical (Workspace horizontal row + Debug Console bottom row)
@@ -88,8 +84,8 @@ class AnalysisView(QWidget):
         self.btn_clear = self.control_section.control_widget.btn_clear
         self.btn_flip = self.control_section.control_widget.btn_flip
         
-        # Wire icons row modal buttons
-        self.move_section.btn_icon_graph.clicked.connect(self._show_graph_modal)
+        # # Wire icons row modal buttons
+        # self.move_section.btn_icon_graph.clicked.connect(self._show_graph_modal)
 
     def connect_engine(self, engine_manager, game_controller=None) -> None:
         """

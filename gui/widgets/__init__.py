@@ -7,5 +7,5 @@ from .top_moves_widget import TopMovesWidget
 from .engine_status_widget import EngineStatusWidget
 from .move_list_widget import MoveListWidget
 from .engine_control_widget import EngineControlWidget
-
+from .board_navigation_widget import BoardNavigationWidget
 

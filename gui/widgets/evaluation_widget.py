@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel
 from PySide6.QtCore import QSize, Qt, QRect
 from PySide6.QtGui import QPainter, QColor, QFont
 
+from .themed_widget import ThemedWidget
 from gui.views.analysis.styles.analysis_styles import get_score_desc_style
 
 class HorizontalEvalBar(QWidget):
@@ -93,13 +94,9 @@ class HorizontalEvalBar(QWidget):
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawRect(0, 0, w - 1, h - 1)
 
-class EvaluationWidget(QWidget):
-    def __init__(self, theme, parent=None):
-        super().__init__(parent)
-        self.theme = theme
-        self._init_ui()
+class EvaluationWidget(ThemedWidget):
 
-    def _init_ui(self):
+    def setup_ui(self):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(15)
@@ -135,8 +132,7 @@ class EvaluationWidget(QWidget):
         self.eval_bar.set_evaluation(0.0, False, 0)
         self.lbl_score_desc.setText("Balanced Even")
 
-    def update_theme(self, theme) -> None:
-        self.theme = theme
-        self.eval_bar.theme = theme
+    def apply_theme(self) -> None:
+        self.eval_bar.theme = self.theme
         self.eval_bar.update()
         self.lbl_score_desc.setStyleSheet(get_score_desc_style(self.theme))

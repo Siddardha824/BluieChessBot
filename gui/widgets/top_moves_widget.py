@@ -3,15 +3,14 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView
 from PySide6.QtCore import Qt
 from gui.views.analysis.styles.analysis_styles import get_section_header_style, get_table_header_style, get_table_style
+from .themed_widget import ThemedWidget
 
-class TopMovesWidget(QWidget):
+class TopMovesWidget(ThemedWidget):
     def __init__(self, theme, initial_top_moves=None, parent=None):
-        super().__init__(parent)
-        self.theme = theme
         self.initial_top_moves = initial_top_moves
-        self._init_ui()
+        super().__init__(theme, parent)
 
-    def _init_ui(self):
+    def setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
@@ -60,7 +59,6 @@ class TopMovesWidget(QWidget):
             ]
             self.populate(clean_moves)
 
-    def update_theme(self, theme) -> None:
-        self.theme = theme
+    def apply_theme(self) -> None:
         self.top_moves_table.horizontalHeader().setStyleSheet(get_table_header_style(self.theme))
         self.top_moves_table.setStyleSheet(get_table_style(self.theme))

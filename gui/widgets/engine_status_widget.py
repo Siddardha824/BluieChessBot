@@ -2,16 +2,12 @@
 
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel
 from PySide6.QtCore import Qt
-
+from .themed_widget import ThemedWidget
 from gui.views.analysis.styles.analysis_styles import get_panel_title_style, get_dot_indicator_style
 
-class EngineStatusWidget(QWidget):
-    def __init__(self, theme, parent=None):
-        super().__init__(parent)
-        self.theme = theme
-        self._init_ui()
+class EngineStatusWidget(ThemedWidget):
 
-    def _init_ui(self):
+    def setup_ui(self):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(10)
@@ -39,6 +35,5 @@ class EngineStatusWidget(QWidget):
             else:
                 self.dot_indicator.setStyleSheet("background-color: #2ECC71; border-radius: 4px;") # Glowing green dot
 
-    def update_theme(self, theme) -> None:
-        self.theme = theme
+    def apply_theme(self) -> None:
         self.lbl_title.setStyleSheet(get_panel_title_style(self.theme))

@@ -2,16 +2,15 @@
 
 from PySide6.QtWidgets import QWidget, QGridLayout, QLabel
 from gui.views.analysis.styles.analysis_styles import get_grid_lbl_style, get_grid_val_style
+from .themed_widget import ThemedWidget
 
-class MetricsGrid(QWidget):
+class MetricsGrid(ThemedWidget):
     def __init__(self, theme, initial_hash="Not Available", initial_threads="Not Available", parent=None):
-        super().__init__(parent)
-        self.theme = theme
         self.initial_hash = initial_hash
         self.initial_threads = initial_threads
-        self._init_ui()
+        super().__init__(theme, parent)
 
-    def _init_ui(self):
+    def setup_ui(self):
         grid_layout = QGridLayout(self)
         grid_layout.setContentsMargins(0, 0, 0, 0)
         grid_layout.setHorizontalSpacing(15)
@@ -67,8 +66,7 @@ class MetricsGrid(QWidget):
         self.val_nodes.setText("-")
         self.val_nps.setText("-")
 
-    def update_theme(self, theme) -> None:
-        self.theme = theme
+    def apply_theme(self) -> None:
         for lbl in self.findChildren(QLabel):
             if lbl.text() in ["Nodes", "NPS", "Hash", "Threads"]:
                 lbl.setStyleSheet(get_grid_lbl_style(self.theme))

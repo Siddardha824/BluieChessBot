@@ -65,8 +65,6 @@ void UCI::parseCommand(const std::string& line)
         std::lock_guard<std::mutex> lock(coutMutex);
         std::cout << "id name Bluie Bot v 1.0.0\n";
         std::cout << "id author Siddardha\n";
-        std::cout << "option name Hash type spin default 128 min 16 max 65536\n";
-        std::cout << "option name Threads type spin default 4 min 1 max 32\n";
         std::cout << "uciok" << std::endl;
     }
     else if (cmd == "isready")

@@ -4,7 +4,7 @@ import logging
 
 # Ensure logging configuration is initialized
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.WARNING,
     format="[%(levelname)s] %(name)s: %(message)s"
 )
 

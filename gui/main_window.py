@@ -31,8 +31,6 @@ class MainWindow(QMainWindow):
         self.wire_connections()
         
         # Log successful bootstrap in workspace debug logger
-        self.analysis_view.debug_console.log_message("INFO", "Bluie Chess GUI system successfully bootstrapped.")
-        self.analysis_view.debug_console.log_message("INFO", "Awaiting user moves on the chessboard...")
         logger.info("MainWindow UI framework successfully bootstrapped.")
 
     def setup_ui(self) -> None:

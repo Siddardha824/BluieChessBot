@@ -3,18 +3,11 @@
 from PySide6.QtWidgets import QWidget, QTableWidget, QTableWidgetItem, QVBoxLayout, QHeaderView
 from PySide6.QtCore import Qt
 from gui.views.analysis.styles.analysis_styles import get_move_list_table_style
+from .themed_widget import ThemedWidget
 
-class MoveListWidget(QWidget):
-    def __init__(self, theme, parent=None):
-        """
-        Initializes the scrollable Move List component.
-        Displays SAN moves split elegantly across White and Black columns.
-        """
-        super().__init__(parent)
-        self.theme = theme
-        self._init_ui()
+class MoveListWidget(ThemedWidget):
 
-    def _init_ui(self) -> None:
+    def setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         
@@ -84,7 +77,7 @@ class MoveListWidget(QWidget):
         # Check if the last row has a Black move
         if self.table.item(row_count - 1, 2) is not None:
             # Clear Black's move cell
-            self.table.setItem(row_count - 1, 2, None)
+            self.table.takeItem(row_count - 1, 2)
         else:
             # Row only contains White's move, so delete the entire row
             self.table.removeRow(row_count - 1)
@@ -93,7 +86,6 @@ class MoveListWidget(QWidget):
         """Clears all moves from the panel."""
         self.table.setRowCount(0)
 
-    def update_theme(self, theme) -> None:
+    def apply_theme(self) -> None:
         """Dynamically repaints the table widget colors."""
-        self.theme = theme
         self.table.setStyleSheet(get_move_list_table_style(self.theme))

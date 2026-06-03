@@ -19,24 +19,19 @@ class EngineHandler(QObject):
         self.board_state = board_state
         self.engine_mode = "play_black"  # Modes: "play_black", "play_white", "free_analysis", "two_human"
 
-        # Wire status ready query
-        self.engine_manager.status_changed.connect(self._handle_engine_status_for_legals)
-        
         # Wire global engine settings overrides from AppState
         app_state.signals.engine_config_changed.connect(self._handle_engine_config_changed)
 
-    def _handle_engine_status_for_legals(self, status: str) -> None:
-        if status == "Ready":
-            self.sync_position_and_query_legals()
+    def send_engine_options(self) -> None:
+        """Sends active engine preferences loaded from preferences.json once on ready status."""
+        if self.engine_manager.engine_status != "Disconnected":
+            opts = app_state.engine_options
+            self.engine_manager.send_command(f"setoption name Hash value {opts.get('Hash', 64)}")
+            self.engine_manager.send_command(f"setoption name Threads value {opts.get('Threads', 1)}")
 
     def sync_position_and_query_legals(self) -> None:
         """Sends current FEN to the engine and requests the up-to-date legal moves list."""
         if self.engine_manager.engine_status != "Disconnected":
-            # Transmit active engine preferences loaded from preferences.json
-            opts = app_state.engine_options
-            self.engine_manager.send_command(f"setoption name Hash value {opts.get('Hash', 64)}")
-            self.engine_manager.send_command(f"setoption name Threads value {opts.get('Threads', 1)}")
-            
             fen = self.board_state.get_fen()
             self.engine_manager.send_position(fen)
             self.engine_manager.send_command("bluie-debug legalmoves")

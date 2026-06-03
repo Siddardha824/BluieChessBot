@@ -1,7 +1,7 @@
 # gui/controllers/game_controller.py
 
 import os
-from PySide6.QtCore import QObject, Signal, QTimer
+from PySide6.QtCore import QObject, QTimer
 from gui.utils.logger import get_logger
 
 from gui.controllers.board_controller import BoardController
@@ -46,7 +46,10 @@ class GameController:
         # 5. Boot engine subprocess
         if os.path.exists(self.engine_path):
             self.engine_manager.start_engine(self.engine_path)
-            QTimer.singleShot(800, self.engine_handler.sync_position_and_query_legals)
+            def on_startup_ready():
+                self.engine_handler.send_engine_options()
+                self.engine_handler.sync_position_and_query_legals()
+            QTimer.singleShot(800, on_startup_ready)
         else:
             logger.warning(f"Engine executable not found at startup: {self.engine_path}. Awaiting manual launch.")
             

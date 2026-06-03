@@ -213,4 +213,36 @@ def get_checkbox_style(theme) -> str:
         f"}}"
     )
 
+def get_combo_style(theme) -> str:
+    bg_hex = theme.panel_background.name()
+    border_hex = theme.panel_border.name()
+    text_hex = theme.panel_text.name()
+    return (
+        f"QComboBox {{"
+        f"  background-color: rgba(0, 0, 0, 0.25);"
+        f"  border: 1px solid {border_hex};"
+        f"  border-radius: 4px;"
+        f"  padding: 4px 8px;"
+        f"  color: {text_hex};"
+        f"  font-family: 'Outfit'; font-size: 11px; font-weight: 600;"
+        f"  min-width: 120px;"
+        f"}}"
+        f"QComboBox::drop-down {{"
+        f"  subcontrol-origin: padding;"
+        f"  subcontrol-position: top right;"
+        f"  width: 15px;"
+        f"  border-left-width: 0px;"
+        f"  border-top-right-radius: 4px;"
+        f"  border-bottom-right-radius: 4px;"
+        f"}}"
+        f"QComboBox QAbstractItemView {{"
+        f"  background-color: {bg_hex};"
+        f"  border: 1px solid {border_hex};"
+        f"  color: {text_hex};"
+        f"  selection-background-color: rgba(255, 255, 255, 0.1);"
+        f"  selection-color: {text_hex};"
+        f"}}"
+    )
+
+
 

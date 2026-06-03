@@ -4,7 +4,6 @@ import os
 from typing import List, Optional
 from PySide6.QtCore import QObject, QProcess, Signal, Slot
 from gui.engine.uci_parser import UCIParser
-from gui.models.analysis_state import AnalysisState
 from gui.models.engine_info import EngineInfo
 from gui.utils.logger import get_logger
 
@@ -12,7 +11,6 @@ from gui.utils.logger import get_logger
 def _decode_qbytearray(data_input) -> str:
     """
     Safely converts a PySide6 QByteArray or Python bytes object to a standard string.
-    Satisfies both runtime environments and Pylance static type checkers.
     """
     if hasattr(data_input, "data"):
         try:

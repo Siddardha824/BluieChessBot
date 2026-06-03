@@ -8,6 +8,12 @@ class EngineInfo(QObject):
     and runtime configuration status of the active UCI chess engine subprocess.
     """
     changed = Signal()
+    name_changed = Signal(str)
+    author_changed = Signal(str)
+    status_changed = Signal(str)
+    hash_size_changed = Signal(int)
+    threads_changed = Signal(int)
+    path_changed = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -28,6 +34,7 @@ class EngineInfo(QObject):
         if self._name != val:
             self._name = val
             self.changed.emit()
+            self.name_changed.emit(self._name)
 
     @property
     def author(self) -> str:
@@ -38,6 +45,7 @@ class EngineInfo(QObject):
         if self._author != val:
             self._author = val
             self.changed.emit()
+            self.author_changed.emit(self._author)
 
     @property
     def hash_size(self) -> int:
@@ -48,6 +56,7 @@ class EngineInfo(QObject):
         if self._hash_size != val:
             self._hash_size = val
             self.changed.emit()
+            self.hash_size_changed.emit(self._hash_size)
 
     @property
     def threads(self) -> int:
@@ -58,6 +67,7 @@ class EngineInfo(QObject):
         if self._threads != val:
             self._threads = val
             self.changed.emit()
+            self.threads_changed.emit(self._threads)
 
     @property
     def status(self) -> str:
@@ -68,6 +78,7 @@ class EngineInfo(QObject):
         if self._status != val:
             self._status = val
             self.changed.emit()
+            self.status_changed.emit(self._status)
 
     @property
     def connection_status(self) -> str:
@@ -78,6 +89,7 @@ class EngineInfo(QObject):
         if self._connection_status != val:
             self._connection_status = val
             self.changed.emit()
+            self.status_changed.emit(self._connection_status)
 
     @property
     def path(self) -> str:
@@ -88,3 +100,4 @@ class EngineInfo(QObject):
         if self._path != val:
             self._path = val
             self.changed.emit()
+            self.path_changed.emit(self._path)

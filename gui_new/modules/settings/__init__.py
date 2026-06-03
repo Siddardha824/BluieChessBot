@@ -1,0 +1,1 @@
+from .managers.settings_manager import SettingsManager as Settings

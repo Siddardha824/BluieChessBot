@@ -1,15 +1,13 @@
 # gui/widgets/depth_widget.py
 
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QProgressBar
+from PySide6.QtWidgets import QVBoxLayout, QLabel, QProgressBar
+
+from .themed_widget import ThemedWidget
 from gui.views.analysis.styles.analysis_styles import get_depth_title_style, get_depth_progress_style
 
-class DepthWidget(QWidget):
-    def __init__(self, theme, parent=None):
-        super().__init__(parent)
-        self.theme = theme
-        self._init_ui()
+class DepthWidget(ThemedWidget):
 
-    def _init_ui(self):
+    def setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(6)
@@ -35,7 +33,6 @@ class DepthWidget(QWidget):
         self.lbl_depth_title.setText("Depth 0/0")
         self.depth_progress.setValue(0)
 
-    def update_theme(self, theme) -> None:
-        self.theme = theme
+    def apply_theme(self) -> None:
         self.lbl_depth_title.setStyleSheet(get_depth_title_style(self.theme))
         self.depth_progress.setStyleSheet(get_depth_progress_style(self.theme))

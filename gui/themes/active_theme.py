@@ -1,5 +1,3 @@
-# gui/themes/active_theme.py
-
 from dataclasses import dataclass
 from PySide6.QtGui import QColor
 

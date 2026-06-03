@@ -1,25 +1,22 @@
 # gui/widgets/engine_control_widget.py
 
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QPushButton, QSpinBox, QCheckBox, QFrame
+from PySide6.QtWidgets import QVBoxLayout, QGridLayout, QLabel, QPushButton, QSpinBox, QCheckBox, QFrame
 from PySide6.QtCore import Qt, Signal
+
+from .themed_widget import ThemedWidget
 from gui.views.analysis.styles.analysis_styles import (
     get_control_label_style, get_input_field_style, get_checkbox_style,
     get_new_search_button_style, get_stop_button_style, get_quick_secondary_button_style
 )
 
-class EngineControlWidget(QWidget):
+class EngineControlWidget(ThemedWidget):
     # Signals generated when user clicks or triggers control options
     start_search = Signal(dict)
     stop_search = Signal()
     clear_board = Signal()
     flip_board = Signal()
 
-    def __init__(self, theme, parent=None):
-        super().__init__(parent)
-        self.theme = theme
-        self._init_ui()
-
-    def _init_ui(self) -> None:
+    def setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(12)
@@ -147,9 +144,8 @@ class EngineControlWidget(QWidget):
             "infinite": False
         }
 
-    def update_theme(self, theme) -> None:
+    def apply_theme(self) -> None:
         """Repaints component colors on active theme change."""
-        self.theme = theme
         
         # Update stylesheet configurations dynamically
         self.spin_depth.setStyleSheet(get_input_field_style(self.theme))
