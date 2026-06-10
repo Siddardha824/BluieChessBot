@@ -1,0 +1,12 @@
+#mainWindow {
+    background-color: #00031f;
+}
+
+#homePage {
+    border: 1px solid red;
+}
+
+#card {
+    background-color: #1d2744;
+    border-radius: 12px;
+}

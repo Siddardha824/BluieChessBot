@@ -25,7 +25,7 @@ class AppManager(QObject):
 
     MAIN_SESSION_ID = "main"
 
-    def __init__(self, parent=None):
+    def __init__(self, app,parent=None):
         super().__init__(parent)
 
         logger.info("Initializing app manager")
@@ -37,7 +37,7 @@ class AppManager(QObject):
 
         self._settings = SettingsManager.get_instance()
 
-        self._theme = ThemeManager.get_instance()
+        self._theme_manager = ThemeManager(app)
 
         self._connect_modules()
         logger.info("App manager initialized")
@@ -56,10 +56,10 @@ class AppManager(QObject):
 
     @property
     def theme(self) -> ThemeManager:
-        return self._theme
+        return self._theme_manager
 
     @property
-    def main_session(self) -> EngineSession:
+    def main_session(self) -> "EngineSession":
         return self._ensure_main_session()
 
     def startup(
@@ -85,6 +85,9 @@ class AppManager(QObject):
                 session.set_position_fen(self.board.board.fen)
             else:
                 logger.warning("Engine executable could not be resolved")
+
+    def set_theme(self) -> None:
+        self._theme_manager.apply_theme("space")
 
     def shutdown(self):
         """
@@ -130,7 +133,7 @@ class AppManager(QObject):
         self.board.position_changed.connect(self._sync_engine_position)
         logger.debug("Connected board position updates to engine session")
 
-    def _ensure_main_session(self) -> EngineSession:
+    def _ensure_main_session(self) -> "EngineSession":
 
         if self._main_session is not None:
             return self._main_session

@@ -19,7 +19,7 @@ def main():
         # Initialize the global Qt application
         app = QApplication(sys.argv)
 
-        manager = AppManager()
+        manager = AppManager(app)
 
         logger.info("Creating MainWindow")
         window = MainWindow(manager)
