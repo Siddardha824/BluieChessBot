@@ -2,8 +2,16 @@
     background-color: #00031f;
 }
 
+QWidget {
+    border: 1px solid white
+}
+
 #homePage {
     border: 1px solid red;
+}
+
+#chessboard {
+    border: 1px solid green;
 }
 
 #card {

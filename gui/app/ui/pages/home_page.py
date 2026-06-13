@@ -1,6 +1,7 @@
-from PySide6.QtWidgets import QVBoxLayout, QLabel
+from PySide6.QtWidgets import QVBoxLayout
 
 from ..templates import StyledWidget
+from ..panels import Chessboard
 
 class HomePage(StyledWidget):
     def __init__(self, app_manager, parent = None):
@@ -12,8 +13,6 @@ class HomePage(StyledWidget):
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
-
-        label = QLabel("This is a test label")
-
-        layout.addWidget(label)
+        self.board = Chessboard(self)
+        layout.addWidget(self.board)
 
