@@ -13,6 +13,6 @@ class HomePage(StyledWidget):
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
-        self.board = Chessboard(self)
+        self.board = Chessboard(self.manager, self)
         layout.addWidget(self.board)
 

@@ -6,7 +6,7 @@ logger = get_logger(__name__)
 
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 
-GUI_DIR = ROOT_DIR / "gui_new"
+GUI_DIR = ROOT_DIR
 
 ASSETS_DIR = GUI_DIR / "assets"
 

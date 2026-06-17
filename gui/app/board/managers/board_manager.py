@@ -26,7 +26,7 @@ class BoardManager(QObject):
         return self._game_state
     
     @property
-    def board(self) -> BoardState:
+    def getSession(self) -> BoardState:
         return self._board_state
 
     def make_move(self, move: str) -> bool:

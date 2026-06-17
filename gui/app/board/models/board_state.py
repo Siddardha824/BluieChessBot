@@ -14,7 +14,7 @@ class BoardState(QObject):
         self._board = chess.Board()
 
     @property
-    def board(self) -> chess.Board:
+    def getBoard(self) -> chess.Board:
         return self._board
 
     @property
