@@ -2,21 +2,20 @@ from PySide6.QtCore import QObject, Signal
 from enum import Enum, auto
 from gui.utils import get_logger
 
-
 logger = get_logger(__name__)
 
 class GameModes(Enum):
     PLAY_WHITE = auto()
     PLAY_BLACK = auto()
     ENGINE_VS_ENGINE = auto()
-    HUMAN_VS_HUMAN = auto()
+    ANALYSIS = auto()
 
 class GameState(QObject):
     game_mode_changed = Signal(GameModes)
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._game_mode = GameModes.PLAY_WHITE
+        self._game_mode = GameModes.ANALYSIS  # Default to Analysis mode
         self._result = None
         self._result_reason = None
 
@@ -25,7 +24,7 @@ class GameState(QObject):
         return self._game_mode
 
     @mode.setter
-    def game_mode(self, val: GameModes):
+    def mode(self, val: GameModes):
         if self._game_mode != val:
             logger.info("Game mode changed: %s -> %s", self._game_mode.name, val.name)
             self._game_mode = val
@@ -48,4 +47,3 @@ class GameState(QObject):
     def result_reason(self, val):
         logger.info("Game result reason set: %s", val)
         self._result_reason = val
-

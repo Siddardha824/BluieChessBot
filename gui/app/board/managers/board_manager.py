@@ -1,6 +1,5 @@
 from PySide6.QtCore import QObject, Signal
 
-from ..models.game_state import GameState
 from ..models.board_state import BoardState
 from ..services.move_executor import MoveExecutor
 from gui.utils import get_logger
@@ -15,16 +14,11 @@ class BoardManager(QObject):
         super().__init__(parent)
 
         logger.info("Initializing board manager")
-        self._game_state = GameState(self)
         self._board_state = BoardState(self)
         self._board_state.position_changed.connect(
             self.position_changed.emit
         )
 
-    @property
-    def game_state(self) -> GameState:
-        return self._game_state
-    
     @property
     def getSession(self) -> BoardState:
         return self._board_state

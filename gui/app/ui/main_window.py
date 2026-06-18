@@ -1,3 +1,4 @@
+from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QWidget
 from typing import TYPE_CHECKING
 
@@ -36,6 +37,11 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.home_page)
 
         self.manager.set_theme()
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        logger.info("MainWindow close event triggered, shutting down services")
+        self.manager.shutdown()
+        event.accept()
 
 
 

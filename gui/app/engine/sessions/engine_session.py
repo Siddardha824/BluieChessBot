@@ -53,10 +53,12 @@ class EngineSession(QObject):
 
             self.engine_info.path = engine_path
             self.engine_info.connection_status = "Connecting"
+            self.engine_info.status = "Connecting"
 
             self.send("uci")
             logger.info("Engine session started: %s", engine_path)
         else:
+            self.engine_info.status = "Disconnected"
             logger.warning("Engine session failed to start: %s", engine_path)
 
     def stop(self):
@@ -67,6 +69,9 @@ class EngineSession(QObject):
     def send(self, command: str):
 
         self._connector.send(command)
+
+    def is_running(self) -> bool:
+        return self._connector.process.state() == QProcess.ProcessState.Running
 
     def is_ready(self):
 
@@ -84,12 +89,27 @@ class EngineSession(QObject):
         self.send(f"position fen {fen}")
 
     def go_depth(self, depth: int):
-
+        self.engine_info.status = "Searching"
         logger.info("Starting engine search to depth %s", depth)
         self.send(f"go depth {depth}")
 
-    def stop_search(self):
+    def go_infinite(self):
+        self.engine_info.status = "Searching"
+        logger.info("Starting infinite engine search")
+        self.send("go infinite")
 
+    def go_time(self, ms: int):
+        self.engine_info.status = "Searching"
+        logger.info("Starting engine search for %s ms", ms)
+        self.send(f"go movetime {ms}")
+
+    def go_nodes(self, nodes: int):
+        self.engine_info.status = "Searching"
+        logger.info("Starting engine search to node limit %s", nodes)
+        self.send(f"go nodes {nodes}")
+
+    def stop_search(self):
+        self.engine_info.status = "Idle"
         logger.info("Stopping engine search")
         self.send("stop")
 
@@ -104,6 +124,7 @@ class EngineSession(QObject):
 
         if packet_type == PacketType.UCIOK:
             self.engine_info.connection_status = "Connected"
+            self.engine_info.status = "Idle"
             logger.info("Engine UCI handshake complete")
 
         elif packet_type == PacketType.READYOK:
@@ -127,6 +148,7 @@ class EngineSession(QObject):
                 packet["best_move"]
             )
             logger.info("Best move received: %s", packet["best_move"])
+            self.engine_info.status = "Idle"
             self.best_move_updated.emit(
                 packet["best_move"]
             )
@@ -138,6 +160,7 @@ class EngineSession(QObject):
         exit_status
     ):
         self.engine_info.connection_status = "Disconnected"
+        self.engine_info.status = "Disconnected"
 
         logger.info("Engine session stopped: code=%s status=%s", exit_code, exit_status)
         self.engine_stopped.emit(exit_code, exit_status)
@@ -147,6 +170,7 @@ class EngineSession(QObject):
         message: str
     ):
         self.engine_info.connection_status = "Error"
+        self.engine_info.status = "Disconnected"
 
         logger.error("Engine session error: %s", message)
         self.engine_error.emit(message)

@@ -8,6 +8,7 @@ from PySide6.QtCore import QObject
 from .board import BoardManager
 from .theme import ThemeManager
 from .settings import SettingsManager
+from .game import GameManager
 from .engine import EngineManager
 from .shared import ROOT_DIR
 from gui.utils import get_logger
@@ -39,6 +40,8 @@ class AppManager(QObject):
 
         self._theme_manager = ThemeManager(app)
 
+        self._game = GameManager(self)
+
         self._connect_modules()
         logger.info("App manager initialized")
 
@@ -49,6 +52,10 @@ class AppManager(QObject):
     @property
     def engine(self) -> EngineManager:
         return self._engine
+
+    @property
+    def game(self) -> GameManager:
+        return self._game
 
     @property
     def settings(self) -> SettingsManager:
@@ -98,9 +105,13 @@ class AppManager(QObject):
         self.engine.shutdown()
         self._main_session = None
 
-    def start_engine(self, engine_path: str | Path | None = None) -> bool:
+    def start_engine(
+        self,
+        engine_path: str | Path | None = None,
+        session_id: str = MAIN_SESSION_ID
+    ) -> bool:
         """
-        Start the main engine session if an executable can be resolved.
+        Start the specified engine session if an executable can be resolved.
         """
 
         resolved_engine_path = self._resolve_engine_path(engine_path)
@@ -109,21 +120,30 @@ class AppManager(QObject):
             logger.warning("Unable to start engine; executable could not be resolved")
             return False
 
-        logger.info("Starting main engine session: %s", resolved_engine_path)
-        self.main_session.start(str(resolved_engine_path))
-        self.main_session.set_position_fen(self.board.getSession.fen)
+        logger.info("Starting engine session '%s': %s", session_id, resolved_engine_path)
+        
+        session = self.engine.get_session(session_id)
+        if session is None:
+            session = self.engine.create_session(session_id)
+
+        if session is None:
+            logger.error("Failed to create engine session: %s", session_id)
+            return False
+
+        session.start(str(resolved_engine_path))
+        session.set_position_fen(self.board.getSession.fen)
 
         return True
 
-    def stop_engine(self):
+    def stop_engine(self, session_id: str = MAIN_SESSION_ID):
         """
-        Stop the main engine session without tearing down all modules.
+        Stop the specified engine session without tearing down all modules.
         """
 
-        session = self.engine.get_session(self.MAIN_SESSION_ID)
+        session = self.engine.get_session(session_id)
 
         if session is not None:
-            logger.info("Stopping main engine session")
+            logger.info("Stopping engine session: %s", session_id)
             session.stop()
 
     def _connect_modules(self):
@@ -151,22 +171,41 @@ class AppManager(QObject):
         return session
 
     def _sync_engine_position(self, fen: str):
-
-        self.main_session.set_position_fen(fen)
+        for session in list(self.engine.sessions.values()):
+            if session.is_running():
+                session.set_position_fen(fen)
 
     @staticmethod
     def _resolve_engine_path(
         engine_path: str | Path | None = None
     ) -> Path | None:
+        import sys
+        if engine_path is not None:
+            path = Path(engine_path)
+            if path.exists():
+                return path
+        else:
+            suffix = ".exe" if sys.platform == "win32" else ""
+            # Try project root
+            path = ROOT_DIR.parent / "build" / f"BluieChessBot{suffix}"
+            if path.exists():
+                return path
+            
+            # Try app root
+            path = ROOT_DIR / "build" / f"BluieChessBot{suffix}"
+            if path.exists():
+                return path
+            
+            # Fallback to check alternate suffix in project root
+            alt_suffix = "" if sys.platform == "win32" else ".exe"
+            alt_path = ROOT_DIR.parent / "build" / f"BluieChessBot{alt_suffix}"
+            if alt_path.exists():
+                return alt_path
 
-        path = (
-            Path(engine_path)
-            if engine_path is not None
-            else ROOT_DIR / "build" / "BluieChessBot.exe"
-        )
+            # Fallback to check alternate suffix in app root
+            alt_path = ROOT_DIR / "build" / f"BluieChessBot{alt_suffix}"
+            if alt_path.exists():
+                return alt_path
 
-        if path.exists():
-            return path
-
-        logger.debug("Engine path does not exist: %s", path)
+        logger.debug("Engine path does not exist")
         return None

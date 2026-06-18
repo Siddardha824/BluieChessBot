@@ -14,12 +14,9 @@ logger = get_logger(__name__)
 
 class Chessboard(StyledWidget):
     """
-    Sleek, interactive, layered custom presentation QWidget for the chessboard canvas.
-    
-    Acts as a pure UI container that delegates mouse clicks to InteractionManager,
-    size-recalculations to BoardGeometry, and drawing pipelines to specialized renderers.
+        Acts as a pure UI container that delegates mouse clicks to InteractionManager,
+        size-recalculations to BoardGeometry, and drawing pipelines to specialized renderers.
     """
-    square_clicked = Signal(object)
 
     def __init__(self, app_manager, parent=None):
         """
@@ -100,7 +97,6 @@ class Chessboard(StyledWidget):
         if square is not None:
             logger.debug("Chessboard mousePress: mapped to square index %s", square)
             self.interaction_manager.handle_square_click(square)
-            self.square_clicked.emit(square)
         super().mousePressEvent(event)
 
     def on_theme_changed(self, theme_name: str) -> None:

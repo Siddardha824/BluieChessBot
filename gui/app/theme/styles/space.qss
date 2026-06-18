@@ -18,3 +18,20 @@ QWidget {
     background-color: #1d2744;
     border-radius: 12px;
 }
+
+QLabel[status="searching"] {
+    color: #4CAF50;
+    font-weight: bold;
+}
+QLabel[status="idle"] {
+    color: #2196F3;
+    font-weight: bold;
+}
+QLabel[status="connecting"] {
+    color: #FF9800;
+    font-weight: bold;
+}
+QLabel[status="disconnected"] {
+    color: #9E9E9E;
+    font-weight: bold;
+}

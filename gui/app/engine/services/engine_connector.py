@@ -48,6 +48,9 @@ class EngineConnector(QObject):
         
         # Run subprocess
         self.process.start(executable_path)
+        if not self.process.waitForStarted(1000):
+            logger.error("Engine subprocess failed to start within 1s")
+            return False
         
         return True
     
