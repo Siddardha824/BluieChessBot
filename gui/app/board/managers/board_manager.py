@@ -20,7 +20,7 @@ class BoardManager(QObject):
         )
 
     @property
-    def getSession(self) -> BoardState:
+    def session(self) -> BoardState:
         return self._board_state
 
     def make_move(self, move: str) -> bool:
@@ -50,11 +50,11 @@ class BoardManager(QObject):
         import chess
         try:
             move = chess.Move.from_uci(uci_move)
-            board = self._board_state.getBoard
+            board = self._board_state.board
             if move in board.legal_moves:
                 return board.san(move)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to get SAN for move %s: %s", uci_move, e)
         return uci_move
 
     def format_uci_sequence(self, uci_moves: list[str]) -> str:
@@ -84,7 +84,8 @@ class BoardManager(QObject):
                     board.push(move)
                 else:
                     san_moves.append(move_str)
-            except Exception:
+            except Exception as e:
+                logger.debug("Failed to parse/format UCI move %s: %s", move_str, e)
                 san_moves.append(move_str)
                 
         return " ".join(san_moves)

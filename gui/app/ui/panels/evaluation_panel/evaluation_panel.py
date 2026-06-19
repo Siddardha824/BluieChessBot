@@ -96,7 +96,7 @@ class EvaluationPanel(StyledWidget):
         self._reset_ui()
 
     def _on_position_changed(self, fen: str):
-        board_session = self._manager.board.getSession
+        board_session = self._manager.board.session
         if board_session and not board_session.move_stack:
             for sid in ["main", "white_engine", "black_engine"]:
                 sess = self._manager.engine.get_session(sid)
@@ -140,22 +140,22 @@ class EvaluationPanel(StyledWidget):
         if self._connected_main:
             try:
                 self._manager.engine.get_session("main").analysis_state.updated.disconnect(self._on_main_updated)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Failed to disconnect main engine session analysis updates: %s", e)
             self._connected_main = False
 
         if self._connected_white:
             try:
                 self._manager.engine.get_session("white_engine").analysis_state.updated.disconnect(self._on_white_updated)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Failed to disconnect white engine session analysis updates: %s", e)
             self._connected_white = False
 
         if self._connected_black:
             try:
                 self._manager.engine.get_session("black_engine").analysis_state.updated.disconnect(self._on_black_updated)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Failed to disconnect black engine session analysis updates: %s", e)
             self._connected_black = False
 
     def _reset_ui(self):
@@ -207,7 +207,7 @@ class EvaluationPanel(StyledWidget):
             return
         
         state = sess.analysis_state
-        board = self._manager.board.getSession.view_board
+        board = self._manager.board.session.view_board
         is_white_turn = (board.turn == chess.WHITE)
         
         score_val = state.score if is_white_turn else -state.score
@@ -241,7 +241,7 @@ class EvaluationPanel(StyledWidget):
         if not white_sess or not black_sess:
             return
             
-        board = self._manager.board.getSession.view_board
+        board = self._manager.board.session.view_board
         is_white_turn = (board.turn == chess.WHITE)
         
         w_state = white_sess.analysis_state

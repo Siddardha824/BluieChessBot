@@ -89,7 +89,7 @@ class AppManager(QObject):
             if resolved_engine_path is not None:
                 logger.info("Starting main engine session: %s", resolved_engine_path)
                 session.start(str(resolved_engine_path))
-                session.set_position_fen(self.board.getSession.fen)
+                session.set_position_fen(self.board.session.fen)
             else:
                 logger.warning("Engine executable could not be resolved")
 
@@ -131,7 +131,7 @@ class AppManager(QObject):
             return False
 
         session.start(str(resolved_engine_path))
-        session.set_position_fen(self.board.getSession.fen)
+        session.set_position_fen(self.board.session.fen)
 
         return True
 
@@ -147,9 +147,6 @@ class AppManager(QObject):
             session.stop()
 
     def _connect_modules(self):
-
-        self._ensure_main_session()
-
         self.board.position_changed.connect(self._sync_engine_position)
         logger.debug("Connected board position updates to engine session")
 

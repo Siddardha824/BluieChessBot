@@ -218,7 +218,7 @@ class EngineConfigTable(QWidget):
         # Engine 1
         settings_1 = self._game_manager.engine_settings.get(self.session_id_1)
         if settings_1:
-            path = settings_1.get("engine_path", "")
+            path = settings_1.engine_path
             self.txt_path_1.setText(Path(path).name if path else "Default Build")
             self.txt_path_1.setToolTip(path if path else "Default Build")
             
@@ -227,16 +227,16 @@ class EngineConfigTable(QWidget):
             self.lbl_status_1.setText(status)
             self._update_status_style(self.lbl_status_1, status)
             
-            self.combo_constraint_1.setCurrentText(settings_1.get("constraint_mode", "Depth"))
-            self.spin_depth_1.setValue(settings_1.get("max_depth", 20))
-            self.spin_time_1.setValue(settings_1.get("max_time_ms", 5000))
-            self.spin_nodes_1.setValue(settings_1.get("max_nodes", 1000000))
+            self.combo_constraint_1.setCurrentText(settings_1.constraint_mode)
+            self.spin_depth_1.setValue(settings_1.max_depth)
+            self.spin_time_1.setValue(settings_1.max_time_ms)
+            self.spin_nodes_1.setValue(settings_1.max_nodes)
             
         # Engine 2
         if self.session_id_2:
             settings_2 = self._game_manager.engine_settings.get(self.session_id_2)
             if settings_2:
-                path = settings_2.get("engine_path", "")
+                path = settings_2.engine_path
                 self.txt_path_2.setText(Path(path).name if path else "Default Build")
                 self.txt_path_2.setToolTip(path if path else "Default Build")
                 
@@ -245,10 +245,10 @@ class EngineConfigTable(QWidget):
                 self.lbl_status_2.setText(status)
                 self._update_status_style(self.lbl_status_2, status)
                 
-                self.combo_constraint_2.setCurrentText(settings_2.get("constraint_mode", "Depth"))
-                self.spin_depth_2.setValue(settings_2.get("max_depth", 20))
-                self.spin_time_2.setValue(settings_2.get("max_time_ms", 5000))
-                self.spin_nodes_2.setValue(settings_2.get("max_nodes", 1000000))
+                self.combo_constraint_2.setCurrentText(settings_2.constraint_mode)
+                self.spin_depth_2.setValue(settings_2.max_depth)
+                self.spin_time_2.setValue(settings_2.max_time_ms)
+                self.spin_nodes_2.setValue(settings_2.max_nodes)
                 
         self._block_ui_signals(False)
         self._update_controls_enabled_states()
@@ -257,19 +257,19 @@ class EngineConfigTable(QWidget):
         # Engine 1
         settings_1 = self._game_manager.engine_settings.get(self.session_id_1)
         if settings_1:
-            settings_1["constraint_mode"] = self.combo_constraint_1.currentText()
-            settings_1["max_depth"] = self.spin_depth_1.value()
-            settings_1["max_time_ms"] = self.spin_time_1.value()
-            settings_1["max_nodes"] = self.spin_nodes_1.value()
+            settings_1.constraint_mode = self.combo_constraint_1.currentText()
+            settings_1.max_depth = self.spin_depth_1.value()
+            settings_1.max_time_ms = self.spin_time_1.value()
+            settings_1.max_nodes = self.spin_nodes_1.value()
             
         # Engine 2
         if self.session_id_2:
             settings_2 = self._game_manager.engine_settings.get(self.session_id_2)
             if settings_2:
-                settings_2["constraint_mode"] = self.combo_constraint_2.currentText()
-                settings_2["max_depth"] = self.spin_depth_2.value()
-                settings_2["max_time_ms"] = self.spin_time_2.value()
-                settings_2["max_nodes"] = self.spin_nodes_2.value()
+                settings_2.constraint_mode = self.combo_constraint_2.currentText()
+                settings_2.max_depth = self.spin_depth_2.value()
+                settings_2.max_time_ms = self.spin_time_2.value()
+                settings_2.max_nodes = self.spin_nodes_2.value()
 
     def _update_controls_enabled_states(self):
         # Engine 1
@@ -298,7 +298,7 @@ class EngineConfigTable(QWidget):
         )
         if file_path:
             # Update settings
-            self._game_manager.engine_settings[session_id]["engine_path"] = file_path
+            self._game_manager.engine_settings[session_id].engine_path = file_path
             
             # Update textbox
             txt_widget = self.txt_path_2 if is_engine_2 else self.txt_path_1
@@ -349,16 +349,16 @@ class EngineConfigTable(QWidget):
             session_1 = self._manager.engine.get_session(self.session_id_1)
             if session_1:
                 session_1.engine_info.status_changed.disconnect(self._on_status_1_changed)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to disconnect engine 1 signals: %s", e)
             
         try:
             if self.session_id_2:
                 session_2 = self._manager.engine.get_session(self.session_id_2)
                 if session_2:
                     session_2.engine_info.status_changed.disconnect(self._on_status_2_changed)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to disconnect engine 2 signals: %s", e)
             
         self._engine_signals_connected = False
 

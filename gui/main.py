@@ -22,6 +22,7 @@ def main():
         manager = AppManager(app)
 
         logger.info("Creating MainWindow")
+        manager.startup()
         window = MainWindow(manager)
         
         window.showMaximized()

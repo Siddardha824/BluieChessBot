@@ -15,7 +15,7 @@ class MoveListWidget(QTableWidget):
     def __init__(self, app_manager, parent=None):
         super().__init__(parent)
         self._manager = app_manager
-        self._board_state = self._manager.board.getSession
+        self._board_state = self._manager.board.session
 
         self.setup_ui()
         self._connect_signals()

@@ -22,7 +22,7 @@ class InteractionManager:
         """
         Processes click events on board squares based on active states.
         """
-        board_state = self._manager.board.getSession.view_board  # underlying chess.Board
+        board_state = self._manager.board.session.view_board  # underlying chess.Board
         piece = board_state.piece_at(BoardMapper.index_to_square(square_idx))
         selected_idx = self.highlight_manager.selected_square
         

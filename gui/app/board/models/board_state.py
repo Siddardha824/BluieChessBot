@@ -13,23 +13,23 @@ class BoardState(QObject):
         super().__init__(parent)
 
         self._board = chess.Board()
-        self._view_board = chess.Board()
+        # Cache list of chess.Board positions representing the stack of boards
+        # _positions[0] is the starting board.
+        # _positions[i] is the board after move i.
+        self._positions = [self._board.copy()]
         self._view_index = 0
 
     @property
-    def getBoard(self) -> chess.Board:
+    def board(self) -> chess.Board:
         return self._board
 
     @property
     def view_board(self) -> chess.Board:
-        return self._view_board
+        return self._positions[self._view_index]
 
     @property
     def starting_fen(self) -> str:
-        board_copy = self._board.copy()
-        while board_copy.move_stack:
-            board_copy.pop()
-        return board_copy.fen()
+        return self._positions[0].fen()
 
     @property
     def view_index(self) -> int:
@@ -40,11 +40,9 @@ class BoardState(QObject):
         max_idx = len(self._board.move_stack)
         index = max(0, min(max_idx, index))
         if self._view_index != index:
+            logger.debug("View index changed to %s / %s", index, max_idx)
             self._view_index = index
-            self._view_board = self._board.copy()
-            while len(self._view_board.move_stack) > self._view_index:
-                self._view_board.pop()
-            self.view_changed.emit()
+            self._sync_view(position_changed=False)
 
     @property
     def fen(self) -> str:
@@ -72,19 +70,17 @@ class BoardState(QObject):
             return
 
         self._board.set_fen(fen)
-        self._view_board = self._board.copy()
-        self._view_index = len(self._board.move_stack)
+        self._positions = [self._board.copy()]
+        self._view_index = 0
         logger.debug("Board FEN updated: %s", self._board.fen())
-        self.position_changed.emit(self._board.fen())
-        self.view_changed.emit()
+        self._sync_view(position_changed=True)
 
     def reset(self):
         self._board.reset()
-        self._view_board = self._board.copy()
+        self._positions = [self._board.copy()]
         self._view_index = 0
         logger.debug("Board reset to starting position")
-        self.position_changed.emit(self._board.fen())
-        self.view_changed.emit()
+        self._sync_view(position_changed=True)
 
     def push(self, move: chess.Move):
         # Truncate moves in _board if we were viewing a past position
@@ -92,13 +88,18 @@ class BoardState(QObject):
             logger.info("Truncating board history from index %s", self._view_index)
             while len(self._board.move_stack) > self._view_index:
                 self._board.pop()
+            self._positions = self._positions[:self._view_index + 1]
                 
         self._board.push(move)
-        self._view_board = self._board.copy()
+        
+        # Cache the new position by copying the previous one and pushing the move
+        new_board = self._positions[-1].copy()
+        new_board.push(move)
+        self._positions.append(new_board)
+        
         self._view_index = len(self._board.move_stack)
         logger.debug("Board move pushed: %s", move.uci())
-        self.position_changed.emit(self._board.fen())
-        self.view_changed.emit()
+        self._sync_view(position_changed=True)
 
     def can_undo(self) -> bool:
         return bool(self._board.move_stack)
@@ -109,14 +110,16 @@ class BoardState(QObject):
             raise IndexError("No moves to undo")
 
         move = self._board.pop()
+        self._positions.pop()
+        
         if self._view_index > len(self._board.move_stack):
             self._view_index = len(self._board.move_stack)
             
-        self._view_board = self._board.copy()
-        while len(self._view_board.move_stack) > self._view_index:
-            self._view_board.pop()
-            
         logger.debug("Board move popped: %s", move.uci())
-        self.position_changed.emit(self._board.fen())
-        self.view_changed.emit()
+        self._sync_view(position_changed=True)
         return move
+
+    def _sync_view(self, position_changed: bool = True):
+        if position_changed:
+            self.position_changed.emit(self._board.fen())
+        self.view_changed.emit()

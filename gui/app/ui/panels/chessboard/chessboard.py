@@ -45,12 +45,11 @@ class Chessboard(StyledWidget):
         self.highlight_renderer = HighlightRenderer()
         self.piece_renderer = PieceRenderer(self.board_geometry)
         
-        # Connect to theme, position changes, game over, mode changes, and view changes
+        # Connect to theme, game over, mode changes, and view changes
         self._manager.theme.theme_changed.connect(self.on_theme_changed)
-        self._manager.board.position_changed.connect(self.on_position_changed)
         self._manager.game.game_over.connect(self.on_game_over)
         self._manager.game.state.game_mode_changed.connect(self.on_game_mode_changed)
-        self._manager.board.getSession.view_changed.connect(self.on_view_changed)
+        self._manager.board.session.view_changed.connect(self.on_view_changed)
         
         logger.info("Pure UI Chessboard widget successfully initialized.")
 
@@ -72,7 +71,7 @@ class Chessboard(StyledWidget):
         """
         Executes board painting pipeline.
         """
-        board_state = self._manager.board.getSession
+        board_state = self._manager.board.session
         theme_preset = self._manager.theme.preset
         
         painter = QPainter(self)
@@ -114,25 +113,11 @@ class Chessboard(StyledWidget):
         logger.debug("Chessboard notified of theme change: %s. Repainting.", theme_name)
         self.update()
 
-    def on_position_changed(self, fen: str) -> None:
-        """Triggered when the board position is updated."""
-        logger.debug("Chessboard notified of position change.")
-        board_session = self._manager.board.getSession
-        board_state = board_session.getBoard
-        
-        # Clear game over badges when a new position is loaded/played,
-        # unless the position itself is a game-over state.
-        if not board_state.is_game_over():
-            self.highlight_manager.game_over_result = None
-            self.highlight_manager.game_over_reason = None
-            
-        self.on_view_changed()
-
     def on_view_changed(self) -> None:
         """Triggered when the viewed board position changes."""
         logger.debug("Chessboard viewed position changed. Updating highlights and repainting.")
         self.highlight_manager.clear_selection()
-        board_session = self._manager.board.getSession
+        board_session = self._manager.board.session
         view_board = board_session.view_board
         
         if not board_session.move_stack:
@@ -158,7 +143,7 @@ class Chessboard(StyledWidget):
                 
         # Game-over overlays are only shown if we are looking at the final position
         # and the game is actually over.
-        live_board = board_session.getBoard
+        live_board = board_session.board
         if board_session.view_index == len(live_board.move_stack) and live_board.is_game_over():
             # Keep game over results
             pass

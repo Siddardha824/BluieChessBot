@@ -26,17 +26,17 @@ class MainWindow(QMainWindow):
         return self._manager
 
     def setup_ui(self) -> None:
-        self.central_widget = QWidget(self)
-        self.setCentralWidget(self.central_widget)
+        self._central_widget = QWidget(self)
+        self.setCentralWidget(self._central_widget)
 
-        layout = QVBoxLayout(self.central_widget)
-
-        self.home_page = HomePage(self.manager, self.central_widget)
-        self.home_page.setObjectName("homePage")
-
-        layout.addWidget(self.home_page)
+        layout = QVBoxLayout(self._central_widget)
 
         self.manager.set_theme()
+        
+        self._home_page = HomePage(self.manager, self._central_widget)
+        self._home_page.setObjectName("homePage")
+
+        layout.addWidget(self._home_page)
 
     def closeEvent(self, event: QCloseEvent) -> None:
         logger.info("MainWindow close event triggered, shutting down services")

@@ -1,6 +1,7 @@
 from PySide6.QtCore import QObject, Signal, QTimer
 import chess
 from ..models.game_state import GameState, GameModes
+from ..models.engine_settings import EngineSettings
 from gui.app.board.services.board_mapper import BoardMapper
 from gui.utils import get_logger
 
@@ -18,27 +19,9 @@ class GameManager(QObject):
         
         # Internal configuration for engine constraint settings per session
         self.engine_settings = {
-            "main": {
-                "constraint_mode": "Depth",
-                "max_depth": 3,
-                "max_time_ms": 1000,
-                "max_nodes": 10000,
-                "engine_path": ""
-            },
-            "white_engine": {
-                "constraint_mode": "Depth",
-                "max_depth": 3,
-                "max_time_ms": 1000,
-                "max_nodes": 10000,
-                "engine_path": ""
-            },
-            "black_engine": {
-                "constraint_mode": "Depth",
-                "max_depth": 4,
-                "max_time_ms": 1000,
-                "max_nodes": 10000,
-                "engine_path": ""
-            }
+            "main": EngineSettings(constraint_mode="Depth", max_depth=3, max_time_ms=1000, max_nodes=10000, engine_path=""),
+            "white_engine": EngineSettings(constraint_mode="Depth", max_depth=3, max_time_ms=1000, max_nodes=10000, engine_path=""),
+            "black_engine": EngineSettings(constraint_mode="Depth", max_depth=4, max_time_ms=1000, max_nodes=10000, engine_path="")
         }
         self.auto_analyze = True
         self.is_paused = False
@@ -58,35 +41,35 @@ class GameManager(QObject):
 
     @property
     def constraint_mode(self) -> str:
-        return self.engine_settings["main"]["constraint_mode"]
+        return self.engine_settings["main"].constraint_mode
 
     @constraint_mode.setter
     def constraint_mode(self, val: str):
-        self.engine_settings["main"]["constraint_mode"] = val
+        self.engine_settings["main"].constraint_mode = val
 
     @property
     def max_depth(self) -> int:
-        return self.engine_settings["main"]["max_depth"]
+        return self.engine_settings["main"].max_depth
 
     @max_depth.setter
     def max_depth(self, val: int):
-        self.engine_settings["main"]["max_depth"] = val
+        self.engine_settings["main"].max_depth = val
 
     @property
     def max_time_ms(self) -> int:
-        return self.engine_settings["main"]["max_time_ms"]
+        return self.engine_settings["main"].max_time_ms
 
     @max_time_ms.setter
     def max_time_ms(self, val: int):
-        self.engine_settings["main"]["max_time_ms"] = val
+        self.engine_settings["main"].max_time_ms = val
 
     @property
     def max_nodes(self) -> int:
-        return self.engine_settings["main"]["max_nodes"]
+        return self.engine_settings["main"].max_nodes
 
     @max_nodes.setter
     def max_nodes(self, val: int):
-        self.engine_settings["main"]["max_nodes"] = val
+        self.engine_settings["main"].max_nodes = val
 
     @property
     def state(self) -> GameState:
@@ -95,7 +78,7 @@ class GameManager(QObject):
     def _connect_signals(self):
         # Listen for board position changes
         self._manager.board.position_changed.connect(self._on_position_changed)
-        self._manager.board.getSession.view_changed.connect(self._on_view_changed)
+        self._manager.board.session.view_changed.connect(self._on_view_changed)
         # Listen for engine best moves
         self._manager.main_session.best_move_updated.connect(self._on_best_move_updated)
         self._connected_sessions.add("main")
@@ -134,7 +117,8 @@ class GameManager(QObject):
         
         if session is not None and not session.is_running():
             logger.info("Starting engine session manually: %s", session_id)
-            path = self.engine_settings.get(session_id, {}).get("engine_path")
+            settings = self.engine_settings.get(session_id)
+            path = settings.engine_path if settings else None
             self._manager.start_engine(engine_path=path if path else None, session_id=session_id)
 
     def stop_game(self):
@@ -171,7 +155,7 @@ class GameManager(QObject):
         self._trigger_next_action()
 
     def _trigger_next_action(self):
-        board_state = self._manager.board.getSession.getBoard
+        board_state = self._manager.board.session.board
         
         # Check game over conditions
         if board_state.is_game_over():
@@ -215,7 +199,7 @@ class GameManager(QObject):
     def _start_engine_search(self):
         mode = self.state.mode
         if mode == GameModes.ENGINE_VS_ENGINE:
-            board_state = self._manager.board.getSession.getBoard
+            board_state = self._manager.board.session.board
             session_id = "white_engine" if board_state.turn == chess.WHITE else "black_engine"
             session = self._manager.engine.get_session(session_id)
         else:
@@ -230,21 +214,21 @@ class GameManager(QObject):
         
         # Synchronize board position FEN to engine immediately before starting search
         if mode == GameModes.ANALYSIS:
-            fen = self._manager.board.getSession.view_board.fen()
+            fen = self._manager.board.session.view_board.fen()
         else:
-            fen = self._manager.board.getSession.fen
+            fen = self._manager.board.session.fen
         session.set_position_fen(fen)
         
         # Apply search constraints based on session-specific settings
         settings = self.engine_settings.get(session_id, self.engine_settings["main"])
-        constraint_mode = settings["constraint_mode"]
+        constraint_mode = settings.constraint_mode
         
         if constraint_mode == "Depth":
-            session.go_depth(settings["max_depth"])
+            session.go_depth(settings.max_depth)
         elif constraint_mode == "Time":
-            session.go_time(settings["max_time_ms"])
+            session.go_time(settings.max_time_ms)
         elif constraint_mode == "Nodes":
-            session.go_nodes(settings["max_nodes"])
+            session.go_nodes(settings.max_nodes)
         else:
             session.go_infinite()
 
@@ -252,7 +236,7 @@ class GameManager(QObject):
         if self.is_paused:
             return
             
-        board_state = self._manager.board.getSession.getBoard
+        board_state = self._manager.board.session.board
         mode = self.state.mode
         
         # In Analysis mode, we just show the best move, we do not play it!
