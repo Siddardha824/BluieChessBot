@@ -29,7 +29,7 @@ class ControlPanel(StyledWidget):
         main_layout.setSpacing(10)
         
         # 1. Panel Header Title
-        self.lbl_title = QLabel("⚙ ENGINE & PLAY CONTROLS", self)
+        self.lbl_title = QLabel("ENGINE & PLAY CONTROLS", self)
         self.lbl_title.setObjectName("panelTitle")
         self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         font = self.lbl_title.font()
@@ -64,20 +64,20 @@ class ControlPanel(StyledWidget):
         btn_grid = QGridLayout()
         btn_grid.setSpacing(10)
         
-        self.btn_action = QPushButton("▶ Start Game", self)
+        self.btn_action = QPushButton("Start Game", self)
         self.btn_action.setObjectName("actionButton")
         self.btn_action.setCursor(Qt.CursorShape.PointingHandCursor)
         
-        self.btn_stop = QPushButton("⏹ Stop", self)
+        self.btn_stop = QPushButton("Stop", self)
         self.btn_stop.setObjectName("stopButton")
         self.btn_stop.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_stop.setEnabled(False)
         
-        self.btn_flip = QPushButton("⇄ Flip Board", self)
+        self.btn_flip = QPushButton("Flip Board", self)
         self.btn_flip.setObjectName("flipButton")
         self.btn_flip.setCursor(Qt.CursorShape.PointingHandCursor)
         
-        self.btn_reset = QPushButton("⟳ Reset Board", self)
+        self.btn_reset = QPushButton("Reset Board", self)
         self.btn_reset.setObjectName("resetButton")
         self.btn_reset.setCursor(Qt.CursorShape.PointingHandCursor)
         
@@ -113,14 +113,14 @@ class ControlPanel(StyledWidget):
         
         # Toggle button text based on mode
         if mode == GameModes.ANALYSIS:
-            self.btn_action.setText("▶ Start Analysis")
-            self.btn_stop.setText("⏸ Pause")
+            self.btn_action.setText("Start Analysis")
+            self.btn_stop.setText("Pause")
         elif mode in (GameModes.PLAY_WHITE, GameModes.PLAY_BLACK):
-            self.btn_action.setText("▶ Start Game")
-            self.btn_stop.setText("🏳 Resign")
+            self.btn_action.setText("Start Game")
+            self.btn_stop.setText("Resign")
         elif mode == GameModes.ENGINE_VS_ENGINE:
-            self.btn_action.setText("▶ Start Match")
-            self.btn_stop.setText("⏸ Pause")
+            self.btn_action.setText("Start Match")
+            self.btn_stop.setText("Pause")
             
         self.btn_action.setEnabled(True)
         self.btn_stop.setEnabled(False)

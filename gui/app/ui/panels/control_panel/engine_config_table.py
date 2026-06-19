@@ -18,6 +18,7 @@ class EngineConfigTable(QWidget):
         self.session_id_1 = "main"
         self.session_id_2 = None
         self._signals_blocked = False
+        self._engine_signals_connected = False
         
         self.setup_ui()
         self._connect_ui_signals()
@@ -58,7 +59,7 @@ class EngineConfigTable(QWidget):
         self.txt_path_1 = QLineEdit(self)
         self.txt_path_1.setReadOnly(True)
         self.txt_path_1.setObjectName("pathLineEdit1")
-        self.btn_browse_1 = QPushButton("📁", self)
+        self.btn_browse_1 = QPushButton("...", self)
         self.btn_browse_1.setFixedWidth(30)
         self.btn_browse_1.setObjectName("browseButton1")
         layout_path_1.addWidget(self.txt_path_1, 1)
@@ -72,7 +73,7 @@ class EngineConfigTable(QWidget):
         self.txt_path_2 = QLineEdit(self)
         self.txt_path_2.setReadOnly(True)
         self.txt_path_2.setObjectName("pathLineEdit2")
-        self.btn_browse_2 = QPushButton("📁", self)
+        self.btn_browse_2 = QPushButton("...", self)
         self.btn_browse_2.setFixedWidth(30)
         self.btn_browse_2.setObjectName("browseButton2")
         layout_path_2.addWidget(self.txt_path_2, 1)
@@ -326,6 +327,9 @@ class EngineConfigTable(QWidget):
         self._signals_blocked = block
 
     def _connect_engine_signals(self):
+        if self._engine_signals_connected:
+            return
+            
         session_1 = self._manager.engine.get_session(self.session_id_1)
         if session_1:
             session_1.engine_info.status_changed.connect(self._on_status_1_changed)
@@ -334,8 +338,13 @@ class EngineConfigTable(QWidget):
             session_2 = self._manager.engine.get_session(self.session_id_2)
             if session_2:
                 session_2.engine_info.status_changed.connect(self._on_status_2_changed)
+                
+        self._engine_signals_connected = True
 
     def _disconnect_engine_signals(self):
+        if not self._engine_signals_connected:
+            return
+            
         try:
             session_1 = self._manager.engine.get_session(self.session_id_1)
             if session_1:
@@ -350,6 +359,8 @@ class EngineConfigTable(QWidget):
                     session_2.engine_info.status_changed.disconnect(self._on_status_2_changed)
         except Exception:
             pass
+            
+        self._engine_signals_connected = False
 
     def _on_status_1_changed(self, status: str):
         self.lbl_status_1.setText(status)

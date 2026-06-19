@@ -66,7 +66,7 @@ class BoardManager(QObject):
             return ""
             
         import chess
-        board = self._board_state.getBoard.copy()
+        board = self._board_state.view_board.copy()
         san_moves = []
         
         for move_str in uci_moves:

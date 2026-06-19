@@ -45,11 +45,12 @@ class Chessboard(StyledWidget):
         self.highlight_renderer = HighlightRenderer()
         self.piece_renderer = PieceRenderer(self.board_geometry)
         
-        # Connect to theme, position changes, game over, and mode changes
+        # Connect to theme, position changes, game over, mode changes, and view changes
         self._manager.theme.theme_changed.connect(self.on_theme_changed)
         self._manager.board.position_changed.connect(self.on_position_changed)
         self._manager.game.game_over.connect(self.on_game_over)
         self._manager.game.state.game_mode_changed.connect(self.on_game_mode_changed)
+        self._manager.board.getSession.view_changed.connect(self.on_view_changed)
         
         logger.info("Pure UI Chessboard widget successfully initialized.")
 
@@ -109,7 +110,7 @@ class Chessboard(StyledWidget):
 
     def on_position_changed(self, fen: str) -> None:
         """Triggered when the board position is updated."""
-        logger.debug("Chessboard notified of position change. Repainting.")
+        logger.debug("Chessboard notified of position change.")
         board_session = self._manager.board.getSession
         board_state = board_session.getBoard
         
@@ -118,23 +119,47 @@ class Chessboard(StyledWidget):
         if not board_state.is_game_over():
             self.highlight_manager.game_over_result = None
             self.highlight_manager.game_over_reason = None
+            
+        self.on_view_changed()
+
+    def on_view_changed(self) -> None:
+        """Triggered when the viewed board position changes."""
+        logger.debug("Chessboard viewed position changed. Updating highlights and repainting.")
+        self.highlight_manager.clear_selection()
+        board_session = self._manager.board.getSession
+        view_board = board_session.view_board
         
         if not board_session.move_stack:
             self.highlight_manager.reset()
         else:
-            last_move = board_session.move_stack[-1]
-            from_idx = BoardMapper.coord_to_index(chess.square_name(last_move.from_square))
-            to_idx = BoardMapper.coord_to_index(chess.square_name(last_move.to_square))
-            self.highlight_manager.set_last_move(from_idx, to_idx)
-            
-        if board_state.is_check():
-            king_sq = board_state.king(board_state.turn)
-            if king_sq is not None:
-                king_idx = BoardMapper.coord_to_index(chess.square_name(king_sq))
-                self.highlight_manager.set_check_square(king_idx)
+            # Last move highlighting (from view_board's move stack)
+            if view_board.move_stack:
+                last_move = view_board.move_stack[-1]
+                from_idx = BoardMapper.coord_to_index(chess.square_name(last_move.from_square))
+                to_idx = BoardMapper.coord_to_index(chess.square_name(last_move.to_square))
+                self.highlight_manager.set_last_move(from_idx, to_idx)
+            else:
+                self.highlight_manager.set_last_move(None, None)
+                
+            # Check warning highlighting
+            if view_board.is_check():
+                king_sq = view_board.king(view_board.turn)
+                if king_sq is not None:
+                    king_idx = BoardMapper.coord_to_index(chess.square_name(king_sq))
+                    self.highlight_manager.set_check_square(king_idx)
+            else:
+                self.highlight_manager.set_check_square(None)
+                
+        # Game-over overlays are only shown if we are looking at the final position
+        # and the game is actually over.
+        live_board = board_session.getBoard
+        if board_session.view_index == len(live_board.move_stack) and live_board.is_game_over():
+            # Keep game over results
+            pass
         else:
-            self.highlight_manager.set_check_square(None)
-        
+            self.highlight_manager.game_over_result = None
+            self.highlight_manager.game_over_reason = None
+            
         self.update()
 
     def on_game_over(self, result: str, reason: str) -> None:

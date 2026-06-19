@@ -22,7 +22,7 @@ class InteractionManager:
         """
         Processes click events on board squares based on active states.
         """
-        board_state = self._manager.board.getSession.getBoard  # underlying chess.Board
+        board_state = self._manager.board.getSession.view_board  # underlying chess.Board
         piece = board_state.piece_at(BoardMapper.index_to_square(square_idx))
         selected_idx = self.highlight_manager.selected_square
         
@@ -74,21 +74,6 @@ class InteractionManager:
                 
                 if success:
                     logger.info("Executed move: %s", move.uci())
-                    
-                    # Update highlighting for last move
-                    self.highlight_manager.set_last_move(selected_idx, square_idx)
-                    
-                    # Check for checks
-                    if board_state.is_check():
-                        # Highlight the active king
-                        king_sq = board_state.king(board_state.turn)
-                        if king_sq is not None:
-                            king_idx = BoardMapper.coord_to_index(chess.square_name(king_sq))
-                            self.highlight_manager.set_check_square(king_idx)
-                    else:
-                        self.highlight_manager.set_check_square(None)
-                        
-                    # Clear current active selection
                     self.highlight_manager.clear_selection()
                     self.update_callback()
                 else:

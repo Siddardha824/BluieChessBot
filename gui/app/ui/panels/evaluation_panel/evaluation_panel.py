@@ -38,7 +38,7 @@ class EvaluationPanel(StyledWidget):
         main_layout.setSpacing(8)
 
         # 1. Header Title
-        self.lbl_title = QLabel("📊 ENGINE ANALYSIS", self)
+        self.lbl_title = QLabel("ENGINE ANALYSIS", self)
         self.lbl_title.setObjectName("panelTitle")
         self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         font = self.lbl_title.font()
@@ -207,7 +207,7 @@ class EvaluationPanel(StyledWidget):
             return
         
         state = sess.analysis_state
-        board = self._manager.board.getSession.getBoard
+        board = self._manager.board.getSession.view_board
         is_white_turn = (board.turn == chess.WHITE)
         
         score_val = state.score if is_white_turn else -state.score
@@ -241,7 +241,7 @@ class EvaluationPanel(StyledWidget):
         if not white_sess or not black_sess:
             return
             
-        board = self._manager.board.getSession.getBoard
+        board = self._manager.board.getSession.view_board
         is_white_turn = (board.turn == chess.WHITE)
         
         w_state = white_sess.analysis_state

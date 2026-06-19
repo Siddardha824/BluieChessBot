@@ -93,6 +93,7 @@ class GameManager(QObject):
     def _connect_signals(self):
         # Listen for board position changes
         self._manager.board.position_changed.connect(self._on_position_changed)
+        self._manager.board.getSession.view_changed.connect(self._on_view_changed)
         # Listen for engine best moves
         self._manager.main_session.best_move_updated.connect(self._on_best_move_updated)
         self._connected_sessions.add("main")
@@ -147,6 +148,13 @@ class GameManager(QObject):
         self.state.mode = mode
         self.is_paused = False
 
+    def _on_view_changed(self):
+        if self.is_paused:
+            return
+        if self.state.mode == GameModes.ANALYSIS:
+            if self.auto_analyze:
+                self._start_engine_search()
+
     def _on_position_changed(self, fen: str):
         if self.is_paused:
             return
@@ -178,11 +186,7 @@ class GameManager(QObject):
 
         mode = self.state.mode
 
-        if mode == GameModes.ANALYSIS:
-            if self.auto_analyze:
-                self._start_engine_search()
-                
-        elif mode in (GameModes.PLAY_WHITE, GameModes.PLAY_BLACK):
+        if mode in (GameModes.PLAY_WHITE, GameModes.PLAY_BLACK):
             # PLAY_WHITE means Human is White (Engine is Black)
             # PLAY_BLACK means Human is Black (Engine is White)
             engine_color = chess.BLACK if mode == GameModes.PLAY_WHITE else chess.WHITE
@@ -215,7 +219,10 @@ class GameManager(QObject):
         session.stop_search()
         
         # Synchronize board position FEN to engine immediately before starting search
-        fen = self._manager.board.getSession.fen
+        if mode == GameModes.ANALYSIS:
+            fen = self._manager.board.getSession.view_board.fen()
+        else:
+            fen = self._manager.board.getSession.fen
         session.set_position_fen(fen)
         
         # Apply search constraints based on session-specific settings

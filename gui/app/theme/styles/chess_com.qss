@@ -59,7 +59,7 @@ QLabel[status="disconnected"] {
     font-weight: bold;
 }
 
-#controlPanel, #evaluationPanel {
+#controlPanel, #evaluationPanel, #moveHistoryPanel {
     background-color: #262522;
     border: 1px solid #3d3935;
     border-radius: 10px;
@@ -87,7 +87,7 @@ QLabel[status="disconnected"] {
     font-weight: bold;
 }
 
-#scrollControl, #scrollEval, #scrollControl > QWidget, #scrollEval > QWidget {
+#scrollControl, #scrollEval, #scrollHistory, #scrollControl > QWidget, #scrollEval > QWidget, #scrollHistory > QWidget {
     background: transparent;
     background-color: transparent;
     border: none;
@@ -95,4 +95,21 @@ QLabel[status="disconnected"] {
 
 #sidebarSplitter::handle, #mainSplitter::handle {
     background-color: #3d3935;
+}
+
+#moveListTable {
+    background-color: transparent;
+    border: none;
+    gridline-color: transparent;
+}
+
+#moveListTable::item {
+    padding: 4px;
+    border-radius: 3px;
+}
+
+#moveListTable::item:selected {
+    background-color: #3d3935;
+    color: #81b64c;
+    font-weight: bold;
 }

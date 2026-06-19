@@ -62,7 +62,7 @@ class HighlightRenderer:
             # Map index to chess.Square to query piece presence
             from gui.app.board.services.board_mapper import BoardMapper
             sq = BoardMapper.index_to_square(dest)
-            piece_at_dest = state.getBoard.piece_at(sq)
+            piece_at_dest = state.view_board.piece_at(sq)
             
             if piece_at_dest is None:
                 # Empty square: Draw a small filled circle in the center
@@ -104,7 +104,7 @@ class HighlightRenderer:
             import chess
             from gui.app.board.services.board_mapper import BoardMapper
             
-            board = state.getBoard
+            board = state.view_board
             white_king_sq = board.king(chess.WHITE)
             black_king_sq = board.king(chess.BLACK)
             

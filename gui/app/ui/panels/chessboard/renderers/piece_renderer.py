@@ -89,7 +89,7 @@ class PieceRenderer:
         for square_idx in range(64):
             # Map index (0-63, A8-H1) to chess.Square
             sq = BoardMapper.index_to_square(square_idx)
-            piece = board_state.getBoard.piece_at(sq)
+            piece = board_state.view_board.piece_at(sq)
             piece_char = piece.symbol() if piece is not None else '.'
             
             if piece_char != '.':
