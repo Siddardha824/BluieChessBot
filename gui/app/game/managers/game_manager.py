@@ -8,6 +8,8 @@ logger = get_logger(__name__)
 
 class GameManager(QObject):
     game_over = Signal(str, str)  # Emits (result, reason)
+    started = Signal()
+    stopped = Signal()
 
     def __init__(self, app_manager, parent=None):
         super().__init__(parent)
@@ -113,9 +115,11 @@ class GameManager(QObject):
         else:
             self._start_session_if_needed("main")
 
-        self._manager.board.new_game()
+        if mode != GameModes.ANALYSIS:
+            self._manager.board.new_game()
         self.is_paused = False
         self._trigger_next_action()
+        self.started.emit()
 
     def _start_session_if_needed(self, session_id: str):
         session = self._manager.engine.get_session(session_id)
@@ -142,11 +146,17 @@ class GameManager(QObject):
         for session in list(self._manager.engine.sessions.values()):
             if session.is_running():
                 session.stop_search()
+        self.stopped.emit()
 
     def set_mode(self, mode: GameModes):
         self.stop_game()
         self.state.mode = mode
         self.is_paused = False
+        
+        # Start game/engine automatically for Analysis and Human vs Engine modes
+        if mode in (GameModes.ANALYSIS, GameModes.PLAY_WHITE, GameModes.PLAY_BLACK):
+            logger.info("Automatically starting game/analysis for mode: %s", mode.name)
+            self.start_game()
 
     def _on_view_changed(self):
         if self.is_paused:

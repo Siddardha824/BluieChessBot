@@ -36,7 +36,7 @@ QLabel[status="disconnected"] {
     font-weight: bold;
 }
 
-#controlPanel, #evaluationPanel, #moveHistoryPanel {
+#controlPanel, #evaluationPanel, #moveHistoryPanel, #chessboard {
     background-color: #0b0f26;
     border: 1px solid #1f2d5a;
     border-radius: 10px;
@@ -71,7 +71,7 @@ QLabel[status="disconnected"] {
 }
 
 #sidebarSplitter::handle, #mainSplitter::handle {
-    background-color: #1f2d5a;
+    background-color: transparent;
 }
 
 #moveListTable {

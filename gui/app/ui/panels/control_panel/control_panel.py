@@ -99,8 +99,10 @@ class ControlPanel(StyledWidget):
         self.btn_flip.clicked.connect(self._on_flip_clicked)
         self.btn_reset.clicked.connect(self._on_reset_clicked)
         
-        # Connect to GameManager game_over signal
+        # Connect to GameManager signals
         self._game_manager.game_over.connect(self._on_game_over)
+        self._game_manager.started.connect(self._on_game_started)
+        self._game_manager.stopped.connect(self._on_game_stopped)
 
     def _on_mode_changed(self, index):
         mode = self.mode_selector.combo_mode.currentData()
@@ -122,14 +124,19 @@ class ControlPanel(StyledWidget):
             self.btn_action.setText("Start Match")
             self.btn_stop.setText("Pause")
             
+        pass
+
+    def _on_game_started(self):
+        self.btn_action.setEnabled(False)
+        self.btn_stop.setEnabled(True)
+
+    def _on_game_stopped(self):
         self.btn_action.setEnabled(True)
         self.btn_stop.setEnabled(False)
 
     def _on_action_clicked(self):
         self.engine_table.push_ui_to_settings()
         self._game_manager.start_game()
-        self.btn_action.setEnabled(False)
-        self.btn_stop.setEnabled(True)
 
     def _on_stop_clicked(self):
         mode = self._game_manager.state.mode
@@ -146,8 +153,6 @@ class ControlPanel(StyledWidget):
             self._game_manager.game_over.emit(result, reason)
         else:
             self._game_manager.stop_game()
-            self.btn_action.setEnabled(True)
-            self.btn_stop.setEnabled(False)
 
     def _on_flip_clicked(self):
         # Flip board visual perspective. Route to parent HomePage's board if available.
@@ -162,11 +167,8 @@ class ControlPanel(StyledWidget):
 
     def _on_reset_clicked(self):
         self._game_manager.stop_game()
-        self.btn_action.setEnabled(True)
-        self.btn_stop.setEnabled(False)
         self._manager.board.new_game()
         logger.info("Board reset to starting position")
 
     def _on_game_over(self, result, reason):
-        self.btn_action.setEnabled(True)
-        self.btn_stop.setEnabled(False)
+        pass

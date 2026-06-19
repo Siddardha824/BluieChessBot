@@ -14,8 +14,12 @@ class BoardGeometry:
         """
         Recalculates centering offsets and square dimensions.
         """
-        # Keep the board square by taking the minimum dimension
-        self.board_size = min(width, height)
+        padding = 24  # Total padding around the board (12px on each side)
+        usable_width = max(0, width - padding)
+        usable_height = max(0, height - padding)
+
+        # Keep the board square by taking the minimum dimension of usable space
+        self.board_size = min(usable_width, usable_height)
         
         # Calculate size of a single square
         self.square_size = self.board_size // 8
@@ -23,7 +27,7 @@ class BoardGeometry:
         # Adjust board size to avoid rounding gaps
         self.board_size = self.square_size * 8
         
-        # Centering offsets
+        # Centering offsets in the full width/height space
         self.x_offset = (width - self.board_size) // 2
         self.y_offset = (height - self.board_size) // 2
 

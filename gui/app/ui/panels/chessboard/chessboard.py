@@ -24,7 +24,7 @@ class Chessboard(StyledWidget):
         Initializes the interactive ChessBoard QWidget workspace frame.
         """
         super().__init__("chessboard", parent)
-        self.setMinimumSize(400, 400)
+        self.setMinimumSize(200, 200)
         
         self._manager = app_manager
         
@@ -77,6 +77,12 @@ class Chessboard(StyledWidget):
         
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        
+        # Apply rounded corner clipping to match the stylesheet's border-radius
+        from PySide6.QtGui import QPainterPath
+        path = QPainterPath()
+        path.addRoundedRect(self.rect(), 10.0, 10.0)
+        painter.setClipPath(path)
         
         # Assemble active context frame
         context = RenderContext(
