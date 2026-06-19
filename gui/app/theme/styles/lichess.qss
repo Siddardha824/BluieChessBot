@@ -57,3 +57,41 @@ QLabel[status="disconnected"] {
     color: #9E9E9E;
     font-weight: bold;
 }
+
+#controlPanel, #evaluationPanel {
+    background-color: #262421;
+    border: 1px solid #3d3935;
+    border-radius: 8px;
+}
+
+#pvTextArea {
+    background-color: #161512;
+    color: #bababa;
+    border: 1px solid #4f4a46;
+    border-radius: 6px;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+}
+
+#largeScoreLabel {
+    color: #ffffff;
+}
+
+#activeSideLabel {
+    color: #9e9e9e;
+}
+
+#telemetryVal {
+    color: #ffd54f;
+    font-weight: bold;
+}
+
+#scrollControl, #scrollEval, #scrollControl > QWidget, #scrollEval > QWidget {
+    background: transparent;
+    background-color: transparent;
+    border: none;
+}
+
+#sidebarSplitter::handle, #mainSplitter::handle {
+    background-color: #3d3935;
+}

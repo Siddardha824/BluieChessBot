@@ -42,3 +42,50 @@ class BoardManager(QObject):
         logger.info("Loading FEN: %s", fen)
         self._board_state.set_fen(fen)
 
+    def get_san_for_move(self, uci_move: str) -> str:
+        """
+        Converts a single UCI move (e.g. 'e2e4') valid in the current position
+        into its SAN representation (e.g. 'e4').
+        """
+        import chess
+        try:
+            move = chess.Move.from_uci(uci_move)
+            board = self._board_state.getBoard
+            if move in board.legal_moves:
+                return board.san(move)
+        except Exception:
+            pass
+        return uci_move
+
+    def format_uci_sequence(self, uci_moves: list[str]) -> str:
+        """
+        Converts a list/sequence of UCI moves starting from the current board position
+        into a formatted SAN string (e.g. '1. e4 e5 2. Nf3 Nc6').
+        """
+        if not uci_moves:
+            return ""
+            
+        import chess
+        board = self._board_state.getBoard.copy()
+        san_moves = []
+        
+        for move_str in uci_moves:
+            try:
+                move = chess.Move.from_uci(move_str)
+                if move in board.legal_moves:
+                    san = board.san(move)
+                    if board.turn == chess.WHITE:
+                        san_moves.append(f"{board.fullmove_number}. {san}")
+                    else:
+                        if not san_moves:
+                            san_moves.append(f"{board.fullmove_number}... {san}")
+                        else:
+                            san_moves.append(san)
+                    board.push(move)
+                else:
+                    san_moves.append(move_str)
+            except Exception:
+                san_moves.append(move_str)
+                
+        return " ".join(san_moves)
+

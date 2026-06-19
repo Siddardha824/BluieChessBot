@@ -45,7 +45,7 @@ class CoordinateRenderer:
             text_color = dark_color if is_light else light_color
             painter.setPen(text_color)
             
-            rank_num = str(8 - row)
+            rank_num = str(row + 1) if geom.flipped else str(8 - row)
             rx = geom.x_offset + padding
             ry = geom.y_offset + row * geom.square_size + padding
             label_rect = QRect(rx, ry, geom.square_size // 3, geom.square_size // 3)
@@ -59,7 +59,7 @@ class CoordinateRenderer:
             text_color = dark_color if is_light else light_color
             painter.setPen(text_color)
             
-            file_letter = files[col]
+            file_letter = files[7 - col] if geom.flipped else files[col]
             fx = geom.x_offset + col * geom.square_size
             fy = geom.y_offset + 7 * geom.square_size
             label_rect = QRect(

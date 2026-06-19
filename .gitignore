@@ -7,3 +7,6 @@ designs/
 .antigravitycli/
 gui-old/
 gui/config/
+*.txt
+Screenshot*
+*.xcf

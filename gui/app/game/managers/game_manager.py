@@ -100,6 +100,10 @@ class GameManager(QObject):
     def start_game(self):
         logger.info("Starting new game in mode: %s", self.state.mode.name)
         
+        # Reset previous game outcome states
+        self.state.result = None
+        self.state.result_reason = None
+        
         # Determine and start required engine sessions manually
         mode = self.state.mode
         if mode == GameModes.ENGINE_VS_ENGINE:

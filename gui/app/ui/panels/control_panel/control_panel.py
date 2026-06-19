@@ -18,14 +18,15 @@ class ControlPanel(StyledWidget):
         self._manager = app_manager
         self._game_manager = self._manager.game
         
+        self.setMinimumHeight(350)
         self.setup_ui()
         self._connect_signals()
         self._update_mode_ui()
 
     def setup_ui(self):
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(15, 15, 15, 15)
-        main_layout.setSpacing(15)
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(10)
         
         # 1. Panel Header Title
         self.lbl_title = QLabel("⚙ ENGINE & PLAY CONTROLS", self)
@@ -131,9 +132,22 @@ class ControlPanel(StyledWidget):
         self.btn_stop.setEnabled(True)
 
     def _on_stop_clicked(self):
-        self._game_manager.stop_game()
-        self.btn_action.setEnabled(True)
-        self.btn_stop.setEnabled(False)
+        mode = self._game_manager.state.mode
+        if mode in (GameModes.PLAY_WHITE, GameModes.PLAY_BLACK):
+            if mode == GameModes.PLAY_WHITE:
+                result = "0-1"
+                reason = "Resigned"
+            else:
+                result = "1-0"
+                reason = "Resigned"
+            self._game_manager.state.result = result
+            self._game_manager.state.result_reason = reason
+            self._game_manager.stop_game()
+            self._game_manager.game_over.emit(result, reason)
+        else:
+            self._game_manager.stop_game()
+            self.btn_action.setEnabled(True)
+            self.btn_stop.setEnabled(False)
 
     def _on_flip_clicked(self):
         # Flip board visual perspective. Route to parent HomePage's board if available.
@@ -141,13 +155,15 @@ class ControlPanel(StyledWidget):
         parent_page = self.parent()
         while parent_page is not None:
             if hasattr(parent_page, "board"):
-                # Simply trigger visual board flipping if implemented in Chessboard
+                parent_page.board.flip()
                 break
             parent_page = parent_page.parent()
         logger.info("Flip board perspective clicked")
 
     def _on_reset_clicked(self):
-        self._on_stop_clicked()
+        self._game_manager.stop_game()
+        self.btn_action.setEnabled(True)
+        self.btn_stop.setEnabled(False)
         self._manager.board.new_game()
         logger.info("Board reset to starting position")
 

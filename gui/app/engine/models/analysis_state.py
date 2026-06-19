@@ -104,3 +104,18 @@ class AnalysisState(QObject):
     def best_move(self, val: Optional[str]):
         logger.debug("Analysis best move updated: %s", val)
         self._best_move = val
+
+    def reset(self):
+        """
+        Clears all telemetry and evaluation metrics to starting/idle values.
+        """
+        self._depth = 0
+        self._nps = 0
+        self._nodes = 0
+        self._time_ms = 0
+        self._score = 0.0
+        self._is_mate = False
+        self._mate_in = None
+        self._pv = []
+        self._best_move = None
+        self.updated.emit()

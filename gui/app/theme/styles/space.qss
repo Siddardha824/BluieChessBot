@@ -2,16 +2,16 @@
     background-color: #00031f;
 }
 
-QWidget {
+/* QWidget {
     border: 1px solid white
-}
+} */
 
 #homePage {
-    border: 1px solid red;
+    /* border: 1px solid red; */
 }
 
 #chessboard {
-    border: 1px solid green;
+    /* border: 1px solid green; */
 }
 
 #card {
@@ -34,4 +34,42 @@ QLabel[status="connecting"] {
 QLabel[status="disconnected"] {
     color: #9E9E9E;
     font-weight: bold;
+}
+
+#controlPanel, #evaluationPanel {
+    background-color: #0b0f26;
+    border: 1px solid #1f2d5a;
+    border-radius: 10px;
+}
+
+#pvTextArea {
+    background-color: #050714;
+    color: #8da2fb;
+    border: 1px solid #1f2d5a;
+    border-radius: 6px;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+}
+
+#largeScoreLabel {
+    color: #00e5ff;
+}
+
+#activeSideLabel {
+    color: #8da2fb;
+}
+
+#telemetryVal {
+    color: #00e5ff;
+    font-weight: bold;
+}
+
+#scrollControl, #scrollEval, #scrollControl > QWidget, #scrollEval > QWidget {
+    background: transparent;
+    background-color: transparent;
+    border: none;
+}
+
+#sidebarSplitter::handle, #mainSplitter::handle {
+    background-color: #1f2d5a;
 }

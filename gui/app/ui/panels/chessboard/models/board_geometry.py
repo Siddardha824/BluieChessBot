@@ -8,6 +8,7 @@ class BoardGeometry:
     square_size: int = 0
     x_offset: int = 0
     y_offset: int = 0
+    flipped: bool = False
 
     def update(self, width: int, height: int) -> None:
         """
@@ -36,6 +37,10 @@ class BoardGeometry:
         row = square_idx // 8
         col = square_idx % 8
         
+        if self.flipped:
+            row = 7 - row
+            col = 7 - col
+            
         x = self.x_offset + col * self.square_size
         y = self.y_offset + row * self.square_size
         
@@ -62,4 +67,8 @@ class BoardGeometry:
         col = min(7, max(0, col))
         row = min(7, max(0, row))
         
+        if self.flipped:
+            row = 7 - row
+            col = 7 - col
+            
         return row * 8 + col

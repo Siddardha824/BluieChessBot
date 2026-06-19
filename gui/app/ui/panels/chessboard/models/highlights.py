@@ -14,6 +14,9 @@ class HighlightManager:
         
         self.check_square: Optional[int] = None
         
+        self.game_over_result: Optional[str] = None
+        self.game_over_reason: Optional[str] = None
+        
         self.debug_overlay_squares: List[int] = []
         self.debug_overlay_mode: str = "NONE"
 
@@ -52,5 +55,7 @@ class HighlightManager:
         self.last_move_from = None
         self.last_move_to = None
         self.check_square = None
+        self.game_over_result = None
+        self.game_over_reason = None
         self.debug_overlay_squares = []
         self.debug_overlay_mode = "NONE"

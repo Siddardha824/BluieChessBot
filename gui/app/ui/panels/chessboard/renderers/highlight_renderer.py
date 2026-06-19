@@ -1,11 +1,18 @@
-from PySide6.QtGui import QPainter, QPen, QColor
+from PySide6.QtGui import QPainter, QPen, QColor, QPixmap
 from PySide6.QtCore import Qt, QRect
 from typing import TYPE_CHECKING
+from gui.app.shared import ASSETS_DIR
 
 if TYPE_CHECKING:
     from ..models.render_context import RenderContext
 
 class HighlightRenderer:
+    def __init__(self):
+        self.win_pixmap = QPixmap(str(ASSETS_DIR / "Win.png"))
+        self.loss_pixmap = QPixmap(str(ASSETS_DIR / "Loss.png"))
+        self.draw_pixmap = QPixmap(str(ASSETS_DIR / "Draw.png"))
+        self.resign_pixmap = QPixmap(str(ASSETS_DIR / "Resign.png"))
+
     def draw(self, painter: QPainter, context: "RenderContext") -> None:
         """
         Draws the active highlight overlays (selection, last move, check, and legal moves).
@@ -20,14 +27,7 @@ class HighlightRenderer:
         
         # Helper to get the screen QRect of a given index
         def get_rect(sq: int) -> QRect:
-            r = sq // 8
-            c = sq % 8
-            return QRect(
-                geom.x_offset + c * geom.square_size,
-                geom.y_offset + r * geom.square_size,
-                geom.square_size,
-                geom.square_size
-            )
+            return geom.square_to_rect(sq)
 
         # 1. Last Played Move Highlight (gold/translucent)
         if hl.last_move_from is not None:
@@ -98,5 +98,53 @@ class HighlightRenderer:
             for dest in hl.debug_overlay_squares:
                 rect = get_rect(dest)
                 painter.fillRect(rect, overlay_color)
+
+        # 6. Game Over Outcome Badges (Win/Loss/Draw/Resign PNGs on Kings)
+        if hasattr(hl, "game_over_result") and hl.game_over_result:
+            import chess
+            from gui.app.board.services.board_mapper import BoardMapper
+            
+            board = state.getBoard
+            white_king_sq = board.king(chess.WHITE)
+            black_king_sq = board.king(chess.BLACK)
+            
+            w_outcome = None
+            b_outcome = None
+            
+            result = hl.game_over_result
+            reason = getattr(hl, "game_over_reason", "")
+            
+            if result == "1-0":
+                w_outcome = "win"
+                b_outcome = "resign" if reason == "Resigned" else "loss"
+            elif result == "0-1":
+                w_outcome = "resign" if reason == "Resigned" else "loss"
+                b_outcome = "win"
+            elif result == "1/2-1/2":
+                w_outcome = "draw"
+                b_outcome = "draw"
+                
+            pixmaps = {
+                "win": self.win_pixmap,
+                "loss": self.loss_pixmap,
+                "resign": self.resign_pixmap,
+                "draw": self.draw_pixmap
+            }
+            
+            for king_sq, outcome in [(white_king_sq, w_outcome), (black_king_sq, b_outcome)]:
+                if king_sq is not None and outcome is not None:
+                    king_idx = BoardMapper.coord_to_index(chess.square_name(king_sq))
+                    rect = get_rect(king_idx)
+                    
+                    pixmap = pixmaps.get(outcome)
+                    if pixmap and not pixmap.isNull():
+                        badge_size = int(geom.square_size * 0.35)
+                        badge_rect = QRect(
+                            rect.right() - badge_size,
+                            rect.top(),
+                            badge_size,
+                            badge_size
+                        )
+                        painter.drawPixmap(badge_rect, pixmap)
                 
         painter.restore()
