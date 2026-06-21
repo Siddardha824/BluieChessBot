@@ -24,7 +24,7 @@ class MoveListWidget(QTableWidget):
     def setup_ui(self):
         self.setObjectName("moveListTable")
         self.setColumnCount(3)
-        self.setHorizontalHeaderLabels(["#", "White", "Black"])
+        self.horizontalHeader().setVisible(False)
         
         # Table configuration
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)

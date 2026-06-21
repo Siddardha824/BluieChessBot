@@ -3,7 +3,7 @@ from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import QHBoxLayout, QSplitter, QScrollArea, QFrame
 
 from ..templates import StyledWidget
-from ..panels import Chessboard, ControlPanel, EvaluationPanel, MoveHistoryPanel
+from ..panels import Chessboard, ControlPanel, EvaluationPanel, MoveHistoryPanel, PlayersPanel
 
 class HomePage(StyledWidget):
     def __init__(self, app_manager, parent = None):
@@ -22,6 +22,7 @@ class HomePage(StyledWidget):
         self.control_panel = ControlPanel(self.manager, self)
         self.evaluation_panel = EvaluationPanel(self.manager, self)
         self.move_history = MoveHistoryPanel(self.manager, self)
+        self.players_panel = PlayersPanel(self.manager, self)
         
         # Wrap Move History Panel in QScrollArea
         self.scroll_history = QScrollArea(self)
@@ -32,6 +33,14 @@ class HomePage(StyledWidget):
         self.scroll_history.setMinimumWidth(150)
         self.scroll_history.setMaximumWidth(280)
         self.scroll_history.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        # Wrap Players Panel in QScrollArea
+        self.scroll_players = QScrollArea(self)
+        self.scroll_players.setObjectName("scrollPlayers")
+        self.scroll_players.setWidgetResizable(True)
+        self.scroll_players.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroll_players.setWidget(self.players_panel)
+        self.scroll_players.setMinimumHeight(150)
         
         # Wrap Control Panel in QScrollArea
         self.scroll_control = QScrollArea(self)
@@ -49,21 +58,29 @@ class HomePage(StyledWidget):
         self.scroll_eval.setWidget(self.evaluation_panel)
         self.scroll_eval.setMinimumHeight(100)
         
+        # Create Vertical Splitter for the left sidebar
+        self.left_sidebar_splitter = QSplitter(Qt.Orientation.Vertical, self)
+        self.left_sidebar_splitter.setObjectName("leftSidebarSplitter")
+        self.left_sidebar_splitter.setHandleWidth(3)
+        self.left_sidebar_splitter.addWidget(self.scroll_control)
+        self.left_sidebar_splitter.addWidget(self.scroll_eval)
+        self.left_sidebar_splitter.setSizes([350, 250])
+
         # Create Vertical Splitter for the right sidebar
-        self.sidebar_splitter = QSplitter(Qt.Orientation.Vertical, self)
-        self.sidebar_splitter.setObjectName("sidebarSplitter")
-        self.sidebar_splitter.setHandleWidth(3)
-        self.sidebar_splitter.addWidget(self.scroll_control)
-        self.sidebar_splitter.addWidget(self.scroll_eval)
-        self.sidebar_splitter.setSizes([350, 250])
+        self.right_sidebar_splitter = QSplitter(Qt.Orientation.Vertical, self)
+        self.right_sidebar_splitter.setObjectName("rightSidebarSplitter")
+        self.right_sidebar_splitter.setHandleWidth(3)
+        self.right_sidebar_splitter.addWidget(self.scroll_history)
+        self.right_sidebar_splitter.addWidget(self.scroll_players)
+        self.right_sidebar_splitter.setSizes([400, 200])
         
         # Create Horizontal Splitter containing Sidebar, Chessboard, and Move History
         self.main_splitter = QSplitter(Qt.Orientation.Horizontal, self)
         self.main_splitter.setObjectName("mainSplitter")
         self.main_splitter.setHandleWidth(3)
-        self.main_splitter.addWidget(self.sidebar_splitter)
+        self.main_splitter.addWidget(self.left_sidebar_splitter)
         self.main_splitter.addWidget(self.board)
-        self.main_splitter.addWidget(self.scroll_history)
+        self.main_splitter.addWidget(self.right_sidebar_splitter)
         
         layout.addWidget(self.main_splitter)
 

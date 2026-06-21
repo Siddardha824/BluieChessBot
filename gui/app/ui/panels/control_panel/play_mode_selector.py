@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QComboBox
 from gui.app.game.models.game_state import GameModes
+from gui.app.ui.templates import configure_combobox_popup
 
 class PlayModeSelector(QWidget):
     def __init__(self, parent=None):
@@ -14,6 +15,7 @@ class PlayModeSelector(QWidget):
         
         self.combo_mode = QComboBox(self)
         self.combo_mode.setObjectName("modeSelector")
+        configure_combobox_popup(self.combo_mode)
         self.combo_mode.addItem("Analysis Mode", GameModes.ANALYSIS)
         self.combo_mode.addItem("Player vs Engine (White)", GameModes.PLAY_WHITE)
         self.combo_mode.addItem("Player vs Engine (Black)", GameModes.PLAY_BLACK)

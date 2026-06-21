@@ -36,8 +36,11 @@ class CoordinateRenderer:
         
         padding = 4
         
-        light_color = QColor(theme.board_light)
-        dark_color = QColor(theme.board_dark)
+        coord_light = getattr(theme, "coord_light", None)
+        coord_dark = getattr(theme, "coord_dark", None)
+        
+        light_color = QColor(coord_light if coord_light else theme.board_light)
+        dark_color = QColor(coord_dark if coord_dark else theme.board_dark)
         
         # 1. Draw Rank Numbers (8 to 1) on the first column (col = 0, row from 0 to 7)
         for row in range(8):

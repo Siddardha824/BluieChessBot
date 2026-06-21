@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
     QComboBox, QSpinBox, QFileDialog, QHBoxLayout
 )
 from gui.app.game.models.game_state import GameModes
+from gui.app.ui.templates import configure_combobox_popup
 from gui.utils import get_logger
 
 logger = get_logger(__name__)
@@ -101,9 +102,11 @@ class EngineConfigTable(QWidget):
         self.combo_constraint_1 = QComboBox(self)
         self.combo_constraint_1.addItems(["Infinite", "Depth", "Time", "Nodes"])
         self.combo_constraint_1.setObjectName("constraintCombo1")
+        configure_combobox_popup(self.combo_constraint_1)
         self.combo_constraint_2 = QComboBox(self)
         self.combo_constraint_2.addItems(["Infinite", "Depth", "Time", "Nodes"])
         self.combo_constraint_2.setObjectName("constraintCombo2")
+        configure_combobox_popup(self.combo_constraint_2)
         
         self.grid.addWidget(self.lbl_constraint, 3, 0)
         self.grid.addWidget(self.combo_constraint_1, 3, 1)

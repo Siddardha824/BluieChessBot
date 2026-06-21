@@ -1,44 +1,9 @@
-QMainWindow {
+#mainWindow {
     background-color: #262421;
-}
-
-QWidget {
-    background-color: #312e2b;
-    color: #e5e5e5;
-}
-
-QLabel {
-    color: #e5e5e5;
-    background: transparent;
-}
-
-QPushButton {
-    background-color: #3d3935;
-    border: 1px solid #4f4a46;
-    border-radius: 6px;
-    padding: 6px;
-}
-
-QPushButton:hover {
-    background-color: #4a4540;
-}
-
-QLineEdit,
-QTextEdit,
-QPlainTextEdit {
-    background-color: #3d3935;
-    border: 1px solid #56514d;
-    border-radius: 6px;
-    padding: 4px;
 }
 
 #homePage {
     background-color: #312e2b;
-}
-
-#card {
-    background-color: #3d3935;
-    border-radius: 10px;
 }
 
 QLabel[status="searching"] {
@@ -58,7 +23,7 @@ QLabel[status="disconnected"] {
     font-weight: bold;
 }
 
-#controlPanel, #evaluationPanel, #moveHistoryPanel, #chessboard {
+#controlPanel, #evaluationPanel, #moveHistoryPanel, #chessboard, #playersPanel {
     background-color: #262421;
     border: 1px solid #3d3935;
     border-radius: 8px;
@@ -86,13 +51,13 @@ QLabel[status="disconnected"] {
     font-weight: bold;
 }
 
-#scrollControl, #scrollEval, #scrollHistory, #scrollControl > QWidget, #scrollEval > QWidget, #scrollHistory > QWidget {
+#scrollControl, #scrollEval, #scrollHistory, #scrollPlayers, #scrollControl > QWidget, #scrollEval > QWidget, #scrollHistory > QWidget, #scrollPlayers > QWidget {
     background: transparent;
     background-color: transparent;
     border: none;
 }
 
-#sidebarSplitter::handle, #mainSplitter::handle {
+#leftSidebarSplitter::handle, #mainSplitter::handle, #rightSidebarSplitter::handle {
     background-color: transparent;
 }
 

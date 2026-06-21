@@ -1,4 +1,3 @@
-import io
 import chess.pgn
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -37,15 +36,21 @@ class MoveHistoryPanel(StyledWidget):
         self.lbl_title.setFont(font)
         main_layout.addWidget(self.lbl_title)
 
-        # 2. Move List Table
-        self.move_list = MoveListWidget(self._manager, self)
-        main_layout.addWidget(self.move_list, 1)
-
         # Divider
         divider1 = QFrame(self)
         divider1.setFrameShape(QFrame.Shape.HLine)
         divider1.setFrameShadow(QFrame.Shadow.Sunken)
         main_layout.addWidget(divider1)
+
+        # 2. Move List Table
+        self.move_list = MoveListWidget(self._manager, self)
+        main_layout.addWidget(self.move_list, 1)
+
+        # Divider
+        divider2 = QFrame(self)
+        divider2.setFrameShape(QFrame.Shape.HLine)
+        divider2.setFrameShadow(QFrame.Shadow.Sunken)
+        main_layout.addWidget(divider2)
 
         # 3. Navigation Controls
         nav_layout = QHBoxLayout()
@@ -83,10 +88,10 @@ class MoveHistoryPanel(StyledWidget):
         main_layout.addLayout(nav_layout)
 
         # Divider
-        divider2 = QFrame(self)
-        divider2.setFrameShape(QFrame.Shape.HLine)
-        divider2.setFrameShadow(QFrame.Shadow.Sunken)
-        main_layout.addWidget(divider2)
+        divider3 = QFrame(self)
+        divider3.setFrameShape(QFrame.Shape.HLine)
+        divider3.setFrameShadow(QFrame.Shadow.Sunken)
+        main_layout.addWidget(divider3)
 
         # 4. Save/Load Action Controls
         action_layout = QVBoxLayout()
