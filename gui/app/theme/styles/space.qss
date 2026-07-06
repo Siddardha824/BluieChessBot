@@ -254,3 +254,38 @@ QSpinBox::down-arrow {
     width: 8px;
     height: 5px;
 }
+
+#playerNameLabel {
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+#positionHeader {
+    color: #ff9100;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+#positionInfoLabel {
+    color: #c7d2fe;
+    padding-left: 4px;
+}
+
+#capturedPiecesLabel {
+    color: #ffab40;
+    font-size: 14px;
+}
+
+#materialLabel {
+    color: #8da2fb;
+    font-weight: bold;
+}
+
+#panelSeparator {
+    background-color: #1f2d5a;
+    max-height: 1px;
+    min-height: 1px;
+    border: none;
+}

@@ -30,6 +30,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self._central_widget)
 
         layout = QVBoxLayout(self._central_widget)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         self.manager.set_theme()
         

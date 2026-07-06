@@ -5,6 +5,7 @@ __pycache__/
 build/
 designs/
 .antigravitycli/
+.agents/
 gui-old/
 gui/config/
 *.txt

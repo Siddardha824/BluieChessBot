@@ -13,7 +13,6 @@ from .engine import EngineManager
 from .shared import ROOT_DIR
 from gui.utils import get_logger
 
-
 logger = get_logger(__name__)
 
 
@@ -36,7 +35,7 @@ class AppManager(QObject):
         self._engine = EngineManager(self)
         self._main_session: EngineSession | None = None
 
-        self._settings = SettingsManager.get_instance()
+        self._settings = SettingsManager(self)
 
         self._theme_manager = ThemeManager(app)
 
