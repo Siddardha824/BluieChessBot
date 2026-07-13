@@ -2,34 +2,41 @@ import json
 from gui.app.shared.paths import PREFERENCES_FILE
 from gui.utils import get_logger
 
-
 logger = get_logger(__name__)
 
 class PreferencesService:
     @staticmethod
-    def load() -> dict:
+    def load() -> dict | None:
         path = PREFERENCES_FILE
+
         if not path.exists():
-            logger.info("Preferences file not found; using defaults: %s", path)
-            return {}
+            logger.info("Preferences File Not found")
+            return None
+        
         try:
-            with open(path, "r", encoding="utf-8") as f:
-                preferences = json.load(f)
+            with open(path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
                 logger.info("Preferences loaded: %s", path)
-                return preferences
+                return data
         except Exception:
-            logger.exception("Failed to load preferences: %s", path)
-            return {}
+            logger.exception("Failed to load Preferences File")
+            return None
 
     @staticmethod
-    def save(data: dict) -> bool:
+    def save(settings: dict | None, new_settings: dict) -> bool:
+        if settings is not None:
+            for key, val in new_settings:
+                settings[key] = val
+        else:
+            settings = new_settings
         path = PREFERENCES_FILE
+
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=4)
+            with open(path, 'w', encoding='utf-8') as f:
+                json.dump(settings, f, indent=4)
             logger.info("Preferences saved: %s", path)
             return True
         except Exception:
-            logger.exception("Failed to save preferences: %s", path)
+            logger.exception("Failed to save the preferences")
             return False
