@@ -1,19 +1,37 @@
-from ..models.theme_preset import ThemePreset
+from ..models.theme_state import ThemeState
 
-SPACE_THEME = ThemePreset(
+SPACE_THEME = ThemeState(
     name="space",
 
-    board_light="#314674",      # Deep space nebula blue
-    board_dark="#0c1225",       # Cosmos dark blue/black
+    bg_window="#00031f",
 
-    move_highlight="#ff9100",   # Vibrant orange highlight for last move
-    selected_square="#ff3d00",  # Neon red/orange highlight for selected square
+    bg_base="#050714",
 
-    arrow_color="#ffab40",      # Bright neon orange for engine arrows
+    bg_panel="#0b0f26",
+    border_panel="#a6370f",
+
+    text_primary="#8da2fb",
+    text_secondary="#8da2fb",
+
+    accent_primary="#ff9100",
+    accent_secondary="#ffab40",
+
+    status_connected="#FF9800",
+    status_disconnected="#9E9E9E",
+    status_idle="#2196F3",
+    status_searching="#4CAF50",
+
+    board_light="#314674",
+    board_dark="#0c1225",
+
+    coord_light="#ff9100",
+    coord_dark="#ff3d00",
+
+    move_highlight="#ff9100",
+    selected_square="#ff3d00",
+
+    arrow_color="#ffab40",
 
     eval_positive="#4caf50",
-    eval_negative="#e53935",
-
-    coord_light="#ff9100",      # Orange coordinates on dark squares
-    coord_dark="#ff3d00"        # Red coordinates on light squares
+    eval_negative="#e53935"
 )

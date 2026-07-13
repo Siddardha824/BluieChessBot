@@ -1,58 +1,47 @@
+import dataclasses
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QApplication
+from ..services.theme_sevice import ThemeService
+from ..models.theme_state import ThemeState
+from gui.utils import get_logger
 
-from ..constants import THEMES
-from gui.app.shared import (
-    SPACE_DOWN_ARROW_ICON,
-    SPACE_SPIN_DOWN_ARROW_ICON,
-    SPACE_SPIN_UP_ARROW_ICON,
-    STYLES_DIR,
-)
+logger = get_logger(__name__)
 
 class ThemeManager(QObject):
 
-    theme_changed = Signal(str)
+    theme_changed = Signal(ThemeState)
 
-    def __init__(
-        self,
-        app: QApplication
-    ):
-        super().__init__()
+    def __init__(self, parent, app: QApplication, name="space"):
+        super().__init__(parent)
 
-        self._app = app
-        self._styles_dir = STYLES_DIR
+        self._theme_service = ThemeService(app)
 
-        self._active_theme = "space"
+        self.load_theme(name)
 
-    @property
-    def active_theme(self) -> str:
-        return self._active_theme
+        logger.info("Theme Manager Initialized")
 
-    @property
-    def preset(self):
-        return THEMES[self._active_theme]
+    def load_theme(self, theme_name):
+        presets = self._load_presets()
 
-    def apply_theme(self, theme_name: str):
+        if theme_name in presets.keys():
+            self._active_theme = presets[theme_name]
+            self.apply_theme(self._active_theme)
 
-        qss_file = self._styles_dir / f"{theme_name}.qss"
+    def load_theme_from_settings(self, theme_dict: dict):
+        theme = ThemeState.from_dict(theme_dict)
 
-        with open(qss_file, "r", encoding="utf-8") as f:
-            stylesheet = f.read()
+        self._active_theme = theme
+        self.apply_theme(theme)
 
-        stylesheet = stylesheet.replace(
-            "__SPACE_DOWN_ARROW_ICON__",
-            SPACE_DOWN_ARROW_ICON.as_posix(),
-        )
-        stylesheet = stylesheet.replace(
-            "__SPACE_SPIN_UP_ARROW_ICON__",
-            SPACE_SPIN_UP_ARROW_ICON.as_posix(),
-        )
-        stylesheet = stylesheet.replace(
-            "__SPACE_SPIN_DOWN_ARROW_ICON__",
-            SPACE_SPIN_DOWN_ARROW_ICON.as_posix(),
-        )
-        self._app.setStyleSheet(stylesheet)
+    def _load_presets(self) -> dict[str, ThemeState]:
+        return self._theme_service.load_presets()
 
-        self._active_theme = theme_name
+    def apply_theme(self, theme: ThemeState):
+        success = self._theme_service.apply_stylesheet(theme)
 
-        self.theme_changed.emit(theme_name)
+        if success:
+            self.theme_changed.emit(theme)
+
+    def get_export_state(self) -> dict:
+        return dataclasses.asdict(self._active_theme)
+

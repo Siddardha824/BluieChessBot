@@ -20,6 +20,6 @@ SPRITE_SHEET = ASSETS_DIR / "Pieces.png"
 
 PREFERENCES_FILE = ROOT_DIR / "config" / "preferences.json"
 
-STYLES_DIR = ROOT_DIR / "app" / "theme" / "styles"
+STYLESHEET = ROOT_DIR / "app" / "theme" / "services" / "stylesheet.qss"
 
 logger.debug("Application root directory: %s", ROOT_DIR)

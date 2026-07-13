@@ -1,0 +1,88 @@
+#mainWindow {
+    background-color: {{ bg_window }};
+}
+
+#homePage {
+    background-color: {{ bg_base }};
+}
+
+QLabel[status="searching"] {
+    color: {{ status_searching }};
+}
+
+QLabel[status="idle"] {
+    color: {{ status_idle }};
+}
+
+QLabel[status="connected"] {
+    color: {{ status_connected }};
+}
+
+QLabel[status="disconnected"] {
+    color: {{ status_disconnected }};
+}
+
+#chessboard,
+#controlPanel,
+#evaluationPanel,
+#moveHistoryPanel,
+#playersPanel {
+    background-color: {{ bg_panel }};
+    border: 1px solid {{ border_panel }};
+    border-radius: 10px;
+}
+
+#panelTitle {
+    color: {{ accent_primary }};
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+#engine1Header,
+#engine2Header,
+#propertyHeader {
+    color: {{ accent_secondary }};
+    font-weight: bold;
+}
+
+#pvTextArea {
+    background-color: {{ bg_base }};
+    color: {{ text_primary }};
+    border: 1px solid {{ border_color }};
+    border-radius: 6px;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+}
+
+#largeScoreLabel {
+    color: {{ accent_secondary }};
+}
+
+#activeSideLabel {
+    color: {{ text_primary }};
+}
+
+#telemetryVal {
+    color: {{ accent_secondary }};
+    font-weight: bold;
+}
+
+#scrollControl,
+#scrollEval,
+#scrollHistory,
+#scrollPlayers,
+#scrollControl > QWidget,
+#scrollEval > QWidget,
+#scrollHistory > QWidget,
+#scrollPlayers > QWidget {
+    background: transparent;
+    background-color: transparent;
+    border: none;
+}
+
+#leftSidebarSplitter::handle,
+#mainSplitter::handle,
+#rightSidebarSplitter::handle {
+    background-color: transparent;
+}
+
