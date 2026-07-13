@@ -1,15 +1,16 @@
 from PySide6.QtCore import QObject, Signal
 import chess
-from ..services.move_node import MoveNode
+from ..services.move_node import MoveNode, ChildMoveNode
+from typing import cast
 from gui.utils import get_logger
 
 logger = get_logger(__name__)
 
 
 class BoardState(QObject):
-    view_changed = Signal(object)
+    view_changed = Signal(MoveNode)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         super().__init__(parent)
 
         self._root_node = MoveNode()
@@ -20,6 +21,10 @@ class BoardState(QObject):
     @property
     def board(self) -> chess.Board:
         return self._view_node.board()
+
+    @property
+    def game_tree(self) -> MoveNode:
+        return self._root_node
 
     @property
     def fen(self) -> str:
@@ -85,7 +90,8 @@ class BoardState(QObject):
         self._sync_view(self._view_node)
 
     def move(self, move: chess.Move):
-        self._view_node = self._view_node.add_variation(move)
+        new_node = self._view_node.add_variation(move)
+        self._view_node = cast(ChildMoveNode, new_node)
 
         self._sync_view(self._view_node)
 
@@ -94,15 +100,15 @@ class BoardState(QObject):
             raise IndexError("No moves to undo")
 
         moved = self._view_node.move
-        self._view_node = self._view_node.parent
+        self._view_node = cast(MoveNode | ChildMoveNode, self._view_node.parent)
         self._sync_view(self._view_node)
         return moved
 
     def can_undo(self) -> bool:
         return self._view_node is not self._root_node and self._view_node.parent is not None
 
-    def _sync_view(self, node):
+    def _sync_view(self, node: MoveNode | ChildMoveNode):
         self.view_changed.emit(node)
-        
 
+    
 
