@@ -1,7 +1,9 @@
 from PySide6.QtCore import QObject, QProcess, Signal
+
 from ..models.engine_status import EngineStatus
 from ..services.engine_connector import EngineConnector
 from ..services.uci_parser import UCIParser, PacketType
+
 from gui.utils import get_logger
 
 logger = get_logger(__name__)
@@ -37,7 +39,7 @@ class EngineService(QObject):
             self.status.info.connection_status = "Running"
         self.status.info.notify_updated()
 
-    def start(self, fallback_path: str = ""):
+    def start(self, fallback_path: str = "") -> bool:
         if fallback_path and not self.status.settings.engine_path:
             self.status.settings.engine_path = fallback_path
 
@@ -48,8 +50,10 @@ class EngineService(QObject):
             self.status.info.notify_updated()
             self.send("uci")
             logger.info("Engine service process started using path: %s", target_path)
+            return True
         else:
             logger.warning("Engine service failed to start process at: %s", target_path)
+            return False
 
     def stop(self):
         logger.info("Stopping engine service process")
@@ -80,6 +84,12 @@ class EngineService(QObject):
 
     def set_position_fen(self, fen: str):
         self.send(f"position fen {fen}")
+
+    def set_options(self):
+        threads = self.status.settings.threads
+        hash_size = self.status.settings.hash_size
+        self.send(f"setoption name Threads value {threads}")
+        self.send(f"setoption name Hash value {hash_size}")
 
     def go(self):
         """

@@ -8,7 +8,7 @@ class AnalysisState(QObject):
     """
     analysis_state_changed = Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         super().__init__(parent)
         self._depth: int = 0
         self._nps: int = 0

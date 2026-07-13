@@ -1,4 +1,5 @@
 from PySide6.QtCore import QObject, Signal
+import inspect
 
 class EngineInfo(QObject):
     """
@@ -7,12 +8,10 @@ class EngineInfo(QObject):
     """
     info_updated = Signal()
 
-    def __init__(self, parent=None, name="", author="", hash_size=0, threads=0, path=""):
+    def __init__(self, parent, name="", author=""):
         super().__init__(parent)
         self._name = name
         self._author = author
-        self._hash_size = hash_size
-        self._threads = threads
         self._connection_status = "NotRunning"
         self._search_status = "Offline"
 
@@ -30,18 +29,6 @@ class EngineInfo(QObject):
     def author(self, val: str): self._author = val
 
     @property
-    def hash_size(self) -> int: return self._hash_size
-    
-    @hash_size.setter
-    def hash_size(self, val: int): self._hash_size = val
-
-    @property
-    def threads(self) -> int: return self._threads
-    
-    @threads.setter
-    def threads(self, val: int): self._threads = val
-
-    @property
     def connection_status(self) -> str: return self._connection_status
     
     @connection_status.setter
@@ -56,3 +43,12 @@ class EngineInfo(QObject):
     def notify_updated(self):
         """Called manually by the service once a full data batch is parsed."""
         self.info_updated.emit()
+
+    def asdict(self) -> dict:
+        properties = [
+            name for name, val in inspect.getmembers(type(self), lambda v: isinstance(v, property))
+        ]
+
+        return {
+            key: getattr(self, key) for key in properties
+        }

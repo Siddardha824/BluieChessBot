@@ -11,7 +11,7 @@ class Engines(QObject):
     engine_added = Signal(str, object)
     engine_removed = Signal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         super().__init__(parent)
         self._active_engines: dict[str, EngineStatus] = {}
 

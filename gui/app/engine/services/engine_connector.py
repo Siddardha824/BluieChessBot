@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 from PySide6.QtCore import QObject, QProcess, Slot, Signal
 from gui.utils import get_logger
 
@@ -25,7 +24,7 @@ class EngineConnector(QObject):
         QProcess.ProcessError.UnknownError: "Unknown process error"
     }
 
-    def __init__(self, parent: Optional[QObject] = None):
+    def __init__(self, parent):
         super().__init__(parent)
         self.process = QProcess(self)
         

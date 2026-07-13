@@ -11,20 +11,21 @@ class EngineManager(QObject):
     Exposes unified signals across all active engine sessions and data models.
     """
     # Multiplexed Model Structure Signals
-    engine_added = Signal(str, object) 
-    engine_removed = Signal(str)       
+    engine_added = Signal(str, object)
+    engine_removed = Signal(str)
     
-    # Multiplexed Model Data Update Signals 
-    engine_info_updated = Signal(str, object)         
-    engine_analysis_updated = Signal(str, object)     
+    # Multiplexed Model Data Update Signals
+    engine_info_updated = Signal(str, object)
+    engine_settings_updated = Signal(str, object)
+    engine_analysis_updated = Signal(str, object)
     
     # Multiplexed Service Event Signals
-    engine_ready = Signal(str)                           
-    engine_stopped = Signal(str, int, QProcess.ExitStatus) 
-    engine_error = Signal(str, str)                      
-    best_move_updated = Signal(str, str)                 
+    engine_ready = Signal(str)
+    engine_stopped = Signal(str, int, QProcess.ExitStatus)
+    engine_error = Signal(str, str)
+    best_move_updated = Signal(str, str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         super().__init__(parent)
         self.engines_model = Engines(self)
         self._services: dict[str, EngineService] = {}
@@ -99,9 +100,10 @@ class EngineManager(QObject):
 
     # --- Public Command API ---
 
-    def start(self, engine_name: str, fallback_path: str = ""):
+    def start(self, engine_name: str, fallback_path: str = "") -> bool:
         if service := self._get_service(engine_name):
-            service.start(fallback_path)
+            return service.start(fallback_path)
+        return False
 
     def stop(self, engine_name: str):
         if service := self._get_service(engine_name):
@@ -132,6 +134,14 @@ class EngineManager(QObject):
         if service := self._get_service(engine_name):
             service.set_position_fen(fen)
 
+    def set_options(self, engine_name: str, hash: int = -1, threads: int = -1):
+        if service := self._get_service(engine_name):
+            if hash > 0:
+                service.update_settings(hash_size=hash)
+            if threads > 0:
+                service.update_settings(threads=threads)
+            service.set_options()
+
     def go(self, engine_name: str):
         """Executes a search using the constraints stored in the engine's settings."""
         if service := self._get_service(engine_name):
@@ -156,3 +166,10 @@ class EngineManager(QObject):
     def stop_search(self, engine_name: str):
         if service := self._get_service(engine_name):
             service.stop_search()
+
+    def asdict(self, engine_name: str) -> dict | None:
+        if service := self._get_service(engine_name):
+            return service.status.asdict()
+        return None
+
+    
