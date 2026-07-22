@@ -1,20 +1,16 @@
-from pathlib import Path
+from PySide6.QtCore import QObject, Signal
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from .engine import EngineSession
-
-from PySide6.QtCore import QObject
+    from PySide6.QtCore import QProcess
 
 from .board import BoardManager
 from .theme import ThemeManager
 from .settings import SettingsManager
 from .game import GameManager
 from .engine import EngineManager
-from .shared import ROOT_DIR
 from gui.utils import get_logger
 
 logger = get_logger(__name__)
-
 
 class AppManager(QObject):
     """
@@ -22,186 +18,137 @@ class AppManager(QObject):
 
     Owns and wires together all major subsystems.
     """
+    # Passing the module signals
 
-    MAIN_SESSION_ID = "main"
+    # Theme Module
+    theme_changed = Signal()
 
-    def __init__(self, app,parent=None):
+    # Game Module
+    game_started = Signal()
+    game_stopped = Signal()
+    game_saved = Signal()
+    game_over = Signal(str, str)
+
+    # Board Module
+    board_state_changed = Signal(object)
+
+    # Engine Module
+    engine_added = Signal(str, object)
+    engine_removed = Signal(str)
+    engine_info_updated = Signal(str, object)
+    engine_settings_updated = Signal(str, object)
+    engine_analysis_updated = Signal(str, object)
+    engine_ready = Signal(str)
+    engine_stopped = Signal(str, int, QProcess.ExitStatus)
+    engine_error = Signal(str, str)
+
+    def __init__(self, parent):
         super().__init__(parent)
 
         logger.info("Initializing app manager")
 
         self._board = BoardManager(self)
-
-        self._engine = EngineManager(self)
-        self._main_session: EngineSession | None = None
-
+        self._engines = EngineManager(self)
+        self._theme = ThemeManager(self)
         self._settings = SettingsManager(self)
-
-        self._theme_manager = ThemeManager(app)
-
         self._game = GameManager(self)
 
         self._connect_modules()
+
+        self.startup()
+
         logger.info("App manager initialized")
 
     @property
     def board(self) -> BoardManager:
         return self._board
-
+    
     @property
-    def engine(self) -> EngineManager:
-        return self._engine
-
+    def engines(self) -> EngineManager:
+        return self._engines
+    
     @property
-    def game(self) -> GameManager:
-        return self._game
-
+    def theme(self) -> ThemeManager:
+        return self._theme
+    
     @property
     def settings(self) -> SettingsManager:
         return self._settings
-
+    
     @property
-    def theme(self) -> ThemeManager:
-        return self._theme_manager
-
-    @property
-    def main_session(self) -> "EngineSession":
-        return self._ensure_main_session()
-
-    def startup(
-        self,
-        engine_path: str | Path | None = None,
-        start_engine: bool = True
-    ):
-        """
-        Initialize application state.
-        """
-
-        logger.info("Starting application services")
-        session = self._ensure_main_session()
-
-        self.board.new_game()
-
-        if start_engine:
-            resolved_engine_path = self._resolve_engine_path(engine_path)
-
-            if resolved_engine_path is not None:
-                logger.info("Starting main engine session: %s", resolved_engine_path)
-                session.start(str(resolved_engine_path))
-                session.set_position_fen(self.board.session.fen)
-            else:
-                logger.warning("Engine executable could not be resolved")
-
-    def set_theme(self) -> None:
-        self._theme_manager.apply_theme("space")
-
-    def shutdown(self):
-        """
-        Graceful application shutdown.
-        """
-
-        logger.info("Shutting down application services")
-        self.engine.shutdown()
-        self._main_session = None
-
-    def start_engine(
-        self,
-        engine_path: str | Path | None = None,
-        session_id: str = MAIN_SESSION_ID
-    ) -> bool:
-        """
-        Start the specified engine session if an executable can be resolved.
-        """
-
-        resolved_engine_path = self._resolve_engine_path(engine_path)
-
-        if resolved_engine_path is None:
-            logger.warning("Unable to start engine; executable could not be resolved")
-            return False
-
-        logger.info("Starting engine session '%s': %s", session_id, resolved_engine_path)
-        
-        session = self.engine.get_session(session_id)
-        if session is None:
-            session = self.engine.create_session(session_id)
-
-        if session is None:
-            logger.error("Failed to create engine session: %s", session_id)
-            return False
-
-        session.start(str(resolved_engine_path))
-        session.set_position_fen(self.board.session.fen)
-
-        return True
-
-    def stop_engine(self, session_id: str = MAIN_SESSION_ID):
-        """
-        Stop the specified engine session without tearing down all modules.
-        """
-
-        session = self.engine.get_session(session_id)
-
-        if session is not None:
-            logger.info("Stopping engine session: %s", session_id)
-            session.stop()
+    def game(self) -> GameManager:
+        return self._game
+    
+    def startup(self):
+        self.settings.load()
+    
+    def shut_down(self):
+        self.save()
+        self.game.stop_game()
+        self.engines.shutdown()
 
     def _connect_modules(self):
-        self.board.position_changed.connect(self._sync_engine_position)
-        logger.debug("Connected board position updates to engine session")
 
-    def _ensure_main_session(self) -> "EngineSession":
+        # Connecting Board Manager, Engine Manager to Game Manager
+        self.board.view_changed.connect(self.game.on_view_changed)
+        self.engines.best_move_updated.connect(self.game.on_best_move_updated)
 
-        if self._main_session is not None:
-            return self._main_session
+        self.game.setup_engine.connect(self.engines.setup_engine)
+        self.game.remove_engine.connect(self.engines.remove_engine)
+        self.game.set_engine_position.connect(self.engines.set_position_fen)
+        self.game.start_engine_search.connect(self.engines.go)
+        self.game.stop_engine_search.connect(self.engines.stop_search)
+        self.game.new_game.connect(self.board.new_game)
+        self.game.make_move.connect(self.board.make_move)
 
-        session = self.engine.get_session(self.MAIN_SESSION_ID)
+        # Connecting Settings module
+        self.settings.loaded.connect(self.load_settings)
 
-        if session is None:
-            logger.debug("Creating main engine session")
-            session = self.engine.create_session(self.MAIN_SESSION_ID)
+        self._connect_ui_pass_on_signals()
 
-        if session is None:
-            raise RuntimeError("Unable to create main engine session")
+    def _connect_ui_pass_on_signals(self):
+        self.theme.theme_changed.connect(self.theme_changed.emit)
 
-        self._main_session = session
-        return session
+        self.board.view_changed.connect(self.board_state_changed.emit)
 
-    def _sync_engine_position(self, fen: str):
-        for session in list(self.engine.sessions.values()):
-            if session.is_running():
-                session.set_position_fen(fen)
+        self.game.game_started.connect(self.game_started.emit)
+        self.game.game_over.connect(self.game_over.emit)
+        self.game.game_saved.connect(self.game_saved.emit)
+        self.game.game_stopped.connect(self.game_stopped.emit)
 
-    @staticmethod
-    def _resolve_engine_path(
-        engine_path: str | Path | None = None
-    ) -> Path | None:
-        import sys
-        if engine_path is not None:
-            path = Path(engine_path)
-            if path.exists():
-                return path
-        else:
-            suffix = ".exe" if sys.platform == "win32" else ""
-            # Try project root
-            path = ROOT_DIR.parent / "build" / f"BluieChessBot{suffix}"
-            if path.exists():
-                return path
-            
-            # Try app root
-            path = ROOT_DIR / "build" / f"BluieChessBot{suffix}"
-            if path.exists():
-                return path
-            
-            # Fallback to check alternate suffix in project root
-            alt_suffix = "" if sys.platform == "win32" else ".exe"
-            alt_path = ROOT_DIR.parent / "build" / f"BluieChessBot{alt_suffix}"
-            if alt_path.exists():
-                return alt_path
+        self.engines.engine_added.connect(self.engine_added.emit)
+        self.engines.engine_removed.connect(self.engine_removed.emit)
+        self.engines.engine_info_updated.connect(self.engine_info_updated.emit)
+        self.engines.engine_settings_updated.connect(self.engine_settings_updated.emit)
+        self.engines.engine_analysis_updated.connect(self.engine_analysis_updated.emit)
+        self.engines.engine_ready.connect(self.engine_ready.emit)
+        self.engines.engine_stopped.connect(self.engine_stopped.emit)
+        self.engines.engine_error.connect(self.engine_error.emit)
 
-            # Fallback to check alternate suffix in app root
-            alt_path = ROOT_DIR / "build" / f"BluieChessBot{alt_suffix}"
-            if alt_path.exists():
-                return alt_path
+    def load_settings(self, settings: dict):
+        if "theme" in settings:
+            self.theme.load_theme_from_settings(settings["theme"])
 
-        logger.debug("Engine path does not exist")
-        return None
+        if "engines" in settings:
+            self.engines.load_settings(settings["engines"])
+
+    def export_pgn(self, filepath: str):
+        active_engines = self.game.get_active_engines()
+        root_node = self.board.get_export_state()
+        engine_info = {}
+
+        if active_engines:
+            for engine in active_engines:
+                engine_info[engine] = self.engines.asdict(engine)
+
+        self.game.save_game(filepath, root_node, engine_info)        
+
+    def save(self):
+
+        theme_settings = self.theme.get_export_state()
+        engines_settings = self.engines.get_export_state()
+
+        self.settings.save(
+            theme=theme_settings,
+            engines=engines_settings
+        )

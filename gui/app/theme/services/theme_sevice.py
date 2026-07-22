@@ -14,8 +14,7 @@ from gui.utils import get_logger
 logger = get_logger(__name__)
 
 class ThemeService:
-    def __init__(self, app: QApplication):
-        self._app = app
+    def __init__(self):
         self._qss = STYLESHEET
 
     def load_presets(self) -> dict[str, ThemeState]:
@@ -41,7 +40,13 @@ class ThemeService:
         stylesheet.replace("__SPACE_SPIN_UP_ARROW_ICON__", SPACE_SPIN_UP_ARROW_ICON.as_posix())
         stylesheet.replace("__SPACE_SPIN_DOWN_ARROW_ICON__", SPACE_SPIN_DOWN_ARROW_ICON.as_posix())
 
-        self._app.setStyleSheet(stylesheet)
+        app = QApplication.instance()
+        if isinstance(app, QApplication):
+            app.setStyleSheet(stylesheet)
+        else:
+            logger.error("Unable to apply the stylesheet")
+            return False
+        
         logger.info("Theme set to %s", theme.name)
 
         return True

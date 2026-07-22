@@ -11,10 +11,10 @@ class ThemeManager(QObject):
 
     theme_changed = Signal(ThemeState)
 
-    def __init__(self, parent, app: QApplication, name="space"):
+    def __init__(self, parent, name="space"):
         super().__init__(parent)
 
-        self._theme_service = ThemeService(app)
+        self._theme_service = ThemeService()
 
         self.load_theme(name)
 

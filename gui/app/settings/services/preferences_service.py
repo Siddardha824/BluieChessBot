@@ -25,7 +25,7 @@ class PreferencesService:
     @staticmethod
     def save(settings: dict | None, new_settings: dict) -> bool:
         if settings is not None:
-            for key, val in new_settings:
+            for key, val in new_settings.items():
                 settings[key] = val
         else:
             settings = new_settings

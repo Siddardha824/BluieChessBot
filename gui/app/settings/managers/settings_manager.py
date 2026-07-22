@@ -15,7 +15,7 @@ class SettingsManager(QObject):
         logger.info("Settings manager initialized")
 
     def save(self, **kwargs):
-        if kwargs is not None:
+        if kwargs:
             success = PreferencesService.save(self._settings, kwargs)
             if success:
                 self.saved.emit()

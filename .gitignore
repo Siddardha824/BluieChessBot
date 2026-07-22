@@ -8,6 +8,5 @@ designs/
 .agents/
 gui-old/
 gui/config/
-*.txt
 Screenshot*
 *.xcf

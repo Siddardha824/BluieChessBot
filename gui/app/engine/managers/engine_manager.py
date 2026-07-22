@@ -1,4 +1,5 @@
 from PySide6.QtCore import QObject, Signal, QProcess
+
 from ..services.engine_service import EngineService
 from ..models.engines import Engines
 from gui.utils import get_logger
@@ -38,7 +39,7 @@ class EngineManager(QObject):
     def create_engine(self, engine_name: str) -> bool:
         if engine_name in self._services:
             logger.warning("Engine '%s' already exists.", engine_name)
-            return False
+            return True
 
         status_model = self.engines_model.add_engine(engine_name)
         if not status_model:
@@ -99,6 +100,14 @@ class EngineManager(QObject):
         return service
 
     # --- Public Command API ---
+    def setup_engine(self, engine_name: str, engine_path: str):
+        success = self.create_engine(engine_name)
+        if not success:
+            logger.error(f"Failed to create engine {engine_name}")
+
+        success = self.start(engine_name, engine_path)
+        if not success:
+            logger.error(f"Failed to start engine {engine_name} at {engine_path}")
 
     def start(self, engine_name: str, fallback_path: str = "") -> bool:
         if service := self._get_service(engine_name):
@@ -172,4 +181,17 @@ class EngineManager(QObject):
             return service.status.asdict()
         return None
 
-    
+    def load_settings(self, engines_dict: dict):
+        for engine_name, engine_data in engines_dict.items():
+            self.create_engine(engine_name)
+
+            if "settings" in engine_data:
+                self.update_settings(engine_name, **engine_data["settings"])
+
+    def get_export_state(self) -> dict:
+        state = {}
+        for name in self.engines_model.active_engines:
+            engine_dict = self.asdict(name)
+            if engine_dict:
+                state[name] = engine_dict
+        return state
