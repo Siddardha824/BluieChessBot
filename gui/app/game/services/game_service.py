@@ -1,3 +1,4 @@
+from __future__ import annotations
 from PySide6.QtCore import QObject, Signal
 import chess
 from ..models.game_state import GameState, GameMode, MatchStatus

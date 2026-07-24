@@ -18,7 +18,7 @@ class EngineService(QObject):
     engine_error = Signal(str)
     best_move_updated = Signal(str)
 
-    def __init__(self, engine_status: EngineStatus, parent=None):
+    def __init__(self, engine_status: EngineStatus, parent):
         super().__init__(parent)
         self.status = engine_status
         self._connector = EngineConnector(self)

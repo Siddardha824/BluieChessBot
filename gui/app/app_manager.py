@@ -1,7 +1,5 @@
 from PySide6.QtCore import QObject, Signal
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from PySide6.QtCore import QProcess
+from PySide6.QtCore import QProcess
 
 from .board import BoardManager
 from .theme import ThemeManager

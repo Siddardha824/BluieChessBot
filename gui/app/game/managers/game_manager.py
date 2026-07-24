@@ -1,5 +1,4 @@
-from turtle import mode
-
+from __future__ import annotations
 from PySide6.QtCore import QObject, Signal
 from ..models.game_state import GameState, GameMode, MatchStatus
 from ..services.game_service import GameService
