@@ -1,6 +1,11 @@
+"""Application-wide path configuration constants.
+
+This module resolves and exposes Path objects representing base directories,
+assets, icons, preferences files, and stylesheets used throughout the GUI.
+"""
+
 from pathlib import Path
 from gui.utils import get_logger
-
 
 logger = get_logger(__name__)
 
