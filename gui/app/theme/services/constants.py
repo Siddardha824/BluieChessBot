@@ -1,3 +1,8 @@
+"""Theme preset constants registry.
+
+This module maps names of preset themes to their respective ThemeState configurations.
+"""
+
 from ..presets.space import SPACE_THEME
 from ..presets.lichess import LICHESS_THEME
 from ..presets.chess_com import CHESS_COM_THEME

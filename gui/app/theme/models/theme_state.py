@@ -1,8 +1,17 @@
+"""Theme state data model.
+
+This module provides the ThemeState dataclass, which defines color hex values
+and configurations for main windows, panels, chessboard elements, evaluation,
+and status labels.
+"""
+
 from dataclasses import dataclass
-from typing import Optional
+
 
 @dataclass(frozen=True)
 class ThemeState:
+    """Store styling variables and color configurations for application themes."""
+
     name: str
 
     # Global themes
@@ -50,7 +59,15 @@ class ThemeState:
     coord_dark: str
 
     @classmethod
-    def from_dict(cls, data: dict):
+    def from_dict(cls, data: dict) -> "ThemeState":
+        """Create a ThemeState instance from a dictionary containing theme fields.
+
+        Args:
+            data: A dictionary containing theme key-value pairs.
+
+        Returns:
+            A new ThemeState instance with parsed attributes.
+        """
         valid_keys = {f for f in cls.__dataclass_fields__}
 
         filtered_data = {k: v for k, v in data.items() if k in valid_keys}
