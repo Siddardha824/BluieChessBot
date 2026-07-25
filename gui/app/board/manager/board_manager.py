@@ -1,9 +1,8 @@
-"""Board manager.
+"""Provide the BoardManager facade controller.
 
-This module provides `BoardManager`, a thin QObject wrapper used by the
-UI layer to interact with the underlying `BoardState` model and helper
-services. `BoardManager` exposes a `view_changed` signal and convenience
-methods that delegate work to `MoveHelper` and `BoardState`.
+This module provides the BoardManager class, which acts as a lightweight QObject
+wrapper for UI layer components to interact with the underlying BoardState model
+and helper services.
 """
 
 from PySide6.QtCore import QObject, Signal
@@ -17,23 +16,20 @@ logger = get_logger(__name__)
 
 
 class BoardManager(QObject):
-    """Manage board interactions for the UI.
+    """Manage chess board interactions and delegate requests to board services.
 
-    `BoardManager` is a lightweight controller that holds a `BoardState`
-    instance and exposes methods the UI can call (apply/undo moves,
-    load FEN, query SAN/UCIs, etc.). It forwards most operations to
-    `MoveHelper` or `BoardState` and emits `view_changed` when the
-    underlying view is updated.
+    This controller acts as a facade holding a BoardState instance and exposing
+    methods to apply or undo moves, load FEN positions, format SAN sequences, and
+    query the game tree.
 
     Signals:
-        view_changed(object): Emitted when the board view or selected node
-            changes. The payload is the new view object (usually a node).
+        view_changed: Emitted when the board view or selected node changes.
     """
 
     view_changed = Signal(object)
 
     def __init__(self, parent):
-        """Create a new `BoardManager`.
+        """Initialize the board manager.
 
         Args:
             parent: QObject parent for ownership in the Qt hierarchy.
@@ -47,11 +43,8 @@ class BoardManager(QObject):
     def make_move(self, move: str) -> bool:
         """Apply a move to the current board state.
 
-        This delegates to `MoveHelper.make_move` which handles move parsing
-        and validation.
-
         Args:
-            move: Move string (typically UCI) to apply.
+            move: The move string (typically UCI) to apply.
 
         Returns:
             True if the move was successfully applied, False otherwise.
@@ -67,7 +60,7 @@ class BoardManager(QObject):
         """Undo the last move on the current board.
 
         Returns:
-            The UCI string for the undone move, or `None` if there was
+            The UCI string for the undone move, or None if there was
             no move to undo.
         """
         return MoveHelper.undo_move(self._state)
@@ -81,7 +74,7 @@ class BoardManager(QObject):
         """Load a FEN string into the board state if it is valid.
 
         Args:
-            fen: FEN string to load.
+            fen: The FEN string to load.
         """
         if self._state.is_valid_fen(fen):
             logger.info("Loading FEN: %s", fen)
@@ -92,13 +85,13 @@ class BoardManager(QObject):
         return self._state.fen
 
     def get_san_for_move(self, uci_move: str) -> str:
-        """Return the SAN (algebraic) representation for a UCI move.
+        """Return the Standard Algebraic Notation (SAN) representation for a UCI move.
 
         Args:
-            uci_move: Move in UCI notation.
+            uci_move: The move in UCI notation.
 
         Returns:
-            The SAN string for the move as formatted by `MoveHelper`.
+            The SAN string for the move.
         """
         return MoveHelper.get_san_for_move(self._state, uci_move)
 
@@ -106,19 +99,17 @@ class BoardManager(QObject):
         """Format a sequence of UCI moves into a human-readable string.
 
         Args:
-            uci_moves: List of moves in UCI notation.
+            uci_moves: A list of moves in UCI notation.
 
         Returns:
-            A formatted string (moves separated by spaces or move numbers)
-            produced by `MoveHelper.format_uci_sequence`.
+            A space-separated SAN sequence of moves.
         """
         return MoveHelper.format_uci_sequence(self._state, uci_moves)
 
     def get_export_state(self) -> MoveNode:
-        """Return the root `MoveNode` representing the current game tree.
+        """Return the root MoveNode representing the game tree.
 
-        The returned object can be used for exporting the game or
-        traversing variations.
+        Returns:
+            The root MoveNode of the active chess game.
         """
         return self._state.game_tree
-

@@ -1,17 +1,21 @@
-"""Board mapping helpers for converting between engine and python-chess coordinates."""
+"""Provide board mapping helpers for coordinate conversions.
+
+This module provides the BoardMapper class for converting chess square indices and
+algebraic coordinate notations between engine standards and python-chess representations.
+"""
 
 import chess
 
 
 class BoardMapper:
-    """Convert between UCI engine board indices and python-chess square coordinates."""
+    """Provide conversions between UCI engine board indices and python-chess square coordinates."""
 
     @staticmethod
     def index_to_square(index: int) -> int:
         """Return the python-chess square index for a given engine board index.
 
         Args:
-            index: Engine board square index in range 0..63.
+            index: Engine board square index in the range 0..63.
 
         Returns:
             The corresponding python-chess square index.
@@ -25,7 +29,7 @@ class BoardMapper:
         """Return the board coordinate string for a given engine board index.
 
         Args:
-            index: Engine board square index in range 0..63.
+            index: Engine board square index in the range 0..63.
 
         Returns:
             A coordinate string such as 'a1' through 'h8'.

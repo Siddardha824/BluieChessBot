@@ -1,9 +1,8 @@
-"""Board state model that tracks a PGN tree and exposes a viewable board.
+"""Track the chess board state and PGN move tree.
 
-This module provides `BoardState`, a Qt `QObject` wrapper around a cached
-PGN move tree (using `MoveNode`) and a current view node. It emits
-`view_changed` when the active view node changes so UI components can
-react to updates.
+This module provides the BoardState class, which wraps a cached PGN move tree
+and active view node, emitting signals when the active node changes to trigger
+reactive updates.
 """
 
 from PySide6.QtCore import QObject, Signal
@@ -16,23 +15,20 @@ logger = get_logger(__name__)
 
 
 class BoardState(QObject):
-    """Represents the current board view and underlying game tree.
+    """Manage the active board view and the underlying game variation tree.
 
-    The `BoardState` keeps a root `MoveNode` representing the game and a
-    reference to the currently visible node (`_view_node`). Consumers can
-    query board properties (FEN, turn, legal moves, etc.) and apply or undo
-    moves. The object emits the `view_changed` Qt signal when the view node
-    changes.
+    This class maintains the root MoveNode and tracks the currently visible active
+    node. It exposes accessors for board query operations (FEN, turn, legal moves)
+    and mutation actions (make move, undo).
 
     Signals:
-        view_changed (MoveNode): emitted with the new view node whenever the
-            active node changes.
+        view_changed: Emitted with the new view node when the active node changes.
     """
 
     view_changed = Signal(MoveNode)
 
     def __init__(self, parent):
-        """Initialize an empty board state attached to a Qt parent.
+        """Initialize the board state model.
 
         Args:
             parent: Qt parent object for QObject ownership.
@@ -46,16 +42,12 @@ class BoardState(QObject):
 
     @property
     def board(self) -> chess.Board:
-        """Return a copy of the current board for the active view node.
-
-        This is a convenience accessor that delegates to the active node's
-        cached board and returns a copy to avoid external mutation.
-        """
+        """Return a copy of the current board for the active view node."""
         return self._view_node.board()
 
     @property
     def game_tree(self) -> MoveNode:
-        """Return the root `MoveNode` representing the full game tree."""
+        """Return the root MoveNode representing the game tree."""
         return self._root_node
 
     @property
@@ -65,9 +57,9 @@ class BoardState(QObject):
 
     @property
     def turn(self) -> chess.Color:
-        """Return the side to move for the current board (True=white)."""
+        """Return the turn side for the current board (True for White)."""
         return self.board.turn
-    
+
     @property
     def is_start_pos(self) -> bool:
         """Return True if the current view is the root (start position)."""
@@ -82,39 +74,52 @@ class BoardState(QObject):
     def halfmove_clock(self) -> int:
         """Return the halfmove clock from the current board view."""
         return self.board.halfmove_clock
-    
+
     @property
     def move_stack(self) -> list[chess.Move]:
-        """Return a copy of the current board's move stack (list of `chess.Move`)."""
+        """Return a copy of the current board's move list."""
         return self.board.move_stack.copy()
 
     @property
     def legal_moves(self):
-        """Return the `legal_moves` generator for the current board view."""
+        """Return the legal moves generator for the current board position."""
         return self.board.legal_moves
-    
+
     def is_legal(self, move: chess.Move) -> bool:
-        """Return True if `move` is legal in the current board view."""
+        """Determine if a move is legal in the current board position.
+
+        Args:
+            move: The chess.Move instance to evaluate.
+
+        Returns:
+            True if the move is legal, False otherwise.
+        """
         return self.board.is_legal(move)
-    
+
     def copy(self) -> chess.Board:
         """Return a copy of the current board object.
 
-        This method intentionally returns a board instance suitable for
-        read-only inspection or for simulating moves without changing the
-        internal view.
+        This is useful for read-only inspection or move simulation without
+        mutating the internal state.
         """
         return self.board
 
     def san(self, move: chess.Move) -> str:
-        """Return the SAN string for `move` using the current board context."""
+        """Convert a move to its Standard Algebraic Notation (SAN) string.
+
+        Args:
+            move: The chess.Move instance to format.
+
+        Returns:
+            The SAN representation of the move.
+        """
         return self.board.san(move)
 
     def set_fen(self, fen: str):
-        """Replace the current game with a new root node set up from `fen`.
+        """Replace the current game tree with a new root node set up from a FEN string.
 
         Args:
-            fen: A FEN string representing the starting board.
+            fen: The FEN string representing the starting board.
         """
         self._root_node = MoveNode()
         self._root_node.setup(fen)
@@ -122,10 +127,14 @@ class BoardState(QObject):
 
         self._sync_view(self._view_node)
 
-    def is_valid_fen(self, fen: str):
-        """Validate a FEN string and return True if it represents a valid board.
+    def is_valid_fen(self, fen: str) -> bool:
+        """Validate a FEN string.
 
-        Logs a warning and returns False for invalid FEN strings.
+        Args:
+            fen: The FEN string to validate.
+
+        Returns:
+            True if the FEN represents a valid board, False otherwise.
         """
         try:
             board = chess.Board(fen)
@@ -147,10 +156,10 @@ class BoardState(QObject):
         self._sync_view(self._view_node)
 
     def move(self, move: chess.Move):
-        """Apply `move` to the current view by creating and switching to a child node.
+        """Apply a move to the current view by creating and selecting a child node.
 
         Args:
-            move: A `chess.Move` instance to apply.
+            move: The chess.Move instance to apply.
         """
         new_node = self._view_node.add_variation(move)
         self._view_node = cast(ChildMoveNode, new_node)
@@ -160,8 +169,11 @@ class BoardState(QObject):
     def undo(self) -> chess.Move | None:
         """Undo the last applied move on the current view.
 
-        Returns the undone `chess.Move` or raises `IndexError` if there are no
-        moves to undo.
+        Returns:
+            The undone chess.Move instance.
+
+        Raises:
+            IndexError: If there are no moves to undo.
         """
         if self._view_node is self._root_node or self._view_node.parent is None:
             raise IndexError("No moves to undo")
@@ -176,10 +188,9 @@ class BoardState(QObject):
         return self._view_node is not self._root_node and self._view_node.parent is not None
 
     def _sync_view(self, node: MoveNode | ChildMoveNode):
-        """Emit the `view_changed` signal for `node`.
+        """Emit the view_changed signal for the given node.
 
-        This internal helper centralizes emitting the Qt signal whenever the
-        view node changes.
+        Args:
+            node: The new active move node.
         """
         self.view_changed.emit(node)
-

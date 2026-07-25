@@ -1,4 +1,8 @@
-"""Move helper utilities for working with UCI moves and board state conversions."""
+"""Provide move helper utilities for working with UCI moves and board state conversions.
+
+This module provides the MoveHelper utility class, which parses, validates, undos, and
+formats chess moves.
+"""
 
 from __future__ import annotations
 
@@ -14,7 +18,7 @@ logger = get_logger(__name__)
 
 
 class MoveHelper:
-    """Utility helpers for making, undoing, and formatting chess moves."""
+    """Provide utility helpers for making, undoing, and formatting chess moves."""
 
     @staticmethod
     def make_move(board: BoardState, move: str) -> bool:
@@ -25,7 +29,7 @@ class MoveHelper:
             move: A UCI move string, such as 'e2e4'.
 
         Returns:
-            True if the move was applied successfully; False otherwise.
+            True if the move was applied successfully, False otherwise.
         """
         try:
             chess_move = chess.Move.from_uci(move)
