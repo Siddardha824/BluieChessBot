@@ -1,3 +1,9 @@
+"""Engine manager facade module.
+
+This module provides the EngineManager class, which acts as a unified entry
+point and facade for all active chess engine sessions and models in the system.
+"""
+
 from PySide6.QtCore import QObject, Signal, QProcess
 
 from ..services.engine_service import EngineService
@@ -6,20 +12,34 @@ from gui.utils import get_logger
 
 logger = get_logger(__name__)
 
+
 class EngineManager(QObject):
+    """Provide a facade and unified entry point for all chess engine operations.
+
+    This class manages active engine subprocess sessions and their corresponding data
+    models, multiplexing signals across the application.
+
+    Signals:
+        engine_added: Emitted when a new engine is successfully added (engine_name, status_model).
+        engine_removed: Emitted when an engine is removed from the registry (engine_name).
+        engine_info_updated: Emitted when engine metadata is updated (engine_name, info_model).
+        engine_settings_updated: Emitted when engine configuration settings are updated.
+        engine_analysis_updated: Emitted when engine search telemetry updates.
+        engine_ready: Emitted when the engine process signals it is ready.
+        engine_stopped: Emitted when the engine process terminates.
+        engine_error: Emitted when a process error occurs.
+        best_move_updated: Emitted when a search finds a new best move.
     """
-    The Facade and single entry point for all engine operations.
-    Exposes unified signals across all active engine sessions and data models.
-    """
+
     # Multiplexed Model Structure Signals
     engine_added = Signal(str, object)
     engine_removed = Signal(str)
-    
+
     # Multiplexed Model Data Update Signals
     engine_info_updated = Signal(str, object)
     engine_settings_updated = Signal(str, object)
     engine_analysis_updated = Signal(str, object)
-    
+
     # Multiplexed Service Event Signals
     engine_ready = Signal(str)
     engine_stopped = Signal(str, int, QProcess.ExitStatus)
@@ -27,16 +47,29 @@ class EngineManager(QObject):
     best_move_updated = Signal(str, str)
 
     def __init__(self, parent):
+        """Initialize the engine manager.
+
+        Args:
+            parent: Qt parent object for memory management.
+        """
         super().__init__(parent)
         self.engines_model = Engines(self)
         self._services: dict[str, EngineService] = {}
-        
+
         self.engines_model.engine_added.connect(self.engine_added)
         self.engines_model.engine_removed.connect(self.engine_removed)
-        
+
         logger.info("Engine manager initialized")
 
     def create_engine(self, engine_name: str) -> bool:
+        """Create a new engine session and register its signals.
+
+        Args:
+            engine_name: The unique identifier for the engine.
+
+        Returns:
+            True if the engine was successfully registered, False otherwise.
+        """
         if engine_name in self._services:
             logger.warning("Engine '%s' already exists.", engine_name)
             return True
@@ -47,17 +80,17 @@ class EngineManager(QObject):
 
         # Wire Data Model Signals
         status_model.info.info_updated.connect(
-            lambda name=engine_name, info_data=status_model.info: 
+            lambda name=engine_name, info_data=status_model.info:
                 self.engine_info_updated.emit(name, info_data)
         )
-        
+
         status_model.analysis.analysis_state_changed.connect(
-            lambda name=engine_name, analysis_data=status_model.analysis: 
+            lambda name=engine_name, analysis_data=status_model.analysis:
                 self.engine_analysis_updated.emit(name, analysis_data)
         )
 
         service = EngineService(status_model, self)
-        
+
         # Wire Service Event Signals
         service.engine_ready.connect(
             lambda name=engine_name: self.engine_ready.emit(name)
@@ -77,6 +110,11 @@ class EngineManager(QObject):
         return True
 
     def remove_engine(self, engine_name: str):
+        """Remove a registered engine and stop its subprocess.
+
+        Args:
+            engine_name: The identifier of the engine to remove.
+        """
         service = self._services.pop(engine_name, None)
         if service:
             service.stop()
@@ -87,6 +125,7 @@ class EngineManager(QObject):
             logger.warning("Cannot remove missing engine: %s", engine_name)
 
     def shutdown(self):
+        """Shut down all active engine subprocesses and clear the registries."""
         logger.info("Shutting down all engines")
         for service in list(self._services.values()):
             service.stop()
@@ -94,6 +133,14 @@ class EngineManager(QObject):
         self.engines_model.clear()
 
     def _get_service(self, engine_name: str) -> EngineService | None:
+        """Retrieve the service wrapper for a specific engine.
+
+        Args:
+            engine_name: The identifier of the engine.
+
+        Returns:
+            The EngineService wrapper if found, None otherwise.
+        """
         service = self._services.get(engine_name)
         if not service:
             logger.warning("Command failed: Engine '%s' not found.", engine_name)
@@ -101,6 +148,12 @@ class EngineManager(QObject):
 
     # --- Public Command API ---
     def setup_engine(self, engine_name: str, engine_path: str):
+        """Create and start a chess engine subprocess.
+
+        Args:
+            engine_name: The identifier for the engine.
+            engine_path: The executable path of the engine.
+        """
         success = self.create_engine(engine_name)
         if not success:
             logger.error(f"Failed to create engine {engine_name}")
@@ -110,40 +163,97 @@ class EngineManager(QObject):
             logger.error(f"Failed to start engine {engine_name} at {engine_path}")
 
     def start(self, engine_name: str, fallback_path: str = "") -> bool:
+        """Start the engine subprocess.
+
+        Args:
+            engine_name: The identifier of the engine.
+            fallback_path: Optional path to use if no path is configured.
+
+        Returns:
+            True if started successfully, False otherwise.
+        """
         if service := self._get_service(engine_name):
             return service.start(fallback_path)
         return False
 
     def stop(self, engine_name: str):
+        """Stop the engine subprocess.
+
+        Args:
+            engine_name: The identifier of the engine.
+        """
         if service := self._get_service(engine_name):
             service.stop()
 
     def send(self, engine_name: str, command: str):
+        """Send a raw UCI command string to the engine subprocess stdin.
+
+        Args:
+            engine_name: The identifier of the engine.
+            command: The raw UCI command string.
+        """
         if service := self._get_service(engine_name):
             service.send(command)
 
     def update_settings(self, engine_name: str, **kwargs):
+        """Update configurations for a specific engine.
+
+        Args:
+            engine_name: The identifier of the engine.
+            **kwargs: Keyword settings arguments (e.g. threads=4).
+        """
         if service := self._get_service(engine_name):
             service.update_settings(**kwargs)
 
     def is_running(self, engine_name: str) -> bool:
+        """Check if the engine process is currently running.
+
+        Args:
+            engine_name: The identifier of the engine.
+
+        Returns:
+            True if running, False otherwise.
+        """
         if service := self._get_service(engine_name):
             return service.is_running()
         return False
 
     def is_ready(self, engine_name: str):
+        """Send an isready query to the engine.
+
+        Args:
+            engine_name: The identifier of the engine.
+        """
         if service := self._get_service(engine_name):
             service.is_ready()
 
     def set_position_startpos(self, engine_name: str):
+        """Set the board position to the standard starting position.
+
+        Args:
+            engine_name: The identifier of the engine.
+        """
         if service := self._get_service(engine_name):
             service.set_position_startpos()
 
     def set_position_fen(self, engine_name: str, fen: str):
+        """Set the board position from a FEN string.
+
+        Args:
+            engine_name: The identifier of the engine.
+            fen: FEN string representing the position.
+        """
         if service := self._get_service(engine_name):
             service.set_position_fen(fen)
 
     def set_options(self, engine_name: str, hash: int = -1, threads: int = -1):
+        """Configure engine options (hash size and thread counts).
+
+        Args:
+            engine_name: The identifier of the engine.
+            hash: Transposition table size in MB.
+            threads: Number of search threads.
+        """
         if service := self._get_service(engine_name):
             if hash > 0:
                 service.update_settings(hash_size=hash)
@@ -152,36 +262,81 @@ class EngineManager(QObject):
             service.set_options()
 
     def go(self, engine_name: str):
-        """Executes a search using the constraints stored in the engine's settings."""
+        """Execute a search using the constraints stored in the engine's settings.
+
+        Args:
+            engine_name: The identifier of the engine.
+        """
         if service := self._get_service(engine_name):
             service.go()
 
     def go_depth(self, engine_name: str, depth: int):
+        """Start search up to a maximum ply depth.
+
+        Args:
+            engine_name: The identifier of the engine.
+            depth: Maximum search depth in plies.
+        """
         if service := self._get_service(engine_name):
             service.go_depth(depth)
 
     def go_infinite(self, engine_name: str):
+        """Start search in infinite mode.
+
+        Args:
+            engine_name: The identifier of the engine.
+        """
         if service := self._get_service(engine_name):
             service.go_infinite()
 
     def go_time(self, engine_name: str, ms: int):
+        """Start search for a maximum time duration.
+
+        Args:
+            engine_name: The identifier of the engine.
+            ms: Maximum search time in milliseconds.
+        """
         if service := self._get_service(engine_name):
             service.go_time(ms)
 
     def go_nodes(self, engine_name: str, nodes: int):
+        """Start search for a maximum node count.
+
+        Args:
+            engine_name: The identifier of the engine.
+            nodes: Maximum nodes to evaluate.
+        """
         if service := self._get_service(engine_name):
             service.go_nodes(nodes)
 
     def stop_search(self, engine_name: str):
+        """Stop the active search.
+
+        Args:
+            engine_name: The identifier of the engine.
+        """
         if service := self._get_service(engine_name):
             service.stop_search()
 
     def asdict(self, engine_name: str) -> dict | None:
+        """Convert the engine status model to a dictionary.
+
+        Args:
+            engine_name: The identifier of the engine.
+
+        Returns:
+            The serialized engine status dictionary, or None if not found.
+        """
         if service := self._get_service(engine_name):
             return service.status.asdict()
         return None
 
     def load_settings(self, engines_dict: dict):
+        """Load engine configurations from a serialized dictionary.
+
+        Args:
+            engines_dict: Dict mapping engine names to settings payload.
+        """
         for engine_name, engine_data in engines_dict.items():
             self.create_engine(engine_name)
 
@@ -189,6 +344,11 @@ class EngineManager(QObject):
                 self.update_settings(engine_name, **engine_data["settings"])
 
     def get_export_state(self) -> dict:
+        """Export the active states and settings of all registered engines.
+
+        Returns:
+            A dictionary containing active engine profiles.
+        """
         state = {}
         for name in self.engines_model.active_engines:
             engine_dict = self.asdict(name)
