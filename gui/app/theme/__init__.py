@@ -1,3 +1,4 @@
-from .managers.theme_manager import ThemeManager
+from .manager.theme_manager import ThemeManager
 
 __all__ = ["ThemeManager"]
+

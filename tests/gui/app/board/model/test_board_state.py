@@ -62,6 +62,19 @@ class TestBoardState:
         emitted_node = blocker.args[0]
         assert isinstance(emitted_node, MoveNode)
 
+        # Verify property delegations for custom white-to-move FEN
+        assert board_state.turn == chess.WHITE
+        assert board_state.fullmove_number == 3
+        assert board_state.halfmove_clock == 2
+
+        # Verify property delegations for custom black-to-move FEN
+        black_turn_fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
+        board_state.set_fen(black_turn_fen)
+        assert board_state.turn == chess.BLACK
+        assert board_state.fullmove_number == 1
+        assert board_state.halfmove_clock == 0
+
+
     def test_is_valid_fen(self, board_state):
         """Verify FEN validation catches both structural and contextual errors."""
         assert board_state.is_valid_fen(chess.STARTING_FEN) is True

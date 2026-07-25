@@ -65,6 +65,17 @@ class TestMoveHelper:
         assert result is None
         mock_board_state.undo.assert_not_called()
 
+    def test_undo_move_fails_when_undo_returns_none(self, mock_board_state):
+        """Test that undoing returns None if the board state undo() operation returns None."""
+        mock_board_state.is_start_pos = False
+        mock_board_state.undo.return_value = None
+        
+        result = MoveHelper.undo_move(mock_board_state)
+        
+        assert result is None
+        mock_board_state.undo.assert_called_once()
+
+
     # --- get_san_for_move Tests ---
 
     def test_get_san_for_move_valid(self, mock_board_state):
@@ -87,6 +98,15 @@ class TestMoveHelper:
         
         assert result == "e2e4"
         mock_board_state.san.assert_not_called()
+
+    def test_get_san_for_move_parsing_exception(self, mock_board_state):
+        """Test that when Move.from_uci raises an exception, the fallback original string is returned."""
+        # Try a syntactically invalid UCI string to trigger ValueError/exception
+        result = MoveHelper.get_san_for_move(mock_board_state, "invalid_move")
+        
+        assert result == "invalid_move"
+        mock_board_state.san.assert_not_called()
+
 
     # --- format_uci_sequence Tests ---
 

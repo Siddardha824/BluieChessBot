@@ -46,3 +46,27 @@ class TestBoardMapper:
         """Verify that passing invalid coordinate strings raises the appropriate ValueError from python-chess."""
         with pytest.raises(ValueError):
             BoardMapper.coord_to_index(invalid_coord)
+
+    @pytest.mark.parametrize(
+        "out_of_bounds_index",
+        [
+            -1,
+            64,
+            100,
+        ]
+    )
+    def test_index_to_square_invalid_inputs(self, out_of_bounds_index):
+        """Verify that passing an out-of-bounds index to index_to_square raises a ValueError."""
+        with pytest.raises(ValueError):
+            BoardMapper.index_to_square(out_of_bounds_index)
+
+    @pytest.mark.parametrize(
+        "out_of_bounds_index, expected_invalid_coord",
+        [
+            (-1, "h9"),
+            (64, "a0"),
+        ]
+    )
+    def test_index_to_coord_out_of_bounds(self, out_of_bounds_index, expected_invalid_coord):
+        """Verify the raw coordinate generation behavior for out-of-bounds indices."""
+        assert BoardMapper.index_to_coord(out_of_bounds_index) == expected_invalid_coord
