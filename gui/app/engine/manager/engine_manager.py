@@ -20,8 +20,9 @@ class EngineManager(QObject):
     models, multiplexing signals across the application.
 
     Signals:
-        engine_added: Emitted when a new engine is successfully added (engine_name, status_model).
+        engine_added: Emitted when a new engine is successfully added (engine_name, engine_status).
         engine_removed: Emitted when an engine is removed from the registry (engine_name).
+
         engine_info_updated: Emitted when engine metadata is updated (engine_name, info_model).
         engine_settings_updated: Emitted when engine configuration settings are updated.
         engine_analysis_updated: Emitted when engine search telemetry updates.
@@ -53,16 +54,19 @@ class EngineManager(QObject):
             parent: Qt parent object for memory management.
         """
         super().__init__(parent)
-        self.engines_model = Engines(self)
+        self.engines = Engines(self)
         self._services: dict[str, EngineService] = {}
 
-        self.engines_model.engine_added.connect(self.engine_added)
-        self.engines_model.engine_removed.connect(self.engine_removed)
+        self.engines.engine_added.connect(self.engine_added)
+        self.engines.engine_removed.connect(self.engine_removed)
 
         logger.info("Engine manager initialized")
 
     def create_engine(self, engine_name: str) -> bool:
-        """Create a new engine session and register its signals.
+        """Create a new engine session and register its data model and service signals.
+
+        Wires data model signals (info, settings, analysis) and process-level service signals
+        (ready, stopped, error, best_move_updated) to multiplexed signals.
 
         Args:
             engine_name: The unique identifier for the engine.
@@ -70,26 +74,32 @@ class EngineManager(QObject):
         Returns:
             True if the engine was successfully registered, False otherwise.
         """
+
         if engine_name in self._services:
             logger.warning("Engine '%s' already exists.", engine_name)
             return True
 
-        status_model = self.engines_model.add_engine(engine_name)
-        if not status_model:
+        engine_status = self.engines.add_engine(engine_name)
+        if not engine_status:
             return False
 
         # Wire Data Model Signals
-        status_model.info.info_updated.connect(
-            lambda name=engine_name, info_data=status_model.info:
+        engine_status.info.info_updated.connect(
+            lambda name=engine_name, info_data=engine_status.info:
                 self.engine_info_updated.emit(name, info_data)
         )
 
-        status_model.analysis.analysis_state_changed.connect(
-            lambda name=engine_name, analysis_data=status_model.analysis:
+        engine_status.settings.settings_updated.connect(
+            lambda name=engine_name, settings_data=engine_status.settings:
+                self.engine_settings_updated.emit(name, settings_data)
+        )
+
+        engine_status.analysis.analysis_state_changed.connect(
+            lambda name=engine_name, analysis_data=engine_status.analysis:
                 self.engine_analysis_updated.emit(name, analysis_data)
         )
 
-        service = EngineService(status_model, self)
+        service = EngineService(engine_status, self)
 
         # Wire Service Event Signals
         service.engine_ready.connect(
@@ -118,7 +128,7 @@ class EngineManager(QObject):
         service = self._services.pop(engine_name, None)
         if service:
             service.stop()
-            self.engines_model.remove_engine(engine_name)
+            self.engines.remove_engine(engine_name)
             service.deleteLater()
             logger.info("Engine removed: %s", engine_name)
         else:
@@ -130,7 +140,7 @@ class EngineManager(QObject):
         for service in list(self._services.values()):
             service.stop()
         self._services.clear()
-        self.engines_model.clear()
+        self.engines.clear()
 
     def _get_service(self, engine_name: str) -> EngineService | None:
         """Retrieve the service wrapper for a specific engine.
@@ -350,7 +360,7 @@ class EngineManager(QObject):
             A dictionary containing active engine profiles.
         """
         state = {}
-        for name in self.engines_model.active_engines:
+        for name in self.engines.active_engines:
             engine_dict = self.asdict(name)
             if engine_dict:
                 state[name] = engine_dict

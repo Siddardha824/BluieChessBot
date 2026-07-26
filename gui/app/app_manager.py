@@ -1,3 +1,10 @@
+"""Application manager entry point module.
+
+This module provides the AppManager class, which acts as the root coordinator
+and facade for the entire chess application, wiring together the game state,
+board display, chess engine process control, themes, and settings.
+"""
+
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtCore import QProcess
 
@@ -10,27 +17,44 @@ from gui.utils import get_logger
 
 logger = get_logger(__name__)
 
+
 class AppManager(QObject):
-    """
-    Root application object.
+    """Root application controller and coordinator.
 
-    Owns and wires together all major subsystems.
-    """
-    # Passing the module signals
+    This manager owns and wires together all major subsystems including the Board,
+    Engine, Game, Settings, and Theme modules. It acts as the central hub for
+    multiplexing signal notifications from subsystems to the UI layer.
 
-    # Theme Module
+    Signals:
+        theme_changed: Emitted when the UI theme changes.
+        game_started: Emitted when a new chess game starts.
+        game_stopped: Emitted when a chess game is aborted or ended.
+        game_saved: Emitted when the current game is saved to disk.
+        game_over: Emitted with (result, termination_reason) when a game ends.
+        board_state_changed: Emitted when the board view changes with the new active MoveNode.
+        engine_added: Emitted when a chess engine is registered (name, status_model).
+        engine_removed: Emitted when a chess engine is removed (name).
+        engine_info_updated: Emitted when an engine's metadata changes.
+        engine_settings_updated: Emitted when an engine's configuration changes.
+        engine_analysis_updated: Emitted when engine search telemetry updates.
+        engine_ready: Emitted when an engine process is ready.
+        engine_stopped: Emitted when an engine process terminates.
+        engine_error: Emitted when an engine process encounters an error.
+    """
+
+    # Theme Module Signals
     theme_changed = Signal()
 
-    # Game Module
+    # Game Module Signals
     game_started = Signal()
     game_stopped = Signal()
     game_saved = Signal()
     game_over = Signal(str, str)
 
-    # Board Module
+    # Board Module Signals
     board_state_changed = Signal(object)
 
-    # Engine Module
+    # Engine Module Signals
     engine_added = Signal(str, object)
     engine_removed = Signal(str)
     engine_info_updated = Signal(str, object)
@@ -41,6 +65,11 @@ class AppManager(QObject):
     engine_error = Signal(str, str)
 
     def __init__(self, parent):
+        """Initialize the application manager and construct all major subsystems.
+
+        Args:
+            parent: The parent QObject for Qt ownership hierarchy.
+        """
         super().__init__(parent)
 
         logger.info("Initializing app manager")
@@ -52,41 +81,47 @@ class AppManager(QObject):
         self._game = GameManager(self)
 
         self._connect_modules()
-
         self.startup()
 
         logger.info("App manager initialized")
 
     @property
     def board(self) -> BoardManager:
+        """Return the BoardManager coordinate and facade controller."""
         return self._board
     
     @property
     def engines(self) -> EngineManager:
+        """Return the EngineManager subprocess and session coordinator."""
         return self._engines
     
     @property
     def theme(self) -> ThemeManager:
+        """Return the ThemeManager presentation and style manager."""
         return self._theme
     
     @property
     def settings(self) -> SettingsManager:
+        """Return the SettingsManager persistence and configuration provider."""
         return self._settings
     
     @property
     def game(self) -> GameManager:
+        """Return the GameManager high-level workflow controller."""
         return self._game
     
     def startup(self):
+        """Start up the application by loading settings from persistent storage."""
         self.settings.load()
     
     def shut_down(self):
+        """Perform a clean shutdown of all systems, saving state and stopping engines."""
         self.save()
         self.game.stop_game()
         self.engines.shutdown()
 
     def _connect_modules(self):
-
+        """Wire together subsystem interactions and signals internally."""
         # Connecting Board Manager, Engine Manager to Game Manager
         self.board.view_changed.connect(self.game.on_view_changed)
         self.engines.best_move_updated.connect(self.game.on_best_move_updated)
@@ -105,6 +140,7 @@ class AppManager(QObject):
         self._connect_ui_pass_on_signals()
 
     def _connect_ui_pass_on_signals(self):
+        """Connect internal subsystem signals to multiplexed AppManager public signals."""
         self.theme.theme_changed.connect(self.theme_changed.emit)
 
         self.board.view_changed.connect(self.board_state_changed.emit)
@@ -124,6 +160,11 @@ class AppManager(QObject):
         self.engines.engine_error.connect(self.engine_error.emit)
 
     def load_settings(self, settings: dict):
+        """Load and apply configuration settings to theme and engine subsystems.
+
+        Args:
+            settings: Dictionary of configuration options.
+        """
         if "theme" in settings:
             self.theme.load_theme_from_settings(settings["theme"])
 
@@ -131,6 +172,11 @@ class AppManager(QObject):
             self.engines.load_settings(settings["engines"])
 
     def export_pgn(self, filepath: str):
+        """Export the current game state, move history, and active engine configuration to a PGN file.
+
+        Args:
+            filepath: Path to the output PGN file.
+        """
         active_engines = self.game.get_active_engines()
         root_node = self.board.get_export_state()
         engine_info = {}
@@ -142,7 +188,7 @@ class AppManager(QObject):
         self.game.save_game(filepath, root_node, engine_info)        
 
     def save(self):
-
+        """Save the current theme settings and engine profiles to the settings manager."""
         theme_settings = self.theme.get_export_state()
         engines_settings = self.engines.get_export_state()
 

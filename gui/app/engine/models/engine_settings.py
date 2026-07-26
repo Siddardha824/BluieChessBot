@@ -7,7 +7,7 @@ valid configurations are stored and passed to the engine service.
 Validation occurs at property setter level to catch configuration errors early.
 """
 
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Signal
 import inspect
 
 
@@ -22,6 +22,9 @@ class EngineSettings(QObject):
 
     Settings are applied to the engine via the EngineService when changed.
 
+    Signals:
+        settings_updated: Emitted when engine configuration settings are updated.
+
     Attributes:
         constraint_mode: Search constraint type (depth, time, nodes, or infinite).
         max_depth: Maximum search depth in plies (1+).
@@ -31,6 +34,9 @@ class EngineSettings(QObject):
         threads: Number of worker threads (1+).
         engine_path: File system path to the chess engine executable.
     """
+
+
+    settings_updated = Signal()
 
     def __init__(self, parent):
         """Initialize engine settings with default values.
@@ -193,6 +199,11 @@ class EngineSettings(QObject):
         if not isinstance(val, str):
             raise ValueError("Engine path must be a string.")
         self._engine_path = val
+
+    def notify_updated(self) -> None:
+        """Emit the settings_updated signal to notify listeners that configuration changed."""
+        self.settings_updated.emit()
+
 
     def asdict(self) -> dict:
         """Convert all settings to a dictionary.
