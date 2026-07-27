@@ -42,7 +42,7 @@ class EngineInfo(QObject):
         super().__init__(parent)
         self._name = name
         self._author = author
-        self._connection_status = "NotRunning"  # NotRunning, Starting, Running, Error
+        self._connection_status = "NotRunning"  # NotRunning, Starting, Running, SyncingSettings, Error
         self._search_status = "Offline"  # Offline, Connecting, Idle, Searching
 
     # Engine identification properties
@@ -71,7 +71,7 @@ class EngineInfo(QObject):
     def connection_status(self) -> str:
         """Return the engine process connection status.
 
-        Possible values: "NotRunning", "Starting", "Running", "Error".
+        Possible values: "NotRunning", "Starting", "Running", "SyncingSettings", "Error".
         """
         return self._connection_status
 

@@ -109,26 +109,55 @@ class EngineService(QObject):
     def send(self, command: str):
         """Send a UCI command to the engine.
 
+        If a setoption command is sent, change connection status to SyncingSettings
+        and automatically send an 'isready' command to synchronize with the engine.
+
         Args:
             command: UCI command string to send.
         """
         self._connector.send(command)
+        if command.startswith("setoption"):
+            self.status.info.connection_status = "SyncingSettings"
+            self.status.info.notify_updated()
+            self._connector.send("isready")
+
 
     def update_settings(self, **kwargs):
         """Dynamically update engine settings from keyword arguments.
 
         Validate that each setting exists on the settings model before updating.
-        Log debug info for successful updates and warnings for unknown settings.
+        If hash_size or threads are updated, synchronizes them with the active engine process.
+        Emits a change notification on the settings model if any configurations were changed.
 
         Args:
             **kwargs: Setting name-value pairs (e.g., threads=4, hash_size=256).
         """
+        updated = False
+        threads_changed = False
+        hash_changed = False
+
         for key, value in kwargs.items():
             if hasattr(self.status.settings, key):
-                setattr(self.status.settings, key, value)
-                logger.debug("Updated setting '%s' to %s", key, value)
+                old_val = getattr(self.status.settings, key)
+                if old_val != value:
+                    setattr(self.status.settings, key, value)
+                    logger.debug("Updated setting '%s' to %s", key, value)
+                    updated = True
+                    if key == "threads":
+                        threads_changed = True
+                    elif key == "hash_size":
+                        hash_changed = True
             else:
                 logger.warning("Attempted to update unknown engine setting: %s", key)
+
+        if updated:
+            self.status.settings.notify_updated()
+            # If the engine is running, synchronize the modified threads/hash options
+            if self.is_running():
+                if threads_changed:
+                    self.set_options("threads")
+                if hash_changed:
+                    self.set_options("hash_size")
 
     def is_running(self) -> bool:
         """Check if the engine process is currently running.
@@ -154,15 +183,30 @@ class EngineService(QObject):
         """
         self.send(f"position fen {fen}")
 
-    def set_options(self):
-        """Configure engine options (threads and hash table size).
+    def set_options(self, option_name: str | None = None):
+        """Configure engine options (threads and/or hash table size).
 
-        Read settings from the engine status model and send UCI setoption commands.
+        If option_name is specified, configure only that option by reading its value from the
+        settings model and sending the corresponding setoption command. Otherwise, configure
+        all options.
+
+        Args:
+            option_name: Optional name of the setting to configure ("threads" or "hash_size").
         """
-        threads = self.status.settings.threads
-        hash_size = self.status.settings.hash_size
-        self.send(f"setoption name Threads value {threads}")
-        self.send(f"setoption name Hash value {hash_size}")
+        if option_name is None:
+            threads = self.status.settings.threads
+            hash_size = self.status.settings.hash_size
+            self.send(f"setoption name Threads value {threads}")
+            self.send(f"setoption name Hash value {hash_size}")
+        elif option_name == "threads":
+            threads = self.status.settings.threads
+            self.send(f"setoption name Threads value {threads}")
+        elif option_name == "hash_size":
+            hash_size = self.status.settings.hash_size
+            self.send(f"setoption name Hash value {hash_size}")
+        else:
+            logger.warning("Attempted to set unknown engine option: %s", option_name)
+
 
     def go(self):
         """Execute a search using the constraint mode configured in settings.
@@ -251,6 +295,10 @@ class EngineService(QObject):
         # Handle engine ready acknowledgment
         elif packet_type == PacketType.READYOK:
             logger.info("Engine ready for commands")
+            if self.status.info.connection_status == "SyncingSettings":
+                self.status.info.connection_status = "Running"
+                self.status.info.notify_updated()
+                logger.info("Engine settings successfully synchronized and applied")
             self.engine_ready.emit()
 
         # Handle engine identification
