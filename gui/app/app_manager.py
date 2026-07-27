@@ -141,7 +141,7 @@ class AppManager(QObject):
 
     def _connect_ui_pass_on_signals(self):
         """Connect internal subsystem signals to multiplexed AppManager public signals."""
-        self.theme.theme_changed.connect(self.theme_changed.emit)
+        self.theme.theme_changed.connect(lambda theme: self.theme_changed.emit())
 
         self.board.view_changed.connect(self.board_state_changed.emit)
 
