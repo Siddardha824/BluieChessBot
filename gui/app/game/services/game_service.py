@@ -181,6 +181,7 @@ class GameService(QObject):
         if board.is_checkmate():
             self._state.match_status = MatchStatus.CHECKMATE
             self.end_game()
+            return
 
         if board.is_game_over(claim_draw=True):
             self._state.match_status = MatchStatus.DRAW
