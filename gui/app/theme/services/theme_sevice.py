@@ -60,11 +60,11 @@ class ThemeService:
         for key, value in theme_dic.items():
             if value is not None:
                 placeholder = f"{{{{ {key} }}}}"
-                stylesheet.replace(placeholder, str(value))
+                stylesheet = stylesheet.replace(placeholder, str(value))
 
-        stylesheet.replace("__SPACE_DOWN_ARROW_ICON__", SPACE_DOWN_ARROW_ICON.as_posix())
-        stylesheet.replace("__SPACE_SPIN_UP_ARROW_ICON__", SPACE_SPIN_UP_ARROW_ICON.as_posix())
-        stylesheet.replace("__SPACE_SPIN_DOWN_ARROW_ICON__", SPACE_SPIN_DOWN_ARROW_ICON.as_posix())
+        stylesheet = stylesheet.replace("__SPACE_DOWN_ARROW_ICON__", SPACE_DOWN_ARROW_ICON.as_posix())
+        stylesheet = stylesheet.replace("__SPACE_SPIN_UP_ARROW_ICON__", SPACE_SPIN_UP_ARROW_ICON.as_posix())
+        stylesheet = stylesheet.replace("__SPACE_SPIN_DOWN_ARROW_ICON__", SPACE_SPIN_DOWN_ARROW_ICON.as_posix())
 
         app = QApplication.instance()
         if isinstance(app, QApplication):
