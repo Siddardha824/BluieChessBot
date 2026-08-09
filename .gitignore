@@ -10,3 +10,4 @@ gui-old/
 gui/config/
 Screenshot*
 *.xcf
+.coverage

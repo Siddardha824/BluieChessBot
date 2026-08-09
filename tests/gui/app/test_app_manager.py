@@ -62,7 +62,7 @@ class TestAppManager:
         assert app.settings.parent() == app
         assert app.game.parent() == app
 
-    def test_signal_multiplexing_wiring(self, qtbot):
+    def test_signal_multiplexing_wiring(self):
         """Verify that subsystem notifications successfully bubble up through the AppManager facade."""
         app = AppManager(parent=None)
 
