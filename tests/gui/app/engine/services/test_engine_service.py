@@ -337,3 +337,15 @@ class TestEngineService:
         assert engine_status.info.connection_status == "Error"
         assert engine_status.info.search_status == "Offline"
         assert received_errors == ["Process crashed"]
+
+    def test_on_stdout_invalid_line(self, engine_status, service):
+        """Verify on_stdout ignores invalid or unrecognized lines without modifying status."""
+        # Arrange
+        engine_status.info.search_status = "Searching"
+
+        # Act
+        service._on_stdout("invalid_line_garbage")
+
+        # Assert
+        assert engine_status.info.search_status == "Searching"
+

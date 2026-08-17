@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import MagicMock
 from gui.app.engine.services.uci_parser import UCIParser, PacketType
 from gui.app.engine.models.analysis_state import AnalysisState
 
@@ -132,3 +133,19 @@ class TestUCIParser:
         assert result is not None
         assert result["type"] == PacketType.INFO
         assert isinstance(result["state"], AnalysisState)
+
+    def test_parse_line_empty_tokens(self, analysis_state):
+        """Verify parse_line returns None if string split results in no tokens."""
+        # Arrange
+        mock_stripped = MagicMock()
+        mock_stripped.split.return_value = []
+
+        mock_line = MagicMock()
+        mock_line.strip.return_value = mock_stripped
+
+        # Act
+        result = UCIParser.parse_line(mock_line, analysis_state)
+
+        # Assert
+        assert result is None
+

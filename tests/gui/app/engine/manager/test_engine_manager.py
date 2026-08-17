@@ -297,3 +297,29 @@ class TestEngineManager:
 
         assert "Stockfish" in engine_manager._services
         mock_service.update_settings.assert_called_once_with(threads=4, hash_size=128)
+
+    def test_create_engine_failure(self, engine_manager):
+        """Verify create_engine returns False if add_engine fails (returns None)."""
+        # Arrange
+        with patch.object(engine_manager.engines, "add_engine", return_value=None):
+            # Act
+            result = engine_manager.create_engine("Stockfish")
+
+            # Assert
+            assert result is False
+
+    def test_missing_engine_operations(self, engine_manager):
+        """Verify calling operations on a missing engine returns default values safely."""
+        # Act & Assert
+        assert engine_manager.start("NonExistentEngine") is False
+        assert engine_manager.is_running("NonExistentEngine") is False
+        assert engine_manager.asdict("NonExistentEngine") is None
+
+    def test_setup_engine_failure_cases(self, engine_manager):
+        """Verify setup_engine handles creation or start failure scenarios gracefully."""
+        # Arrange
+        with patch.object(engine_manager, "create_engine", return_value=False), \
+             patch.object(engine_manager, "start", return_value=False):
+            # Act / Assert (should complete without raising exception)
+            engine_manager.setup_engine("Stockfish", "/invalid/path")
+

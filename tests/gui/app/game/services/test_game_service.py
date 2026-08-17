@@ -189,3 +189,14 @@ class TestGameService:
 
         with qtbot.assertNotEmitted(service.make_move):
             service.on_best_move_updated("Analysis", "d2d4")
+
+    def test_trigger_next_action_non_active(self, service, state, qtbot):
+        """Verify _trigger_next_action returns early if match status is not ACTIVE."""
+        # Arrange
+        state.match_status = MatchStatus.DRAW
+        service._white_engine = "White"
+
+        # Act & Assert
+        with qtbot.assertNotEmitted(service.start_engine_search):
+            service._trigger_next_action()
+

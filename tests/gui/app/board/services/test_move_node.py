@@ -127,3 +127,16 @@ class TestMoveNode:
         assert final_board.piece_at(chess.E4) == chess.Piece(chess.PAWN, chess.WHITE)
         assert final_board.piece_at(chess.E5) == chess.Piece(chess.PAWN, chess.BLACK)
         assert final_board.piece_at(chess.F3) == chess.Piece(chess.KNIGHT, chess.WHITE)
+
+    def test_child_node_initialization_with_raw_parent(self):
+        """Verify ChildMoveNode initialization falls back to parent.board() if parent lacks _cached_board."""
+        # Arrange
+        from chess.pgn import Game
+        raw_parent = Game()
+        move_e4 = chess.Move.from_uci("e2e4")
+
+        # Act
+        child = ChildMoveNode(raw_parent, move_e4)
+
+        # Assert
+        assert child.board().piece_at(chess.E4) == chess.Piece(chess.PAWN, chess.WHITE)
