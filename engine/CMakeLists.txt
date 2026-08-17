@@ -11,7 +11,7 @@ find_package(Threads REQUIRED)
 
 include_directories(include .)
 
-add_executable(BluieChessBot
+add_executable(BluieChessBot.bin
     src/Bluie.cpp
     src/core/Debug.cpp
     src/core/MoveGen.cpp
@@ -27,4 +27,4 @@ add_executable(BluieChessBot
 )
 
 # Link platform-independent threads package
-target_link_libraries(BluieChessBot PRIVATE Threads::Threads)
+target_link_libraries(BluieChessBot.bin PRIVATE Threads::Threads)

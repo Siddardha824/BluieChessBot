@@ -3,11 +3,7 @@
 __pycache__/
 .vscode/
 build/
-designs/
-.antigravitycli/
-.agents/
-gui-old/
-gui/config/
-Screenshot*
 *.xcf
 .coverage
+.cache
+.pytest_cache
