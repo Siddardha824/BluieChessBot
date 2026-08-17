@@ -13,11 +13,12 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-from gui.app.theme.services.theme_sevice import ThemeService
+from gui.app.theme.services.theme_service import ThemeService
 from gui.ui.panels.engine_analysis_panel import EngineAnalysisPanel
 from gui.ui.panels.single_engine_status import SingleEngineStatus
 from gui.ui.panels.engines_status_panel import EnginesStatusPanel
-from gui.ui.panels.settings_panel import SettingsPanel
+from gui.ui.panels.engine_settings_panel import EngineSettingsPanel
+from gui.ui.panels.global_settings_panel import GlobalSettingsPanel
 
 
 class PanelPreviewWindow(QMainWindow):
@@ -49,7 +50,8 @@ class PanelPreviewWindow(QMainWindow):
             "Engine Analysis Panel": [EngineAnalysisPanel, {"parent": None}, (300, 500)],
             "Single Engine Status Panel": [SingleEngineStatus, {"engine_role": "Test", "parent": None}, (350, 150)],
             "Engine Status Panel": [EnginesStatusPanel, {"parent": None}, (350, 300)],
-            "Settings Panel": [SettingsPanel, {"parent": None}, (400, 500)],
+            "Engine Settings Panel": [EngineSettingsPanel, {"parent": None}, (400, 500)], 
+            "Global Settings Panel": [GlobalSettingsPanel, {"parent": None}, (400, 500)],
         }
         
         self._setup_ui()

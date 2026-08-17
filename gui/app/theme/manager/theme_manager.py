@@ -6,7 +6,7 @@ modifying, applying, and exporting stylesheet theme configurations across the GU
 
 import dataclasses
 from PySide6.QtCore import QObject, Signal
-from ..services.theme_sevice import ThemeService
+from ..services.theme_service import ThemeService
 from ..models.theme_state import ThemeState
 from gui.utils import get_logger
 
@@ -14,15 +14,17 @@ logger = get_logger(__name__)
 
 
 class ThemeManager(QObject):
-    """Provide a controller facade for managing and applying application themes.
+    """
+    Controller facade for managing and applying application themes.
 
     This manager orchestrates loading preset and custom themes, applying active
     stylesheets to the application, and emitting signals to notify reactive observers.
 
     Signals:
-        theme_changed: Emitted when the active application ThemeState changes.
+        theme_changed (Signal): Emitted when the active application ThemeState changes.
     """
 
+    # Emitted when the active application theme changes. Payload: theme (ThemeState)
     theme_changed = Signal(ThemeState)
 
     def __init__(self, parent, name="space"):
@@ -62,6 +64,16 @@ class ThemeManager(QObject):
 
         self._active_theme = theme
         self.apply_theme(theme)
+
+    @property
+    def available_themes(self) -> list[str]:
+        """Return the list of available preset theme names."""
+        return self._theme_service.available_themes
+
+    @property
+    def active_theme_name(self) -> str:
+        """Return the name of the active theme."""
+        return self._active_theme.name
 
     def _load_presets(self) -> dict[str, ThemeState]:
         """Load and return all available preset configurations.

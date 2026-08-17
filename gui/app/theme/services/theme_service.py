@@ -21,7 +21,8 @@ logger = get_logger(__name__)
 
 
 class ThemeService:
-    """Provide theme loader and stylesheet application logic.
+    """
+    Service for loading themes and applying stylesheets.
 
     This service replaces placeholders in stylesheet templates with concrete theme
     colors and asset file paths, then binds them to the active QApplication.
@@ -30,6 +31,11 @@ class ThemeService:
     def __init__(self):
         """Initialize the theme service."""
         self._qss = STYLESHEET
+
+    @property
+    def available_themes(self) -> list[str]:
+        """Return the list of all available preset theme names."""
+        return list(PRESET_THEMES.keys())
 
     def load_presets(self) -> dict[str, ThemeState]:
         """Load and return the list of preset themes.
@@ -66,6 +72,7 @@ class ThemeService:
         stylesheet = stylesheet.replace("__SPACE_SPIN_UP_ARROW_ICON__", SPACE_SPIN_UP_ARROW_ICON.as_posix())
         stylesheet = stylesheet.replace("__SPACE_SPIN_DOWN_ARROW_ICON__", SPACE_SPIN_DOWN_ARROW_ICON.as_posix())
 
+        # Verify a valid QApplication instance is running to prevent crashes during headless testing
         app = QApplication.instance()
         if isinstance(app, QApplication):
             app.setStyleSheet(stylesheet)

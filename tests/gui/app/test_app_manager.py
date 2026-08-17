@@ -12,7 +12,7 @@ class TestAppManager:
     @pytest.fixture(autouse=True)
     def mock_theme_service(self):
         """Automatically mock stylesheet application to avoid modifying the Pytest QApp styling."""
-        with patch("gui.app.theme.services.theme_sevice.ThemeService.apply_stylesheet") as mock_apply:
+        with patch("gui.app.theme.services.theme_service.ThemeService.apply_stylesheet") as mock_apply:
             mock_apply.return_value = True
             yield mock_apply
 
