@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QSpinBox, QLineEdit, QFileDialog, QPushButton, QHBoxLayout
 )
 from PySide6.QtGui import QFontMetrics
-from gui.ui.core.styled_widget import StyledWidget
+from gui.ui.core import StyledWidget
 
 
 class EngineSettingsPanel(StyledWidget):

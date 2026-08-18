@@ -7,7 +7,7 @@ depth, selective depth, and principal variation (PV) move suggestions.
 
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QVBoxLayout, QGridLayout, QLabel, QProgressBar, QTextEdit
-from gui.ui.core.styled_widget import StyledWidget
+from gui.ui.core import StyledWidget
 
 
 class EngineAnalysisPanel(StyledWidget):

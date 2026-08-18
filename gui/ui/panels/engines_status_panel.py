@@ -7,7 +7,7 @@ SingleEngineStatus widgets and forwards user settings requests to the parent lay
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QVBoxLayout, QLabel
-from gui.ui.core.styled_widget import StyledWidget
+from gui.ui.core import StyledWidget
 
 from .single_engine_status import SingleEngineStatus
 

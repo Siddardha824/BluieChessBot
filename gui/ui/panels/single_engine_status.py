@@ -6,9 +6,9 @@ status and the current calculation constraint for a single chess engine (White o
 and emits user intents to open the engine-specific settings dialog.
 """
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QPushButton
-from gui.ui.core.styled_widget import StyledWidget
+from gui.ui.core import StyledWidget
 
 
 class SingleEngineStatus(StyledWidget):

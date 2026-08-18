@@ -30,78 +30,18 @@ The project currently contains:
 │                    BluieChessBot                        │
 ├─────────────────────────────────────────────────────────┤
 │  Python Desktop Application                             │
-│  PySide6 • UI • Models • Services • Application State  │
+│  PySide6 • UI • Models • Services • Application State   │
 ├─────────────────────────────────────────────────────────┤
 │  Engine Integration                                     │
-│  Engine Manager • Sessions • Connector • UCI           │
+│  Engine Manager • Sessions • Connector • UCI            │
 ├─────────────────────────────────────────────────────────┤
 │  C++ Chess Engine                                       │
-│  Board • Move Generation • Attacks • Evaluation        │
+│  Board • Move Generation • Attacks • Evaluation         │
 │  Search • Debugging • UCI                               │
 └─────────────────────────────────────────────────────────┘
 ```
 
 The engine is intentionally independent of the GUI. The GUI communicates with an engine process through UCI rather than directly depending on the engine's C++ implementation.
-
-## Repository Layout
-
-```text
-BluieChessBot/
-├── engine/                 # C++20 chess engine
-│   ├── include/            # Public engine headers
-│   │   ├── attacks/
-│   │   ├── board/
-│   │   ├── core/
-│   │   └── uci/
-│   ├── src/                # Engine implementation
-│   │   ├── attacks/
-│   │   ├── board/
-│   │   ├── core/
-│   │   └── uci/
-│   ├── tools/              # Engine utilities and test programs
-│   └── CMakeLists.txt
-├── gui/                    # Python/PySide6 application
-├── tests/                  # Python tests
-├── run_ui_preview.py       # Standalone GUI component preview
-├── requirements.txt        # Python dependencies
-├── pytest.ini              # Pytest configuration
-├── TESTING_GUIDELINES.md
-├── COMMENTING_GUIDELINES.md
-├── LICENSE
-└── README.md
-```
-
-## Engine
-
-The engine is written in modern C++ and currently uses C++20. Its source is organized around the following subsystems:
-
-- **Board** — board representation and position state
-- **Attacks** — precomputed and generated attack information, including magic-indexing infrastructure
-- **Move Generation** — pseudo-legal and legal move generation
-- **Evaluation** — position scoring
-- **Search** — engine search and asynchronous search infrastructure
-- **UCI** — command and response handling for integration with chess GUIs
-- **Debugging and Tools** — diagnostics, attack generation, and engine testing utilities
-
-The engine is built with CMake and links against the platform-independent CMake `Threads` package.
-
-## GUI
-
-The GUI is written in Python using PySide6. It is organized into reusable application services, models, and UI components instead of putting the entire interface into a single window class.
-
-Current GUI infrastructure includes components for:
-
-- Board rendering and chess-piece rendering
-- Engine management and engine sessions
-- Engine information and status presentation
-- Engine analysis presentation
-- Application and analysis state
-- Settings
-- Theme management and stylesheet customization
-- Reusable styled widgets
-- UI component preview and isolation testing
-
-The GUI also uses `python-chess` for chess rules and position/game-state support where appropriate.
 
 ## Requirements
 
@@ -189,7 +129,7 @@ Run the Python test suite with:
 pytest
 ```
 
-For engine-level work, build the engine and use the testing utilities under `engine/tools` and the engine test sources.
+No Tests available for engine currently.
 
 See [`TESTING_GUIDELINES.md`](TESTING_GUIDELINES.md) for project-specific testing practices and [`COMMENTING_GUIDELINES.md`](COMMENTING_GUIDELINES.md) for documentation conventions.
 
@@ -212,39 +152,6 @@ GUI
 ```
 
 This boundary keeps the GUI independent from the engine implementation and makes the engine usable outside the desktop application.
-
-## Development Principles
-
-BluieChessBot is being developed around a few core principles:
-
-1. **Clear ownership of state** — board, analysis, engine, and application state should have explicit owners.
-2. **Separation of concerns** — engine, integration, application, and presentation layers should remain independently understandable.
-3. **Composition over monoliths** — reusable services, models, managers, and widgets are preferred over large classes with unrelated responsibilities.
-4. **Testability** — chess logic and application components should be testable independently where practical.
-5. **Incremental architecture** — interfaces should evolve deliberately as the project grows instead of accumulating hidden coupling.
-
-## Roadmap
-
-Planned development areas include:
-
-- [ ] Stabilize the engine's search and evaluation
-- [ ] Expand engine correctness and regression testing
-- [ ] Improve engine benchmarking and diagnostics
-- [ ] Complete robust engine session management
-- [ ] Complete the main chess-board/gameplay workflow
-- [ ] Expand analysis and principal-variation presentation
-- [ ] Support multiple analysis variations
-- [ ] Improve game-tree and variation management
-- [ ] Add comprehensive PGN import/export
-- [ ] Add position setup and editing
-- [ ] Expand engine configuration and options
-- [ ] Improve themes and customization
-- [ ] Add game/database management
-- [ ] Add online chess integration, including Lichess
-- [ ] Add packaging and release workflows
-- [ ] Provide polished cross-platform distributions
-
-The roadmap is intentionally flexible while the architecture continues to mature.
 
 ## Contributing
 

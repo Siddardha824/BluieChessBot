@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QGroupBox, QFormLayout, QComboBox, 
     QLineEdit, QFileDialog, QPushButton, QHBoxLayout
 )
-from gui.ui.core.styled_widget import StyledWidget
+from gui.ui.core import StyledWidget
 
 
 class GlobalSettingsPanel(StyledWidget):
