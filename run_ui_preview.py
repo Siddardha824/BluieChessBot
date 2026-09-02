@@ -20,7 +20,8 @@ from gui.ui.panels import (
     EnginesStatusPanel,
     EngineSettingsPanel,
     GlobalSettingsPanel,
-    GameControlPanel
+    GameControlPanel,
+    MoveHistoryPanel
 )
 
 
@@ -55,7 +56,8 @@ class PanelPreviewWindow(QMainWindow):
             "Engine Status Panel": [EnginesStatusPanel, {"parent": None}, (350, 300)],
             "Engine Settings Panel": [EngineSettingsPanel, {"parent": None}, (400, 500)],
             "Global Settings Panel": [GlobalSettingsPanel, {"parent": None}, (400, 500)],
-            "Game Control Panel":[GameControlPanel, {"parent": None}, (350, 300)]
+            "Game Control Panel":[GameControlPanel, {"parent": None}, (350, 300)],
+            "Move History Panel": [MoveHistoryPanel, {"parent": None}, (300, 300)]
         }
         
         self._setup_ui()
