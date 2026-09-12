@@ -1,1 +1,0 @@
-from .move_history_panel import MoveHistoryPanel

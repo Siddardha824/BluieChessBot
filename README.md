@@ -131,7 +131,7 @@ pytest
 
 No Tests available for engine currently.
 
-See [`TESTING_GUIDELINES.md`](TESTING_GUIDELINES.md) for project-specific testing practices and [`COMMENTING_GUIDELINES.md`](COMMENTING_GUIDELINES.md) for documentation conventions.
+See [`TESTING_GUIDELINES.md`](TESTING_GUIDELINES.md) for project-specific testing practices, [`LOGGING_GUIDELINES.md`](LOGGING_GUIDELINES.md) for logging architecture, and [`COMMENTING_GUIDELINES.md`](COMMENTING_GUIDELINES.md) for documentation conventions.
 
 ## UCI Integration
 

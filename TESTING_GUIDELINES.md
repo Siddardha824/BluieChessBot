@@ -1,6 +1,6 @@
 # Testing and Verification Guidelines
 
-This document details the testing philosophy, rules, component-specific constraints, UI testing guidelines, directory structure, and execution practices for unit and integration testing in the **BluieChessBot** project. All tests generated or updated by developers or AI agents must adhere strictly to these standards.
+This document details the testing philosophy, rules, component-specific constraints, UI testing guidelines, log verification practices with `caplog`, directory structure, and execution practices for unit and integration testing in the **BluieChessBot** project. All tests generated or updated by developers or AI agents must adhere strictly to these standards.
 
 ---
 
@@ -16,6 +16,8 @@ This document details the testing philosophy, rules, component-specific constrai
 **Arrange-Act-Assert (AAA):** Structure every test clearly with comments or logical spacing dividing setup (**Arrange**), execution (**Act**), and assertions (**Assert**).
 
 **Object Isolation:** Tests must not leak state. Use Pytest fixtures to provide fresh instances of objects for each test method.
+
+**Verify Error Logging with `caplog`:** For failure branches, error handling blocks, and warning paths, use pytest's `caplog` fixture to verify that errors are logged at the correct severity with descriptive messages, without polluting test output. Refer to [`LOGGING_GUIDELINES.md`](LOGGING_GUIDELINES.md) for logging level standards.
 
 **No Unused Imports:** Only import packages, classes, or modules that are explicitly used in the test. Do not import `MagicMock` if only using `@patch`.
 
@@ -44,6 +46,23 @@ This document details the testing philosophy, rules, component-specific constrai
 * Verify that Qt signals from the underlying Model successfully bubble up through the Manager to the UI layer.
 * Verify termination triggers by feeding known game-ending positions (checkmate, stalemate, repetition FENs) and asserting that `GameManager` captures termination, stops searches, and emits `game_over`.
 
+### Error Handling & Log Verification (`caplog`)
+* **Test Negative & Edge Paths:** Whenever a service or manager handles an error, catches an exception, or ignores an invalid input, assert that the corresponding log message was generated.
+* **Scope Log Level:** Always configure `caplog.at_level()` with the appropriate severity (`logging.WARNING`, `logging.ERROR`, etc.) and optionally specify the logger name to filter out noise from other modules:
+  ```python
+  with caplog.at_level(logging.ERROR, logger="gui.app.engine.services.engine_connector"):
+      connector.start("/invalid/path")
+  ```
+* **Substring Assertions:** Assert against essential diagnostic keywords in `caplog.text` rather than full timestamped strings:
+  ```python
+  assert "Engine executable not found" in caplog.text
+  ```
+* **Strict Tuple Assertions:** For exact level and message validation, check `caplog.record_tuples`:
+  ```python
+  assert ("gui.app.engine.services.engine_connector", logging.ERROR, "Engine executable not found: /invalid/path") in caplog.record_tuples
+  ```
+* **Clear State in Multi-Step Tests:** Use `caplog.clear()` between consecutive actions within the same test to prevent earlier log messages from causing false positives.
+
 ---
 
 ## 3. UI Testing Guidelines (PySide6 & pytest-qt)
@@ -67,9 +86,11 @@ Do not test specific hex codes, font sizes, or pixel widths. Stylesheets change,
 
 ---
 
-## 4. Template Example: Testing the `SingleEngineCard`
+## 4. Template Examples
 
-Place UI tests in their respective directories following the mirroring rule (e.g., `tests/gui/ui/panels/test_engine_status_panel.py`).
+Place tests in their respective directories following the mirroring rule (e.g., `tests/gui/ui/panels/test_engine_status_panel.py` or `tests/gui/app/engine/services/test_engine_connector.py`).
+
+### 4.1. UI Testing Template (`SingleEngineCard`)
 
 ```python
 import pytest
@@ -110,6 +131,50 @@ class TestSingleEngineCard:
 
         assert blocker.args == ["White"]
 ```
+
+### 4.2. Service & Log Verification Template (`EngineConnector` with `caplog`)
+
+```python
+import logging
+import pytest
+from gui.app.engine.services.engine_connector import EngineConnector
+
+
+class TestEngineConnectorLogging:
+    """Test suite verifying logging behavior and error handling in EngineConnector."""
+
+    def test_start_nonexistent_executable_logs_error(self, caplog, qtbot):
+        """Verify that attempting to start a missing executable logs an ERROR with path details."""
+        # Arrange
+        connector = EngineConnector(parent=None)
+        invalid_path = "/non/existent/path/bluie_bot"
+
+        # Act
+        with caplog.at_level(logging.ERROR, logger="gui.app.engine.services.engine_connector"):
+            success = connector.start(invalid_path)
+
+        # Assert
+        assert success is False
+        assert f"Engine executable not found: {invalid_path}" in caplog.text
+        assert any(
+            record.levelno == logging.ERROR and "Engine executable not found" in record.message
+            for record in caplog.records
+        )
+
+    def test_send_command_when_stopped_logs_warning(self, caplog, qtbot):
+        """Verify sending a command to a stopped process logs a WARNING."""
+        # Arrange
+        connector = EngineConnector(parent=None)
+        command = "isready"
+
+        # Act
+        with caplog.at_level(logging.WARNING, logger="gui.app.engine.services.engine_connector"):
+            connector.send_command(command)
+
+        # Assert
+        assert "Failed to send command; engine is not running: isready" in caplog.text
+```
+
 ---
 
 ## 5. Test Directory Organization
@@ -135,6 +200,9 @@ Project_Root/
     │   │   │   └── board_state.py        # Source module
     │   │   └── managers/
     │   │       └── game_manager.py       # Source module
+    │   └── engine/
+    │       └── services/
+    │           └── engine_connector.py   # Source service
     └── ui/
         └── panels/
             └── engine_status_panel.py    # Source UI component
@@ -153,6 +221,9 @@ Project_Root/
         │   │   │   └── test_board_state.py        # Mirrored test
         │   │   └── managers/
         │   │       └── test_game_manager.py       # Mirrored test
+        │   └── engine/
+        │       └── services/
+        │           └── test_engine_connector.py   # Mirrored test
         └── ui/
             └── panels/
                 └── test_engine_status_panel.py    # Mirrored test
@@ -169,6 +240,7 @@ To run tests locally, execute the following commands in the project root. Note t
 | `pytest` | Runs all tests, including UI tests (Qt event loop is handled automatically by the plugin). |
 | `pytest -v` | Runs all tests with verbose output for better debugging readability. |
 | `pytest --cov=gui/app` | Runs tests and generates a code coverage report for the core backend directory. |
+| `pytest -k "test_start_nonexistent"` | Runs specific test matching expression. |
 
 ---
 
@@ -184,9 +256,11 @@ When proposing a new test suite, follow this exact structure:
 
 **Mock Requirements:** [List of dependencies to mock]
 
+**Log Verification:** [Specify expected caplog levels and messages for negative paths]
+
 **Test Case Matrix (Normal):** [Input, expected state, expected signals]
 
-**Test Case Matrix (Edge):** [Illegal moves, corrupted FEN, process crash]
+**Test Case Matrix (Edge):** [Illegal moves, corrupted FEN, process crash, log emissions]
 
 **Test Code Blueprint:** [File path, sample code, assertions]
 
@@ -196,7 +270,7 @@ Every review conducted by the Testing Agent must conclude with these precise met
 
 **Coverage Gaps:** Untested branches in the changes.
 
-**Recommended Tests:** List of tests to write.
+**Recommended Tests:** List of tests to write (including error log assertions).
 
 **Risk Level:** Project risk assessment of the current build.
 
